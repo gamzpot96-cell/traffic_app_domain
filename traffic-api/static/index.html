@@ -46,11 +46,29 @@
         <p id="summary" class="muted">조회 버튼을 눌러주세요.</p>
         <p class="muted">※ 경로의 교통정보이며 서울 전체 교통 현황을 대표하지 않습니다.</p>
     </section>
+    
+<section>
+    <h2>서울 교통 브리핑</h2>
+
+    <h3 id="briefingTitle">
+        경로를 조회하면 브리핑이 표시됩니다.
+    </h3>
+
+    <p id="briefingContent">
+        아직 생성된 교통 브리핑이 없습니다.
+    </p>
+
+    <p class="muted">
+        카카오 자동차 경로 정보를 바탕으로 작성된
+        데이터 기반 브리핑입니다.
+    </p>
+</section>
+
     <section>
         <h2>도로 구간별 교통정보</h2>
         <div class="scroll">
             <table>
-                <thead><tr><th>도로명</th><th>구간 거리</th><th>통행속도</th><th>교통 상태 코드</th></tr></thead>
+                <thead><tr><th>도로명</th><th>구간 거리</th><th>통행속도</th><th>교통 상태</th></tr></thead>
                 <tbody id="roadRows"><tr><td colspan="4">조회 결과 없음</td></tr></tbody>
             </table>
         </div>
@@ -62,6 +80,8 @@
     const summary = document.getElementById("summary");
     const roadRows = document.getElementById("roadRows");
     const submitButton = document.getElementById("submitButton");
+    const briefingTitle = document.getElementById("briefingTitle");
+    const briefingContent = document.getElementById("briefingContent");
 
     function displayNumber(value, unit) {
         return value === null || value === undefined ? "정보 없음" : value + " " + unit;
@@ -90,7 +110,7 @@
                     road.name,
                     displayNumber(road.distance_m, "m"),
                     displayNumber(road.traffic_speed_kmh, "km/h"),
-                    road.traffic_state === null ? "정보 없음" : String(road.traffic_state)
+                    road.traffic_status || "정보 없음"
                 ];
                 values.forEach(function (value) {
                     const cell = document.createElement("td");
@@ -107,6 +127,12 @@
                 row.appendChild(cell);
                 roadRows.appendChild(row);
             }
+            
+if (data.briefing) {
+    briefingTitle.textContent = data.briefing.title;
+    briefingContent.textContent = data.briefing.content;
+}
+
             message.textContent = "";
         } catch (error) {
             message.textContent = "오류: " + error.message;

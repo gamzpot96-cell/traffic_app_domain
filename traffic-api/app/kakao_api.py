@@ -102,6 +102,9 @@ def summarize_route(route: dict) -> dict:
                 "distance_m": road.get("distance"),
                 "traffic_speed_kmh": road.get("traffic_speed"),
                 "traffic_state": road.get("traffic_state"),
+                "traffic_status": get_traffic_status_name(
+    road.get("traffic_state")
+),
                 "vertexes": road.get("vertexes") or [],
             })
     return {
@@ -110,3 +113,20 @@ def summarize_route(route: dict) -> dict:
         "roads": roads,
         "scope_notice": "카카오 자동차 길찾기 경로의 교통정보이며, 서울 전체 도로의 현황을 뜻하지 않습니다.",
     }
+
+def get_traffic_status_name(traffic_state):
+    """카카오 교통 상태 코드를 한글로 변환합니다."""
+
+    traffic_status_names = {
+        0: "정보 없음",
+        1: "정체",
+        2: "지체",
+        3: "서행",
+        4: "원활",
+        6: "통행 불가"
+    }
+
+    return traffic_status_names.get(
+        traffic_state,
+        "정보 없음"
+    )
