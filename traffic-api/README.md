@@ -1,50 +1,35 @@
-# 🚗 ITS 실시간 교통정보 서비스 (Real-time Traffic Info Service)
+# 서울 도로교통 브리핑 (Kakao 브랜치)
 
-ITS(국가교통정보센터) API와 카카오 Local API를 연동하여 전국 도로의 실시간 교통소통 상태를 조회하고, OpenLayers 지도로 시각화하는 FastAPI 웹 애플리케이션입니다.
+이 브랜치는 **ITS/TOPIS 대신 카카오**의 장소 검색 및 자동차 길찾기를 사용하는 시범 구현입니다.
 
----
+## 기능
+- 출발지/목적지 장소 검색: Kakao Local API
+- 자동차 경로 조회: Kakao Mobility Directions API
+- 도로별 통행속도/교통상태 코드와 지도 경로 표시: FastAPI + OpenLayers
+- 실제 API 키는 서버의 환경변수에서만 사용
 
-## 📌 주요 기능 (Key Features)
+> **범위 제한:** 카카오 자동차 길찾기 결과는 선택한 경로에 포함된 도로의 정보입니다. 서울특별시 모든 도로의 실시간 교통정보나 도로 전체의 평균속도를 의미하지 않습니다.
 
-* **동네 이름 기반 교통정보 검색**: 카카오 키워드 검색 API를 이용해 동네 이름(예: 인사동, 혜화동 등) 입력 시 해당 위치 중심의 실시간 도로 교통 데이터를 조회합니다.
-* **좌표 범위(Bounding Box) 검색**: 특정 경도·위도 범위를 지정하여 해당 구역 내 도로들의 현재 속도, 통행시간, 정체 상태를 확인합니다.
-* **인터랙티브 웹 지도 시각화**: OpenLayers 및 ITS WMTS 타일 레이어를 활용하여 실시간 지도 위에서 교통 흐름 상태를 직관적으로 파악할 수 있습니다.
-* **Supabase DB 백업 및 데이터 누적**: 조회된 교통정보 데이터를 백그라운드 작업(Background Tasks)으로 Supabase PostgreSQL에 자동 저장하며, ITS API 장애/타임아웃 발생 시 DB에 저장된 최신 백업 데이터를 대체 반환합니다.
-* **Vercel Serverless 배포 지원**: Vercel 환경에 최적화된 비동기 HTTP 요청 처리 및 타임아웃 예외 처리가 적용되어 있습니다.
+## 로컬 실행
+```powershell
+cd C:\workspace\traffic_app_domain\traffic-api
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
----
+`.env.example`을 참고해 `.env` 파일을 만들고 `KAKAO_REST_API_KEY`를 입력합니다. 카카오모빌리티 자동차 길찾기 API 이용 권한이 필요할 수 있습니다.
 
-## 🛠️ 기술 스택 (Tech Stack)
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
 
-### Backend
-* **Framework**: FastAPI (Python 3.10+)
-* **HTTP Client**: HTTPX (Async)
-* **Database**: Supabase (PostgreSQL)
-* **ORM/Driver**: psycopg2-binary
+- 메인 화면: http://127.0.0.1:8000/
+- 지도: http://127.0.0.1:8000/map
+- API 예: http://127.0.0.1:8000/api/route?origin=서울역&destination=잠실역
+- 테스트: `.\.venv\Scripts\python.exe -m pytest -q`
 
-### Frontend
-* **HTML5 / CSS3 / JavaScript (Vanilla JS)**
-* **Map Engine**: OpenLayers 6.x (OSM + ITS WMTS Layer)
+## 배포
+Vercel 프로젝트의 **Root Directory는 `traffic-api`**로 지정하고, `KAKAO_REST_API_KEY`를 Environment Variables에 설정합니다. 이 브랜치를 배포할 때만 별도의 Preview 배포를 활용하세요.
 
-### External APIs
-* **ITS 국가교통정보센터 API**: 실시간 교통소통정보 조회
-* **카카오 Local API**: 키워드 검색 기반 좌표(Geocoding) 변환
-
-### Deployment
-* **Platform**: Vercel (Serverless Function)
-
----
-
-## 📁 프로젝트 구조 (Project Structure)
-
-```text
-├── app/
-│   ├── database.py       # Supabase PostgreSQL DB 연동 및 CRUD 로직
-│   └── its_api.py        # ITS 국가교통정보센터 Open API 호출 모듈
-├── static/
-│   ├── index.html        # 메인 교통정보 목록 및 동네/좌표 검색 UI
-│   └── map.html          # OpenLayers 기반 실시간 교통 지도 페이지
-├── main.py               # FastAPI 엔드포인트 및 카카오 API 연동 로직
-├── requirements.txt      # 프로젝트 의존성 라이브러리 목록
-├── vercel.json           # Vercel 배포 설정 파일
-└── .env                  # 환경변수 설정 파일 (Git 미포함)
+## 데이터베이스
+이 시범 버전은 데이터베이스 저장을 하지 않습니다. 기존 Supabase 코드는 향후 활용을 위한 참고용으로 남겨두었고, 실행 흐름과는 분리했습니다.

@@ -1,188 +1,107 @@
 <!doctype html>
 <html lang="ko">
-
 <head>
     <meta charset="utf-8">
-    <title>ITS 실시간 교통정보 지도</title>
-
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/css/ol.css"
-        type="text/css"
-    >
-    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/build/ol.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>서울 도로교통 경로 지도</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@6.15.1/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@6.15.1/dist/ol.js"></script>
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, "Noto Sans KR", sans-serif;
-        }
-
-        h2 {
-            padding: 15px 20px;
-            margin: 0;
-            background-color: #1f2937;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-link {
-            color: #60a5fa;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        #map {
-            width: 100%;
-            height: calc(100vh - 60px);
-        }
-
-        .control-box {
-            position: absolute;
-            top: 75px;
-            left: 20px;
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: white;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .btn:hover {
-            background-color: #f3f4f6;
-        }
-
-        .ol-popup {
-            position: absolute;
-            background-color: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #cccccc;
-            bottom: 12px;
-            left: -50px;
-            min-width: 150px;
-        }
+        body { margin: 0; font-family: Arial, "Noto Sans KR", sans-serif; }
+        header { padding: 16px; background: #182437; color: #fff; }
+        header a { color: #93c5fd; margin-left: 12px; }
+        form { padding: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        button { padding: 11px 16px; border: 0; border-radius: 6px; background: #2563eb; color: white; cursor: pointer; }
+        #map { height: calc(100vh - 190px); min-height: 320px; }
+        #result { margin: 0 12px 12px; }
+        .note { color: #64748b; padding: 0 12px; font-size: 13px; }
     </style>
 </head>
-
 <body>
+<header><strong>서울 교통 경로 지도</strong><a href="/">목록으로 돌아가기</a></header>
+<form id="mapRouteForm">
+    <label>출발지 <input id="origin" value="서울역" required minlength="2"></label>
+    <label>목적지 <input id="destination" value="잠실역" required minlength="2"></label>
+    <button type="submit">경로 표시</button>
+</form>
+<p id="result" role="status">출발지와 목적지를 입력하세요.</p>
+<p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
+<div id="map"></div>
+<script>
+    const routeSource = new ol.source.Vector();
+    const routeLayer = new ol.layer.Vector({ source: routeSource });
+    const map = new ol.Map({
+        target: "map",
+        layers: [
+            new ol.layer.Tile({ source: new ol.source.OSM() }),
+            routeLayer
+        ],
+        view: new ol.View({ center: ol.proj.fromLonLat([126.9780, 37.5665]), zoom: 11 })
+    });
 
-    <h2>
-        <span>🚗 ITS 실시간 교통정보 지도</span>
-        <a href="/" class="header-link">목록으로 이동 ➔</a>
-    </h2>
-
-    <div class="control-box">
-        <input type="text" id="mapSearchInput" placeholder="동네 이름 (예: 인사동)" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-        <button id="searchMapBtn" class="btn">동네 이동 및 조회</button>
-        <button id="trafficTileBtn" class="btn">교통정보 레이어 켜기</button>
-        <button id="fetchTrafficDataBtn" class="btn">현재 화면 영역 정보 조회</button>
-    </div>
-
-    <div id="map"></div>
-
-    <script>
-        // 1. 기본 지도 생성
-        const map = new ol.Map({
-            target: "map",
-            layers: [
-                new ol.layer.Tile({
-                    source: new ol.source.OSM()
-                })
-            ],
-            view: new ol.View({
-                projection: "EPSG:3857",
-                center: ol.proj.fromLonLat([126.9780, 37.5665]), // 서울 중심 좌표
-                zoom: 12,
-                maxZoom: 18,
-                minZoom: 7
+    function makeMarker(place, color) {
+        const feature = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([place.longitude, place.latitude]))
+        });
+        feature.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 7,
+                fill: new ol.style.Fill({ color: color }),
+                stroke: new ol.style.Stroke({ color: "#ffffff", width: 2 })
             })
-        });
+        }));
+        routeSource.addFeature(feature);
+    }
 
-        // 2. ITS 교통정보 타일 레이어 (WMTS)
-        const trafficTileLayer = new ol.layer.Tile({
-            source: new ol.source.XYZ({
-                url: "https://its.go.kr:9443/geoserver/gwc/service/wmts/rest/" +
-                     "ntic:N_LEVEL_{z}/" +
-                     "ntic:REALTIME/" +
-                     "EPSG:3857/" +
-                     "EPSG:3857:{z}/{y}/{x}" +
-                     "?format=image/png8"
-            }),
-            visible: false
-        });
-        map.addLayer(trafficTileLayer);
+    const roadColors = { 1: "#16a34a", 2: "#eab308", 3: "#dc2626" };
+    function drawRoad(road) {
+        const vertexes = road.vertexes || [];
+        const coordinates = [];
+        for (let index = 0; index + 1 < vertexes.length; index += 2) {
+            coordinates.push(ol.proj.fromLonLat([vertexes[index], vertexes[index + 1]]));
+        }
+        if (coordinates.length < 2) {
+            return;
+        }
+        const feature = new ol.Feature({ geometry: new ol.geom.LineString(coordinates) });
+        feature.setStyle(new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: roadColors[road.traffic_state] || "#64748b",
+                width: 5
+            })
+        }));
+        routeSource.addFeature(feature);
+    }
 
-        // 3. 교통정보 타일 켜기/끄기 이벤트
-        const trafficTileBtn = document.getElementById("trafficTileBtn");
-        trafficTileBtn.addEventListener("click", function () {
-            const currentVisible = trafficTileLayer.getVisible();
-            trafficTileLayer.setVisible(!currentVisible);
-            trafficTileBtn.textContent = currentVisible ? "교통정보 레이어 켜기" : "교통정보 레이어 끄기";
-        });
-
-        // 4. 현재 지도의 바운딩 박스를 계산하여 백엔드로 요청
-        const fetchTrafficDataBtn = document.getElementById("fetchTrafficDataBtn");
-        fetchTrafficDataBtn.addEventListener("click", async function () {
-            const extent = map.getView().calculateExtent(map.getSize());
-            const minCoord = ol.proj.toLonLat([extent[0], extent[1]]);
-            const maxCoord = ol.proj.toLonLat([extent[2], extent[3]]);
-
-            const minX = minCoord[0].toFixed(4);
-            const minY = minCoord[1].toFixed(4);
-            const maxX = maxCoord[0].toFixed(4);
-            const maxY = maxCoord[1].toFixed(4);
-
-            alert(`현재 지도 영역의 교통정보를 수집합니다.\n경도: ${minX}~${maxX}\n위도: ${minY}~${maxY}`);
-
-            try {
-                const response = await fetch(`/traffic?min_x=${minX}&max_x=${maxX}&min_y=${minY}&max_y=${maxY}`);
-                if (!response.ok) throw new Error("데이터 조회 실패");
-
-                const result = await response.json();
-                const itemCount = result?.body?.items?.length || 0;
-                alert(`조회 완료! 수집된 구간 수: ${itemCount}건`);
-            } catch (err) {
-                alert("교통정보 조회 중 오류가 발생했습니다.");
-                console.error(err);
+    document.getElementById("mapRouteForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const result = document.getElementById("result");
+        result.textContent = "경로 조회 중...";
+        try {
+            const params = new URLSearchParams({
+                origin: document.getElementById("origin").value.trim(),
+                destination: document.getElementById("destination").value.trim()
+            });
+            const response = await fetch("/api/route?" + params.toString());
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(typeof data.detail === "string" ? data.detail : "조회 실패");
             }
-        });
-
-        // 5. 동네 이름으로 검색하여 지도 조회
-        const searchMapBtn = document.getElementById("searchMapBtn");
-        searchMapBtn.addEventListener("click", async function () {
-            const location = document.getElementById("mapSearchInput").value;
-            if (!location) {
-                alert("동네 이름을 입력해주세요.");
-                return;
+            routeSource.clear();
+            data.roads.forEach(drawRoad);
+            makeMarker(data.origin, "#2563eb");
+            makeMarker(data.destination, "#111827");
+            const extent = routeSource.getExtent();
+            if (!ol.extent.isEmpty(extent)) {
+                map.getView().fit(extent, { padding: [40, 40, 40, 40], maxZoom: 15 });
             }
-
-            try {
-                const response = await fetch(`/traffic/search?location=${encodeURIComponent(location)}`);
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || "검색 실패");
-                }
-
-                const result = await response.json();
-                const itemCount = result?.body?.items?.length || 0;
-                alert(`'${location}' 주변 교통정보 조회가 완료되었습니다! (수집 건수: ${itemCount}건)`);
-            } catch (err) {
-                alert("오류: " + err.message);
-            }
-        });
-    </script>
-
+            const minutes = data.total_duration_seconds == null ? "정보 없음" : (data.total_duration_seconds / 60).toFixed(1) + "분";
+            result.textContent = data.origin.name + " → " + data.destination.name + " | 예상 " + minutes;
+        } catch (error) {
+            result.textContent = "오류: " + error.message;
+        }
+    });
+</script>
 </body>
 </html>
