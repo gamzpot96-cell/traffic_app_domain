@@ -79,6 +79,14 @@
             margin-top: 16px;
             color: #475569;
         }
+        
+.news-time {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 8px;
+    margin-bottom: 24px;
+}
+
     </style>
 </head>
 
@@ -112,6 +120,11 @@
             <h1 id="newsTitle">
                 아직 생성된 뉴스가 없습니다.
             </h1>
+            
+<p id="newsRetrievedAt" class="news-time">
+    교통정보 조회 전입니다.
+</p>
+
 
             <p id="newsLead" class="lead"></p>
 
@@ -135,6 +148,10 @@
 
             const newsTitle = document.getElementById(
                 "newsTitle"
+            );
+            
+            const newsRetrievedAt = document.getElementById(
+            "newsRetrievedAt"
             );
 
             const newsLead = document.getElementById(
@@ -172,6 +189,34 @@
                 newsLead.textContent = newsData.lead;
                 newsBody.textContent = newsData.body;
                 newsNotice.textContent = newsData.scope_notice;
+                
+// 서버에서 전달받은 조회 완료 시각 표시
+if (newsData.retrieved_at) {
+
+    const retrievedDate = new Date(
+        newsData.retrieved_at
+    );
+
+    newsRetrievedAt.textContent =
+        "교통정보 조회 완료: " +
+        retrievedDate.toLocaleString("ko-KR", {
+            timeZone: "Asia/Seoul",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        }) +
+        " (KST)";
+
+} else {
+
+    newsRetrievedAt.textContent =
+        "조회 완료 시각 정보가 없습니다.";
+
+}
 
                 newsStatus.textContent =
                     "조회 완료: " +

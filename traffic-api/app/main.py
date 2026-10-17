@@ -3,7 +3,8 @@
 
 import logging
 from pathlib import Path
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 
@@ -140,32 +141,40 @@ async def get_overview_briefing():
         )
     }
 
+
 # 서울 주요 경로 뉴스형 교통 브리핑 API
 @app.get("/api/briefing/news")
 async def get_news_briefing():
 
-    # 1. 서울 주요 이동 경로 3곳 조회
+    # 1. 서울 주요 이동 경로 조회
     analysis_results = await analyze_seoul_routes()
 
-    # 2. 조회 결과 확인
+    # 2. 조회가 완료된 시각 기록 (한국 시간)
+    retrieved_at = datetime.now(
+        ZoneInfo("Asia/Seoul")
+    )
+
+    # 3. 조회 결과 확인
     if not analysis_results:
         raise HTTPException(
             status_code=503,
             detail="뉴스 브리핑을 생성할 교통정보가 없습니다."
         )
 
-    # 3. 뉴스 제목, 리드, 본문 생성
+    # 4. 뉴스 제목, 리드, 본문 생성
     news = create_news_briefing(analysis_results)
 
-    # 4. JSON 응답 반환
+    # 5. JSON 응답 반환
     return {
         "title": news["title"],
         "lead": news["lead"],
         "body": news["body"],
         "scope_notice": news["scope_notice"],
         "analyzed_route_count": len(analysis_results),
-        "routes": analysis_results
+        "routes": analysis_results,
+        "retrieved_at": retrieved_at.isoformat()
     }
+
 
 # 뉴스형 교통 브리핑 웹페이지
 @app.get("/news")
