@@ -148,3 +148,127 @@ def save_news_article(news_data):
         "saved_route_count": len(route_values),
         "message": "뉴스 기사와 경로 정보 저장 완료"
     }
+
+# Supabase에 저장된 최신 뉴스 목록 조회
+def get_saved_news_articles(limit=10):
+
+    # 한 번에 조회할 기사 수 제한
+    if not 1 <= limit <= 50:
+        raise ValueError("조회할 기사 수는 1~50 사이여야 합니다.")
+
+    with get_database_connection() as connection:
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    lead,
+                    analyzed_route_count,
+                    retrieved_at,
+                    created_at
+                FROM public.traffic_news_articles
+                ORDER BY created_at DESC, id DESC
+                LIMIT %s
+                """,
+                (limit,)
+            )
+
+            rows = cursor.fetchall()
+
+    articles = []
+
+    for row in rows:
+
+        articles.append({
+            "id": row[0],
+            "title": row[1],
+            "lead": row[2],
+            "analyzed_route_count": row[3],
+            "retrieved_at": row[4].isoformat(),
+            "created_at": row[5].isoformat()
+        })
+
+    return articles
+
+# 저장된 뉴스 기사 1건과 연결된 경로 조회
+def get_saved_news_article(article_id):
+
+    with get_database_connection() as connection:
+
+        with connection.cursor() as cursor:
+
+            # 1. 뉴스 기사 조회
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    title,
+                    lead,
+                    body,
+                    scope_notice,
+                    analyzed_route_count,
+                    retrieved_at,
+                    created_at
+                FROM public.traffic_news_articles
+                WHERE id = %s
+                """,
+                (article_id,)
+            )
+
+            article_row = cursor.fetchone()
+
+            # 해당 ID의 기사가 없는 경우
+            if article_row is None:
+                return None
+
+            # 2. 기사에 연결된 경로 분석 결과 조회
+            cursor.execute(
+                """
+                SELECT
+                    start_place,
+                    end_place,
+                    distance_m,
+                    duration_seconds,
+                    total_road_count,
+                    congested_count,
+                    congested_distance_m,
+                    congestion_ratio
+                FROM public.traffic_route_snapshots
+                WHERE article_id = %s
+                ORDER BY id
+                """,
+                (article_id,)
+            )
+
+            route_rows = cursor.fetchall()
+
+    # 3. 경로 데이터를 JSON으로 변환할 수 있게 정리
+    routes = []
+
+    for route in route_rows:
+        routes.append({
+            "start": route[0],
+            "end": route[1],
+            "distance_m": route[2],
+            "duration_seconds": route[3],
+            "total_road_count": route[4],
+            "congested_count": route[5],
+            "congested_distance_m": route[6],
+            "congestion_ratio": float(route[7])
+        })
+
+    # 4. 뉴스 기사와 경로 데이터 반환
+    return {
+        "id": article_row[0],
+        "title": article_row[1],
+        "lead": article_row[2],
+        "body": article_row[3],
+        "scope_notice": article_row[4],
+        "analyzed_route_count": article_row[5],
+        "retrieved_at": article_row[6].isoformat(),
+        "created_at": article_row[7].isoformat(),
+        "routes": routes
+    }

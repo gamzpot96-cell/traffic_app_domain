@@ -166,6 +166,42 @@
     }
 }
 
+/* 저장된 뉴스 목록 */
+.history-section {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.history-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 12px;
+}
+
+.history-date {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.history-title {
+    display: block;
+    font-weight: bold;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.history-item button {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+#historyStatus {
+    color: #475569;
+    font-size: 14px;
+}
+
     </style>
 </head>
 
@@ -192,6 +228,25 @@
         <p id="newsStatus" role="status">
             버튼을 누르면 교통정보를 조회합니다.
         </p>
+
+<!-- 과거 뉴스 조회 -->
+<section class="history-section">
+
+    <h2>저장된 교통 뉴스</h2>
+
+    <button
+        type="button"
+        id="loadHistoryButton"
+        onclick="loadNewsHistory()"
+    >
+        저장된 뉴스 목록 불러오기
+    </button>
+
+    <p id="historyStatus" role="status"></p>
+
+    <div id="historyList"></div>
+
+</section>
 
         <hr>
 
@@ -464,6 +519,172 @@ function displayTrafficDashboard(routes) {
         routeChart.appendChild(chartItem);
 
     });
+}
+
+// Supabase에 저장된 뉴스 목록 조회
+async function loadNewsHistory() {
+
+    const historyButton = document.getElementById(
+        "loadHistoryButton"
+    );
+
+    const historyStatus = document.getElementById(
+        "historyStatus"
+    );
+
+    const historyList = document.getElementById(
+        "historyList"
+    );
+
+    historyButton.disabled = true;
+    historyStatus.textContent = "저장된 뉴스를 불러오는 중입니다.";
+
+    try {
+
+        const response = await fetch("/api/news/history");
+
+        const historyData = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                typeof historyData.detail === "string"
+                    ? historyData.detail
+                    : "뉴스 목록 조회 실패"
+            );
+        }
+
+        // 이전 목록 제거
+        historyList.replaceChildren();
+
+        if (historyData.articles.length === 0) {
+            historyStatus.textContent = "저장된 뉴스가 없습니다.";
+            return;
+        }
+
+        // 각 기사의 제목과 조회 시각 표시
+        historyData.articles.forEach(function (article) {
+
+            const item = document.createElement("div");
+            item.className = "history-item";
+
+            const dateText = document.createElement("p");
+            dateText.className = "history-date";
+
+            const articleDate = new Date(article.retrieved_at);
+
+            dateText.textContent =
+                "기사 #" + article.id + " · " +
+                articleDate.toLocaleString("ko-KR", {
+                    timeZone: "Asia/Seoul"
+                });
+
+            const title = document.createElement("span");
+            title.className = "history-title";
+            title.textContent = article.title;
+
+            const viewButton = document.createElement("button");
+            viewButton.type = "button";
+            viewButton.textContent = "이 기사 읽기";
+
+            viewButton.addEventListener("click", function () {
+                loadSavedNews(article.id);
+            });
+
+            item.appendChild(dateText);
+            item.appendChild(title);
+            item.appendChild(viewButton);
+
+            historyList.appendChild(item);
+        });
+
+        historyStatus.textContent =
+            "저장된 뉴스 " + historyData.count + "건을 불러왔습니다.";
+
+    } catch (error) {
+
+        historyStatus.textContent =
+            "오류: " + error.message;
+
+    } finally {
+
+        historyButton.disabled = false;
+
+    }
+}
+
+
+// 선택한 과거 뉴스 상세 조회
+async function loadSavedNews(articleId) {
+
+    const newsStatus = document.getElementById("newsStatus");
+
+    newsStatus.textContent =
+        "저장된 기사 #" + articleId + "을 불러오는 중입니다.";
+
+    try {
+
+        const response = await fetch(
+            "/api/news/history/" + articleId
+        );
+
+        const article = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                typeof article.detail === "string"
+                    ? article.detail
+                    : "기사 상세 조회 실패"
+            );
+        }
+
+        // 기존 뉴스 기사 영역에 저장된 기사 표시
+        document.getElementById("newsTitle").textContent =
+            article.title;
+
+        document.getElementById("newsLead").textContent =
+            article.lead;
+
+        document.getElementById("newsBody").textContent =
+            article.body;
+
+        document.getElementById("newsNotice").textContent =
+            article.scope_notice;
+
+        // 과거 조회 완료 시각 표시
+        const retrievedDate = new Date(article.retrieved_at);
+
+        document.getElementById("newsRetrievedAt").textContent =
+            "과거 교통정보 조회 완료: " +
+            retrievedDate.toLocaleString("ko-KR", {
+                timeZone: "Asia/Seoul",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false
+            }) + " (KST)";
+
+        // 저장된 경로 데이터로 기존 그래프 다시 그리기
+        displayTrafficDashboard(article.routes);
+
+        newsStatus.textContent =
+            "저장된 기사 #" + article.id +
+            " · 과거 기록 조회 완료";
+
+        // 기사 영역으로 이동
+        document.getElementById("newsTitle").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    } catch (error) {
+
+        newsStatus.textContent =
+            "오류: " + error.message;
+
+    }
 }
 
     </script>

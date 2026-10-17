@@ -2,6 +2,10 @@
 """카카오 기반 서울 교통 경로 조회 서비스."""
 
 import logging
+from app.news_database import (
+    get_saved_news_articles,
+    get_saved_news_article
+)
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -183,3 +187,52 @@ async def news_page():
     return FileResponse(
         ROOT / "static" / "news.html"
     )
+
+# Supabase에 저장된 뉴스 목록 조회 API
+@app.get("/api/news/history")
+def get_news_history():
+
+    try:
+        articles = get_saved_news_articles(limit=10)
+
+        return {
+            "count": len(articles),
+            "articles": articles
+        }
+
+    except Exception:
+        logger.exception("저장된 뉴스 목록 조회 실패")
+
+        raise HTTPException(
+            status_code=503,
+            detail="저장된 뉴스 목록을 가져오지 못했습니다."
+        )
+
+# 저장된 뉴스 상세 조회 API
+@app.get("/api/news/history/{article_id}")
+def get_news_history_detail(article_id: int):
+
+    if article_id < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="기사 ID는 1 이상의 정수여야 합니다."
+        )
+
+    try:
+        article = get_saved_news_article(article_id)
+
+    except Exception as error:
+        logger.exception("뉴스 상세 조회 실패")
+
+        raise HTTPException(
+            status_code=503,
+            detail="저장된 뉴스를 불러오지 못했습니다."
+        ) from error
+
+    if article is None:
+        raise HTTPException(
+            status_code=404,
+            detail="해당 기사를 찾을 수 없습니다."
+        )
+
+    return article
