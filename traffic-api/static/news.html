@@ -87,6 +87,85 @@
     margin-bottom: 24px;
 }
 
+
+/* 교통정보 대시보드 */
+.dashboard {
+    margin-top: 30px;
+    margin-bottom: 35px;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    padding: 20px;
+    background-color: #f1f5f9;
+    border-radius: 10px;
+}
+
+.summary-card p {
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 0;
+}
+
+.summary-card strong {
+    font-size: 28px;
+    color: #172033;
+}
+
+/* 경로별 비교 그래프 */
+.chart-item {
+    margin-bottom: 22px;
+}
+
+.chart-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.chart-track {
+    height: 15px;
+    background-color: #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chart-bar {
+    height: 100%;
+    background-color: #2563eb;
+    border-radius: 8px;
+}
+
+.chart-notice {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.7;
+}
+
+/* 모바일 화면 대응 */
+@media (max-width: 650px) {
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .container {
+        margin: 10px;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+}
+
     </style>
 </head>
 
@@ -115,6 +194,44 @@
         </p>
 
         <hr>
+
+        
+<!-- 교통정보 핵심 지표 -->
+<section id="trafficDashboard" class="dashboard">
+    <h2>주요 경로 교통 현황</h2>
+
+    <div class="summary-cards">
+
+        <div class="summary-card">
+            <p>분석 경로</p>
+            <strong id="routeCount">-</strong>
+        </div>
+
+        <div class="summary-card">
+            <p>최고 정체·지체 거리 비율</p>
+            <strong id="highestRatio">-</strong>
+        </div>
+
+        <div class="summary-card">
+            <p>해당 경로 정체·지체 구간</p>
+            <strong id="highestCongestedCount">-</strong>
+        </div>
+
+    </div>
+
+    <h3>경로별 정체·지체 거리 비율</h3>
+
+    <div id="routeChart">
+        조회 버튼을 누르면 비교 그래프가 표시됩니다.
+    </div>
+
+    <p class="chart-notice">
+        정체·지체 거리 비율은 해당 자동차 경로의
+        전체 거리 대비 정체·지체 구간 거리의 비율입니다.
+        전체 교통 혼잡도를 의미하지는 않습니다.
+    </p>
+</section>
+
 
         <article>
             <h1 id="newsTitle">
@@ -189,6 +306,7 @@
                 newsLead.textContent = newsData.lead;
                 newsBody.textContent = newsData.body;
                 newsNotice.textContent = newsData.scope_notice;
+                displayTrafficDashboard(newsData.routes);
                 
 // 서버에서 전달받은 조회 완료 시각 표시
 if (newsData.retrieved_at) {
@@ -234,6 +352,120 @@ if (newsData.retrieved_at) {
 
             }
         }
+        
+// 교통정보 대시보드 표시 함수
+function displayTrafficDashboard(routes) {
+
+    const routeCount = document.getElementById("routeCount");
+
+    const highestRatio = document.getElementById("highestRatio");
+
+    const highestCongestedCount = document.getElementById(
+        "highestCongestedCount"
+    );
+
+    const routeChart = document.getElementById("routeChart");
+
+    // 1. 분석 경로 수 표시
+    routeCount.textContent = routes.length + "개";
+
+    // 2. 경로별 정체·지체 거리 비율 계산
+    const chartData = [];
+
+    routes.forEach(function (route) {
+
+        const distance = route.distance_m;
+        const congestedDistance = route.congested_distance_m;
+
+        // 거리 정보가 올바르지 않으면 비교에서 제외
+        if (
+            distance == null ||
+            distance <= 0 ||
+            congestedDistance == null ||
+            congestedDistance < 0 ||
+            congestedDistance > distance
+        ) {
+            return;
+        }
+
+        const ratio = congestedDistance / distance * 100;
+
+        chartData.push({
+            name: route.start + " → " + route.end,
+            ratio: ratio,
+            congestedCount: route.congested_count
+        });
+
+    });
+
+    // 3. 정체·지체 거리 비율이 높은 순서로 정렬
+    chartData.sort(function (first, second) {
+        return second.ratio - first.ratio;
+    });
+
+    // 조회된 경로 중 비교 가능한 데이터가 없는 경우
+    if (chartData.length === 0) {
+
+        highestRatio.textContent = "정보 없음";
+        highestCongestedCount.textContent = "정보 없음";
+
+        routeChart.textContent =
+            "비교 가능한 경로 거리 정보가 없습니다.";
+
+        return;
+    }
+
+    // 4. 가장 높은 정체·지체 거리 비율 표시
+    const highestRoute = chartData[0];
+
+    highestRatio.textContent =
+        highestRoute.ratio.toFixed(1) + "%";
+
+    highestCongestedCount.textContent =
+        highestRoute.congestedCount + "개";
+
+    // 5. 기존 그래프 제거
+    routeChart.replaceChildren();
+
+    // 6. 경로별 막대그래프 생성
+    chartData.forEach(function (route) {
+
+        const chartItem = document.createElement("div");
+        chartItem.className = "chart-item";
+
+        const chartLabel = document.createElement("div");
+        chartLabel.className = "chart-label";
+
+        const routeName = document.createElement("span");
+        routeName.textContent = route.name;
+
+        const ratioText = document.createElement("strong");
+        ratioText.textContent = route.ratio.toFixed(1) + "%";
+
+        chartLabel.appendChild(routeName);
+        chartLabel.appendChild(ratioText);
+
+        // 그래프 배경
+        const chartTrack = document.createElement("div");
+        chartTrack.className = "chart-track";
+
+        // 그래프 막대
+        const chartBar = document.createElement("div");
+        chartBar.className = "chart-bar";
+
+        // 100%를 전체 막대 너비로 사용
+        chartBar.style.width = route.ratio + "%";
+
+        chartTrack.appendChild(chartBar);
+
+        chartItem.appendChild(chartLabel);
+        chartItem.appendChild(chartTrack);
+
+        routeChart.appendChild(chartItem);
+
+    });
+}
+
     </script>
 </body>
 </html>
