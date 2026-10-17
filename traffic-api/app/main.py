@@ -329,3 +329,11 @@ async def admin_login(login_data: AdminLoginRequest):
         "token_type": "bearer",
         "expires_in": login_result.get("expires_in")
     }
+
+# 관리자 로그인 웹페이지
+@app.get("/admin")
+async def admin_page():
+
+    return FileResponse(
+        ROOT / "static" / "admin.html"
+    )

@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>관리자 로그인 - 서울 교통 뉴스</title>
+
+    <style>
+        body {
+            margin: 0;
+            background-color: #f3f5f9;
+            color: #172033;
+            font-family: Arial, "Malgun Gothic", sans-serif;
+        }
+
+        .login-container {
+            max-width: 420px;
+            margin: 80px auto;
+            padding: 35px;
+            background-color: white;
+            border-radius: 12px;
+        }
+
+        .site-title {
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 25px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+        }
+
+        .message {
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .admin-panel {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .navigation {
+            margin-top: 25px;
+        }
+
+        .navigation a {
+            color: #2563eb;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-container">
+
+        <p class="site-title">SEOUL TRAFFIC NEWS</p>
+
+        <h1>관리자 로그인</h1>
+
+        <p>교통 뉴스 저장 및 관리를 위한 인증 페이지입니다.</p>
+
+        <form id="loginForm">
+
+            <label for="adminEmail">이메일</label>
+            <input
+                type="email"
+                id="adminEmail"
+                autocomplete="username"
+                required
+            >
+
+            <label for="adminPassword">비밀번호</label>
+            <input
+                type="password"
+                id="adminPassword"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit" id="loginButton">
+                로그인
+            </button>
+
+        </form>
+
+        <p id="loginMessage" class="message" role="status"></p>
+
+        <section id="adminPanel" class="admin-panel">
+            <h2>관리자 인증 완료</h2>
+            <p>관리자 계정으로 로그인했습니다.</p>
+            <p>다음 단계에서 뉴스 저장 기능을 연결합니다.</p>
+
+            <button type="button" id="logoutButton">
+                로그아웃
+            </button>
+        </section>
+
+        <nav class="navigation">
+            <a href="/">홈</a>
+            <a href="/news">교통 뉴스</a>
+        </nav>
+
+    </main>
+
+    <script>
+        // 인증 토큰은 브라우저 메모리에만 저장
+        let adminAccessToken = null;
+
+        const loginForm = document.getElementById("loginForm");
+        const loginButton = document.getElementById("loginButton");
+        const loginMessage = document.getElementById("loginMessage");
+        const adminPanel = document.getElementById("adminPanel");
+        const logoutButton = document.getElementById("logoutButton");
+
+        loginForm.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const email = document.getElementById(
+                "adminEmail"
+            ).value;
+
+            const passwordInput = document.getElementById(
+                "adminPassword"
+            );
+
+            loginButton.disabled = true;
+            loginMessage.textContent = "관리자 로그인 확인 중입니다.";
+
+            try {
+
+                // 1. 로그인 API 호출
+                const loginResponse = await fetch("/api/admin/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: passwordInput.value
+                    })
+                });
+
+                const loginData = await loginResponse.json();
+
+                if (!loginResponse.ok) {
+                    throw new Error(
+                        typeof loginData.detail === "string"
+                            ? loginData.detail
+                            : "로그인에 실패했습니다."
+                    );
+                }
+
+                // 로그인에 사용한 비밀번호 입력값 지우기
+                passwordInput.value = "";
+
+                // 2. 인증 토큰을 임시로 보관
+                adminAccessToken = loginData.access_token;
+
+                // 3. FastAPI에서 관리자 권한 재확인
+                const verifyResponse = await fetch("/api/admin/me", {
+                    headers: {
+                        "Authorization": "Bearer " + adminAccessToken
+                    }
+                });
+
+                if (!verifyResponse.ok) {
+                    throw new Error("관리자 권한을 확인하지 못했습니다.");
+                }
+
+                const verifyData = await verifyResponse.json();
+
+                if (!verifyData.authenticated || !verifyData.is_admin) {
+                    throw new Error("관리자 인증 결과가 올바르지 않습니다.");
+                }
+
+                // 4. 로그인 화면을 관리자 화면으로 전환
+                loginForm.style.display = "none";
+                adminPanel.style.display = "block";
+
+                loginMessage.textContent =
+                    "관리자 로그인 및 권한 확인에 성공했습니다.";
+
+            } catch (error) {
+
+                adminAccessToken = null;
+
+                loginMessage.textContent =
+                    "오류: " + error.message;
+
+            } finally {
+
+                passwordInput.value = "";
+                loginButton.disabled = false;
+
+            }
+        });
+
+        // 로그아웃
+        logoutButton.addEventListener("click", function () {
+
+            adminAccessToken = null;
+
+            loginForm.style.display = "block";
+            adminPanel.style.display = "none";
+
+            loginMessage.textContent = "로그아웃했습니다.";
+
+        });
+    </script>
+</body>
+</html>
