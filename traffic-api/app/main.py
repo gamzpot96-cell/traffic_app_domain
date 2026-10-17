@@ -16,7 +16,10 @@ from app.kakao_api import (
 
 from app.briefing import create_traffic_briefing
 from app.traffic_analysis import analyze_seoul_routes
-from app.overview_briefing import create_overview_briefing
+from app.overview_briefing import (
+    create_overview_briefing,
+    create_news_briefing
+)
 
 # 로그 설정
 logger = logging.getLogger(__name__)
@@ -136,3 +139,38 @@ async def get_overview_briefing():
             "서울 전체 도로의 상황을 대표하지 않습니다."
         )
     }
+
+# 서울 주요 경로 뉴스형 교통 브리핑 API
+@app.get("/api/briefing/news")
+async def get_news_briefing():
+
+    # 1. 서울 주요 이동 경로 3곳 조회
+    analysis_results = await analyze_seoul_routes()
+
+    # 2. 조회 결과 확인
+    if not analysis_results:
+        raise HTTPException(
+            status_code=503,
+            detail="뉴스 브리핑을 생성할 교통정보가 없습니다."
+        )
+
+    # 3. 뉴스 제목, 리드, 본문 생성
+    news = create_news_briefing(analysis_results)
+
+    # 4. JSON 응답 반환
+    return {
+        "title": news["title"],
+        "lead": news["lead"],
+        "body": news["body"],
+        "scope_notice": news["scope_notice"],
+        "analyzed_route_count": len(analysis_results),
+        "routes": analysis_results
+    }
+
+# 뉴스형 교통 브리핑 웹페이지
+@app.get("/news")
+async def news_page():
+
+    return FileResponse(
+        ROOT / "static" / "news.html"
+    )
