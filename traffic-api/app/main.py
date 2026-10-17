@@ -1,6 +1,10 @@
 
 """카카오 기반 서울 교통 경로 조회 서비스."""
+import os
+import httpx
 
+from pydantic import BaseModel
+from dotenv import load_dotenv
 import logging
 from app.news_database import (
     get_saved_news_articles,
@@ -9,7 +13,7 @@ from app.news_database import (
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.responses import FileResponse
 
 from app.kakao_api import (
@@ -25,13 +29,14 @@ from app.overview_briefing import (
     create_overview_briefing,
     create_news_briefing
 )
+from app.admin_auth import require_admin
 
 # 로그 설정
 logger = logging.getLogger(__name__)
 
 # 프로젝트 폴더 경로
 ROOT = Path(__file__).resolve().parent.parent
-
+load_dotenv()
 
 # FastAPI 애플리케이션 생성
 app = FastAPI(
@@ -236,3 +241,91 @@ def get_news_history_detail(article_id: int):
         )
 
     return article
+
+# 관리자 로그인 상태 확인 API
+@app.get("/api/admin/me")
+async def get_admin_profile(
+    admin_user=Depends(require_admin)
+):
+
+    return {
+        "authenticated": True,
+        "is_admin": True,
+        "user_id": admin_user["id"]
+    }
+
+# 관리자 로그인 요청 데이터
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+# Supabase Auth를 통한 로그인
+@app.post("/api/admin/login")
+async def admin_login(login_data: AdminLoginRequest):
+
+    supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+    supabase_key = os.getenv("SUPABASE_ANON_KEY", "")
+
+    if not supabase_url or not supabase_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Supabase 인증 설정이 없습니다."
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+
+            response = await client.post(
+                supabase_url + "/auth/v1/token",
+                params={"grant_type": "password"},
+                headers={
+                    "apikey": supabase_key,
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "email": login_data.email,
+                    "password": login_data.password
+                }
+            )
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=503,
+            detail="인증 서버에 연결할 수 없습니다."
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=401,
+            detail="이메일 또는 비밀번호를 확인하세요."
+        )
+
+    login_result = response.json()
+
+    # 로그인 성공 후 실제 관리자 UID 확인
+    admin_user_id = os.getenv("ADMIN_USER_ID", "")
+    logged_in_user = login_result.get("user", {})
+    logged_in_user_id = logged_in_user.get("id", "")
+
+    import secrets
+
+    if (
+        not admin_user_id
+        or not isinstance(logged_in_user_id, str)
+        or not secrets.compare_digest(
+            logged_in_user_id,
+            admin_user_id
+        )
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="관리자 권한이 없습니다."
+        )
+
+    return {
+        "message": "관리자 로그인 성공",
+        "access_token": login_result["access_token"],
+        "token_type": "bearer",
+        "expires_in": login_result.get("expires_in")
+    }
