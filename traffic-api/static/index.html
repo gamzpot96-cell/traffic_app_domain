@@ -73,6 +73,60 @@
             </table>
         </div>
     </section>
+    
+<!-- 서울 주요 경로 종합 교통 브리핑 -->
+<section>
+    <h2>서울 주요 경로 종합 교통 브리핑</h2>
+
+    <p class="muted">
+        서울 주요 이동 경로 3곳의 교통 상황을 비교합니다.
+    </p>
+
+    <button
+        type="button"
+        id="overviewButton"
+        onclick="loadOverviewBriefing()"
+    >
+        서울 주요 경로 종합 조회
+    </button>
+
+    <p id="overviewMessage" role="status"></p>
+
+    <h3>경로별 교통 현황</h3>
+
+    <div class="scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>이동 경로</th>
+                    <th>거리</th>
+                    <th>예상 시간</th>
+                    <th>정체·지체 구간</th>
+                    <th>정체·지체 거리 비율</th>
+                </tr>
+            </thead>
+
+            <tbody id="overviewTableBody">
+                <tr>
+                    <td colspan="5">
+                        조회 버튼을 눌러주세요.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>종합 교통 브리핑</h3>
+
+    <p
+        id="overviewBriefingText"
+        style="white-space: pre-line; line-height: 1.8;"
+    >
+        아직 생성된 종합 브리핑이 없습니다.
+    </p>
+
+    <p id="overviewScopeNotice" class="muted"></p>
+</section>
 </main>
 <script>
     const routeForm = document.getElementById("routeForm");
@@ -140,6 +194,132 @@ if (data.briefing) {
             submitButton.disabled = false;
         }
     });
+    
+async function loadOverviewBriefing() {
+
+    const overviewButton = document.getElementById(
+        "overviewButton"
+    );
+
+    const overviewMessage = document.getElementById(
+        "overviewMessage"
+    );
+
+    const overviewTableBody = document.getElementById(
+        "overviewTableBody"
+    );
+
+    const overviewBriefingText = document.getElementById(
+        "overviewBriefingText"
+    );
+
+    const overviewScopeNotice = document.getElementById(
+        "overviewScopeNotice"
+    );
+
+    // 중복 조회 방지
+    overviewButton.disabled = true;
+    overviewMessage.textContent = "서울 주요 경로를 조회하고 있습니다.";
+
+    try {
+
+        // 1. FastAPI에서 종합 교통정보 가져오기
+        const response = await fetch(
+            "/api/briefing/overview"
+        );
+
+        const overviewData = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                typeof overviewData.detail === "string"
+                    ? overviewData.detail
+                    : "종합 교통정보를 가져오지 못했습니다."
+            );
+        }
+
+        // 2. 기존 표 내용 지우기
+        overviewTableBody.replaceChildren();
+
+        // 3. 경로별 교통정보를 표에 추가
+        overviewData.routes.forEach(function (route) {
+
+            const routeRow = document.createElement("tr");
+
+            const routeName = route.start + " → " + route.end;
+
+            let distanceText = "정보 없음";
+            let durationText = "정보 없음";
+            let congestionRatioText = "정보 없음";
+
+            if (route.distance_m != null) {
+                distanceText = (
+                    route.distance_m / 1000
+                ).toFixed(2) + " km";
+            }
+
+            if (route.duration_seconds != null) {
+                durationText = (
+                    route.duration_seconds / 60
+                ).toFixed(1) + " 분";
+            }
+
+            if (route.distance_m > 0) {
+                const congestionRatio = (
+                    route.congested_distance_m /
+                    route.distance_m
+                ) * 100;
+
+                congestionRatioText =
+                    congestionRatio.toFixed(1) + "%";
+            }
+
+            const cellValues = [
+                routeName,
+                distanceText,
+                durationText,
+                route.congested_count + "개",
+                congestionRatioText
+            ];
+
+            cellValues.forEach(function (value) {
+
+                const tableCell = document.createElement("td");
+
+                tableCell.textContent = value;
+
+                routeRow.appendChild(tableCell);
+
+            });
+
+            overviewTableBody.appendChild(routeRow);
+
+        });
+
+        // 4. 종합 브리핑 문장 표시
+        overviewBriefingText.textContent =
+            overviewData.briefing;
+
+        // 5. 분석 범위 안내
+        overviewScopeNotice.textContent =
+            overviewData.scope_notice || "";
+
+        overviewMessage.textContent =
+            "조회 완료: " +
+            overviewData.analyzed_route_count +
+            "개 경로 분석";
+
+    } catch (error) {
+
+        overviewMessage.textContent =
+            "오류가 발생했습니다: " + error.message;
+
+    } finally {
+
+        overviewButton.disabled = false;
+
+    }
+}
 </script>
 </body>
 </html>

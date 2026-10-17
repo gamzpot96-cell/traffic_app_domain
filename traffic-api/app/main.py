@@ -15,7 +15,8 @@ from app.kakao_api import (
 )
 
 from app.briefing import create_traffic_briefing
-
+from app.traffic_analysis import analyze_seoul_routes
+from app.overview_briefing import create_overview_briefing
 
 # 로그 설정
 logger = logging.getLogger(__name__)
@@ -104,3 +105,34 @@ async def route_search(
             status_code=error.status_code,
             detail=error.message
         ) from error
+
+# 서울 주요 경로 종합 교통 브리핑 API
+@app.get("/api/briefing/overview")
+async def get_overview_briefing():
+
+    # 1. 서울 주요 경로 3곳 조회
+    analysis_results = await analyze_seoul_routes()
+
+    # 2. 성공적으로 조회한 경로가 있는지 확인
+    if not analysis_results:
+        raise HTTPException(
+            status_code=503,
+            detail="교통정보를 가져오지 못했습니다."
+        )
+
+    # 3. 종합 교통 브리핑 생성
+    briefing_text = create_overview_briefing(
+        analysis_results
+    )
+
+    # 4. JSON 형식으로 반환
+    return {
+        "title": "서울 주요 경로 종합 교통 브리핑",
+        "analyzed_route_count": len(analysis_results),
+        "routes": analysis_results,
+        "briefing": briefing_text,
+        "scope_notice": (
+            "선택한 자동차 경로의 교통정보이며 "
+            "서울 전체 도로의 상황을 대표하지 않습니다."
+        )
+    }
