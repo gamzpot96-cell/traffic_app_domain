@@ -53,6 +53,8 @@ class SharedNavigationTests(unittest.TestCase):
     def test_d01_form_fields_do_not_receive_orange_outline(self):
         css = self.client.get("/static/design-system.css").text
         self.assertIn(":where(button, a):focus-visible {", css)
+        self.assertIn(":where(input, textarea, select):focus {\n    outline: none;\n}", css)
+        self.assertNotIn(":where(button, a):focus {\n    outline: none;\n}", css)
         self.assertNotIn(":where(button, input, select, textarea, a):focus-visible", css)
         self.assertIn("outline: 3px solid #f59e0b;", css)
         navigation_css = self.client.get("/static/navigation.css").text
