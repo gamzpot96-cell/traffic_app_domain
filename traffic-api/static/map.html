@@ -93,18 +93,64 @@
 <p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
 </section>
 </main>
-<div class="map-canvas-frame"><div id="map"></div></div>
+<div class="map-canvas-frame"><p id="mapBasemapStatus" class="note" role="status" aria-live="polite">기본 배경 지도 표시 중</p><div id="map"></div></div>
 <script>
     const routeSource = new ol.source.Vector();
     const routeLayer = new ol.layer.Vector({ source: routeSource });
+    // 기존 OSM을 기본값으로 유지합니다. 고해상도 지도 설정 실패 시에도 지도가 동작합니다.
+    const standardOsmSource = new ol.source.OSM();
+    const backgroundLayer = new ol.layer.Tile({ source: standardOsmSource });
     const map = new ol.Map({
         target: "map",
         layers: [
-            new ol.layer.Tile({ source: new ol.source.OSM() }),
+            backgroundLayer,
             routeLayer
         ],
         view: new ol.View({ center: ol.proj.fromLonLat([126.9780, 37.5665]), zoom: 11 })
     });
+
+    // 고해상도 이미지 타일은 실제 512px를 제공할 때만 tilePixelRatio 2를 사용합니다.
+    // CARTO 키는 브라우저 지도용 공개키이며 로컬 .env/CARTO 대시보드에서 관리합니다.
+    async function configureRetinaBasemap() {
+        const status = document.getElementById("mapBasemapStatus");
+        try {
+            const response = await fetch("/api/map/basemap-config");
+            if (!response.ok) throw new Error("배경 지도 설정을 읽을 수 없습니다.");
+            const config = await response.json();
+            if (config.provider !== "carto") {
+                status.textContent = "기본 OpenStreetMap 배경 지도 사용 중 · 고해상도 지도는 별도 키 설정 후 이용할 수 있습니다.";
+                return;
+            }
+            const prefix = "https://basemaps.cartocdn.com/rastertiles/voyager/";
+            if (typeof config.tile_url !== "string" ||
+                !config.tile_url.startsWith(prefix) ||
+                !config.tile_url.includes("/{z}/{x}/{y}@2x.png?key=")) {
+                throw new Error("고해상도 배경 지도 설정이 유효하지 않습니다.");
+            }
+            const retinaSource = new ol.source.XYZ({
+                url: config.tile_url,
+                tilePixelRatio: 2,
+                crossOrigin: "anonymous",
+                attributions: [
+                    '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+                    '© <a href="https://carto.com/attribution/">CARTO</a>'
+                ]
+            });
+            let fallbackApplied = false;
+            retinaSource.on("tileloaderror", function () {
+                if (fallbackApplied) return;
+                fallbackApplied = true;
+                backgroundLayer.setSource(standardOsmSource);
+                status.textContent = "고해상도 배경 지도 연결에 실패하여 기본 OpenStreetMap 지도로 돌아왔습니다.";
+            });
+            backgroundLayer.setSource(retinaSource);
+            status.textContent = "고해상도 CARTO 배경 지도 표시 중 · © OpenStreetMap contributors · © CARTO";
+        } catch (error) {
+            backgroundLayer.setSource(standardOsmSource);
+            status.textContent = "고해상도 지도 설정을 사용할 수 없어 기본 OpenStreetMap 지도를 표시합니다.";
+        }
+    }
+    configureRetinaBasemap();
 
     function makeMarker(place, color) {
         const feature = new ol.Feature({
