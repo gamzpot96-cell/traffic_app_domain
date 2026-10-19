@@ -1260,6 +1260,14 @@ git pull origin kakao
 
 통과 후 `/news`에서 저장된 경로를 선택해 다운로드한 CSV를 Excel/텍스트 편집기로 확인하고 DB 건수를 재검증해야 함. 사용자 승인 없이 DB 쓰기나 F17/D01 전체 코드 적용을 테스트 완료로 선언하지 않음.
 
+### 12.23 D01 1단계 Windows 로컬 회귀 테스트 38개 통과 (2026-10-19)
+
+- 사용자가 Windows PowerShell 가상환경에서 `python -m unittest discover -s tests -p "test_*.py" -v` 실행해 **Ran 38 tests in 0.514s / OK** 결과를 제출. 실패 및 오류 항목 0개.
+- 공통 메뉴·D01 스타일/앵커 6개, 관리자 서명 4개, F23 뉴스→지도 6개, F16 뉴스 검색 7개, F22 CSV 8개, F17 교통 변화 7개가 각각 통과함.
+- `test DB error`, `private DB detail`, `secret DB` traceback은 의도적으로 발생시킨 mock 예외이며 각 테스트는 `ok`. `StarletteDeprecationWarning`은 비치명적 패키지 경고.
+- **현재 확인된 범위:** D01 1단계 코드의 자동 회귀 테스트 통과. 실제 Chrome에서 새 디자인의 공통 메뉴 드롭다운과 F17 `/news#trafficTrends`, F22 `/news#trafficExport` 링크 클릭, 모바일 메뉴 및 지도 크기는 아직 수동 검증 전.
+- **다음 순서:** `/news` 새로고침 후 분석·통계 메뉴에서 실제 F17/F22 앵커 이동 확인 → 브라우저 확인 후 D01 홈 레이아웃 개선. 이번 README 기록만으로 DB·앱 코드는 변경하지 않음.
+
 ### 12.22 D01 1단계 공통 디자인 시스템·내비게이션 코드 반영 (2026-10-19)
 
 - **적용 완료(코드):** 새 `traffic-api/static/design-system.css` 파일의 10개 의미별 CSS 토큰(남색 `#13243B`, 파랑 `#2463EB`, 청록 `#087E8B`, 페이지 배경 `#F3F6FA` 등), 키보드 포커스 및 움직임 감소 기초 스타일을 작성. 홈 `/`, 뉴스 `/news`, 지도 `/map`, 관리자 `/admin` 네 페이지의 `head`에 공통 CSS 추가.
