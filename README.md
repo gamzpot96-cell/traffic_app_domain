@@ -1556,3 +1556,16 @@ git pull origin kakao
 - **테스트 계획:** 키 없음 OSM 정상, 키 있을 때 URL·attribution·2x 선택, 키에 다른 비밀정보 미포함, 지도 구조/JS 보존, 타일 오류 fallback, 기존 전체 42개 회귀. 타일 서비스 실제 선명도는 사용자가 키 설정 후 Chrome에서 캡처로 검증.
 - **상태:** 사용자 승인 및 공식 사용조건 재검증 완료, 구현 착수.
 
+
+### 12.45 HiDPI CARTO 배경 지도 옵션 구현 (2026-10-19)
+
+- **실제 변경 파일:** `app/main.py`, `static/map.html`, 신규 `tests/test_basemap_config.py`. `kakao` 브랜치에만 반영; 기존 Supabase/Kakao DB·API·경로 좌표·교통 상태별 선·기사 URL 처리 로직 불변.
+- `GET /api/map/basemap-config`가 선택적 환경변수 `CARTO_BASEMAP_KEY`의 유무를 조회해 `provider=osm` 또는 **CARTO voyager 2배 이미지 타일 URL**을 반환함. 응답에 기타 키는 포함하지 않음. 2배 타일: `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png?key=<키>`; 브라우저 공개키를 URL에 포함해야 하는 CARTO 서비스 구조이며, 키는 URL을 통해 사용자에게 보여지는 값이라 사용 도메인 제한을 권장함.
+- 지도 OpenLayers 6.9.0은 **기본 OSM 레이어로 즉시 렌더링**, 설정 API가 `provider=carto`를 반환할 때만 `ol.source.XYZ({tilePixelRatio:2,...})`로 배경 레이어 소스를 교체함. CARTO 사용 시 OpenStreetMap·CARTO 출처 표기를 함께 표시. 설정 요청 실패/잘못된 구성/타일 로드 실패는 기존 OSM으로 자동 복귀.
+- 지도 상단에 `mapBasemapStatus` 상태 문구 추가. 경로선은 기존 별도 vector layer로 유지되며 고해상도 타일 API 미설정 시 경로 검색 기능은 변함없이 작동함.
+- **환경설정:** `traffic-api/.env`(Git 제외)에 사용자 발급 키를 **`CARTO_BASEMAP_KEY=발급받은키`** 형태로 한 줄 추가하고 FastAPI 재시작. 배포 시 호스팅 환경변수에 동일 항목 구성. 가입/발급: https://www.carto.com/basemaps/apikey/index.html. **실제 키 값을 채팅·README·Git에 게시하지 말 것.**
+- **주의:** CARTO의 2026-09 변경 정책상 무료 키도 발급 필요. 발급 전 배경은 OSM이므로 화면 선명도는 아직 개선되지 않음. 출처는 반드시 유지하고 무료/상업 용도별 한도와 정책을 준수. 기본 OSM 위에 `tilePixelRatio:2`를 임의 강제하는 잘못된 해법은 사용하지 않음.
+- **테스트:** 새 `tests/test_basemap_config.py`에서 키 없음·유효 공개키·잘못된 키 및 프런트의 2배 타일/출처/OSM fallback/기존 지도 구조 등 **4개 테스트**를 추가. 이전 42개와 합해 **46개 전체 회귀 예상**이나 Windows 실행 전이므로 통과로 단정하지 않음.
+- **다음 검사:** `git pull origin kakao` 후 새 unittest 4개 및 전체 46개 실행. 키 설정 전 OSM 배경+상태문구 확인. CARTO 키 발급·설정한 이후 `/map?article_id=8&route_index=0`에서 새로고침, 고해상도 타일 출처 표기와 실제 선명도·경로선 유지 확인.
+- **진행 상태:** 코드 반영 완료 / 로컬 자동 테스트 및 CARTO 실제 타일 선명도 사용자 실확인 대기. D01 관리자 화면 디자인은 별도 다음 단계.
+
