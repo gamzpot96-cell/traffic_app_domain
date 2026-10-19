@@ -15,6 +15,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.responses import FileResponse
+from starlette.concurrency import run_in_threadpool
 
 from app.kakao_api import (
     KakaoApiError,
@@ -30,6 +31,12 @@ from app.overview_briefing import (
     create_news_briefing
 )
 from app.admin_auth import require_admin
+from app.news_database import save_news_article
+from app.news_drafts import (
+    create_draft_token,
+    verify_draft_token,
+    DRAFT_TTL_SECONDS
+)
 
 # 로그 설정
 logger = logging.getLogger(__name__)
@@ -337,3 +344,92 @@ async def admin_page():
     return FileResponse(
         ROOT / "static" / "admin.html"
     )
+
+
+
+# 관리자가 저장할 뉴스를 생성하고, 저장용 서명 증표를 발급
+@app.post("/api/admin/news/generate")
+async def generate_admin_news(admin_user=Depends(require_admin)):
+    analysis_results = await analyze_seoul_routes()
+
+    # 데이터가 일부만 수집되면 세 경로 뉴스로 저장하지 않습니다.
+    if len(analysis_results) != 3:
+        raise HTTPException(
+            status_code=503,
+            detail="세 경로가 모두 조회되지 않아 기사 생성을 중단했습니다."
+        )
+
+    retrieved_at = datetime.now(ZoneInfo("Asia/Seoul")).isoformat()
+    article = create_news_briefing(analysis_results)
+
+    news_data = {
+        "title": article["title"],
+        "lead": article["lead"],
+        "body": article["body"],
+        "scope_notice": article["scope_notice"],
+        "analyzed_route_count": len(analysis_results),
+        "retrieved_at": retrieved_at,
+        "routes": analysis_results
+    }
+
+    try:
+        draft_token, generation_id = create_draft_token(
+            news_data, admin_user["id"]
+        )
+    except (RuntimeError, ValueError):
+        logger.exception("기사 저장용 서명 증표 생성 실패")
+        raise HTTPException(
+            status_code=503,
+            detail="기사 서명 설정을 확인할 수 없습니다."
+        )
+
+    return {
+        "news": news_data,
+        "draft_token": draft_token,
+        "generation_id": generation_id,
+        "expires_in": DRAFT_TTL_SECONDS
+    }
+
+
+class AdminNewsSaveRequest(BaseModel):
+    draft_token: str
+
+
+# 관리자가 확인한 동일한 기사 초안만 서버에서 검증하고 저장
+@app.post("/api/admin/news/save")
+async def save_admin_news(
+    save_request: AdminNewsSaveRequest,
+    admin_user=Depends(require_admin)
+):
+    try:
+        generation_id, news_data = verify_draft_token(
+            save_request.draft_token, admin_user["id"]
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="기사 저장 증표가 만료됐거나 올바르지 않습니다. 새로 생성하세요."
+        )
+    except RuntimeError:
+        raise HTTPException(
+            status_code=503,
+            detail="기사 서명 설정을 확인할 수 없습니다."
+        )
+
+    try:
+        # psycopg 동기 호출은 요청 이벤트 루프 밖에서 수행
+        return await run_in_threadpool(
+            save_news_article, news_data, generation_id
+        )
+    except (ValueError, KeyError, TypeError):
+        logger.exception("저장 데이터 유효성 검사 실패")
+        raise HTTPException(
+            status_code=400,
+            detail="기사 데이터가 올바르지 않습니다."
+        )
+    except Exception:
+        logger.exception("관리자 뉴스 DB 저장 실패")
+        raise HTTPException(
+            status_code=503,
+            detail="기사 저장 중 데이터베이스 오류가 발생했습니다."
+        )
