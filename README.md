@@ -2053,3 +2053,12 @@ git pull origin kakao
 - 승인된 후속 보완: `traffic-api/tests/test_navigation.py`에서 해당 검사에 사용되는 CSS 문자열을 `.replace("\r\n", "\n")`으로 정규화하도록 최소 수정. **CSS 디자인·일반 기능 변경 없음**. 테스트 수정 커밋 `c3eee91`.
 - 아직 수정 뒤 Windows 전체 테스트를 재실행하지 않았으므로 **60개 합격이라고 기재하지 않음**. `git pull origin kakao` 후 같은 명령으로 재검증 필요. 의도된 mock 예외 메시지 및 StarletteDeprecationWarning은 본 실패와 무관.
 - `kakao` 루트 README만 기록·`main`/DB/API/인증/.env 변경 없음.
+
+### 14.34 Windows CRLF 보완 후 전체 60개 자동 테스트 통과 (2026-10-19)
+
+- 사용자가 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 재실행 로그를 제출함.
+- **실제 최종 결과: `Ran 60 tests in 0.227s`, `OK`**. 60개 전체 `ok`, 실패·오류 0개. 이전 14.33에서 실패했던 `test_d01_form_fields_do_not_receive_orange_outline`이 이번에는 `ok`로 완료됨.
+- `RuntimeError: test DB error`, `private DB detail`, `secret DB`는 예외 처리를 검사하는 mock 테스트의 예상 로그로 해당 테스트들은 `ok`였음. `StarletteDeprecationWarning`은 비치명적 라이브러리 경고.
+- **검증 구분:** 위는 사용자 Windows 환경의 실제 자동 테스트 성공 기록. 별도 Chrome 검증(기사 #11 저장/조회/지도 연결, 390px 모바일 화면, Console)은 앞선 14.18~14.32에 기록되어 있으며 자동 테스트만으로 브라우저 조작을 확인했다고 주장하지 않음.
+- **잔여 항목:** 모바일 320px·768px 반응형 및 입력 필드 Tab 포커스의 시각적 식별은 아직 미검증. 폼 포커스 `outline:none`에 따른 접근성 문제는 잔존할 수 있음.
+- 이 기록은 `kakao` 루트 README만 갱신하며 코드/DB/API/.env/관리자 인증/`main` 브랜치는 변경하지 않음.
