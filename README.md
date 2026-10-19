@@ -1373,6 +1373,15 @@ git pull origin kakao
 - **다음 확인:** 새로고침 후 CSV 영역의 '저장 경로' 옵션에서 정확히 `서울역 → 잠실역 2호선`을 선택한 화면과, 다운로드 직후 상태의 `저장된 경로 N건` 문구 확인. 필요 시 개발자 도구 Network에서 요청 쿼리 확인.
 - 코드·DB는 건드리지 않고 우선 실사용 조건을 재현. F22 필터 통과 판정 및 F17 다음 단계는 이 검증 이후 진행.
 
+### 12.25 D01 메뉴 hover 전용 강조 수정 코드 반영 (2026-10-19)
+
+- **원인 수정 반영:** `navigation.css`의 상단 메뉴 배경색 적용 범위를 `.site-nav-trigger:hover`로 제한. `aria-expanded=true` 또는 `site-nav-current`만으로 배경을 켜지 않음.
+- 하위 항목도 `.site-nav-item a:hover`에만 파란 배경 및 글자색 적용. 기존 `a[aria-current=page]`에 붙던 상시 강조 스타일 제거. '준비 중' 항목은 비활성 유지.
+- `navigation.js`는 단순 pathname만 비교해 `/news`의 여러 링크가 일괄 현재 페이지가 되는 문제를 고치기 위해 pathname과 hash를 모두 비교해 `aria-current` 표시. 메뉴 상태에 따른 `site-nav-current` 클래스 부여 제거. 단, 키보드 focus-visible 윤곽과 기존 메뉴 클릭·닫기 동작은 보존.
+- `tests/test_navigation.py`에 `test_d01_menu_uses_hover_only_for_background_highlighting` 1개 추가. 직전 통과한 38개에 더해 **39개 테스트가 예상되지만 아직 Windows 실행은 확인하지 않았음**. 자동 테스트는 CSS/JS 구조 검사이며 실제 hover 동작은 브라우저 수동 확인 필요.
+- 이번 수정은 `kakao` 브랜치의 네비게이션 CSS/JS 및 테스트만 바꾸며 FastAPI API, Supabase DB, Kakao 호출, 홈/뉴스/지도/관리자 본문 레이아웃은 바꾸지 않음.
+- **다음 확인:** `git pull origin kakao` 후 전체 unittest 39개 → Chrome `Ctrl+F5` → 다섯 상위 항목 비hover 시 모두 어두운 동일 배경, hover 시에만 배경 변화, F17/F22 등 활성 하위 링크도 hover 때만 파란색인지 점검. 모바일 메뉴와 키보드 포커스도 확인.
+
 ### 12.24 D01 공통 메뉴 영구 강조 문제 수정 설계 (2026-10-19)
 
 - **사용자 확인:** F17/F22 상단 메뉴 링크 `/news#trafficTrends` 및 `/news#trafficExport` 이동 정상. 그러나 `/news`에서 '분석·통계', '교통 뉴스', '서비스 안내' 상단 메뉴가 마우스를 올리지 않아도 강조되고, 세 메뉴의 실제 활성 하위 링크도 모두 상시 파란색으로 보이는 현상 발견.
