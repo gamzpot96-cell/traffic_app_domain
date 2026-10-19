@@ -213,6 +213,22 @@
 .saved-route-link:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
 .saved-route-link:hover { background: #1d4ed8; }
 
+/* F17: 실제 저장 조회 시점별 교통 변화 그래프 */
+.traffic-trends { margin: 24px 0; padding: 18px; background: #fff; border: 1px solid #dbe4ee; border-radius: 10px; }
+.traffic-trends h2 { margin-top: 0; }
+.trend-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.trend-form label { flex: 1 1 165px; display: flex; flex-direction: column; gap: 7px; font-size: 13px; font-weight: 600; color: #334155; }
+.trend-form select, .trend-form input { box-sizing: border-box; min-height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff; font: inherit; }
+.trend-form button { min-height: 42px; }
+.trend-figure { margin: 20px 0; overflow-x: auto; }
+.trend-figure svg { width: 100%; min-width: 320px; height: auto; background: #f8fafc; border-radius: 8px; }
+.trend-table-wrap { overflow-x: auto; }
+.trend-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.trend-table th, .trend-table td { padding: 9px; border-bottom: 1px solid #e2e8f0; text-align: left; white-space: nowrap; }
+.trend-table th { background: #f1f5f9; }
+.trend-feedback { margin: 12px 0; color: #475569; line-height: 1.6; }
+@media(max-width:650px) { .trend-form label { flex-basis: 100%; } .trend-form button { width: 100%; } }
+
 /* F22 저장 경로 CSV 다운로드 - 기사 검색과 구분된 폼 */
 .traffic-export { margin: 24px 0; padding: 18px; background: #f8fafc; border: 1px solid #dbe4ee; border-radius: 10px; }
 .traffic-export h3 { margin: 0 0 10px; }
@@ -267,6 +283,38 @@
         <p id="newsStatus" role="status">
             버튼을 누르면 교통정보를 조회합니다.
         </p>
+
+<!-- F17 저장된 조회 시점 기반 경로 변화 차트 -->
+<section id="trafficTrends" class="traffic-trends" aria-labelledby="trafficTrendsTitle">
+    <h2 id="trafficTrendsTitle">날짜·시간대별 교통 변화</h2>
+    <p class="chart-notice">기사와 함께 저장된 경로 조회 기록만 표시합니다. 수집되지 않은 시간대의 값은 추정하지 않으며, 서울 전체 교통정보가 아닙니다.</p>
+    <form id="trafficTrendForm" class="trend-form">
+        <label for="trendRoute">저장 경로
+            <select id="trendRoute" required><option value="">저장 경로를 선택하세요</option></select>
+        </label>
+        <label for="trendStartDate">조회 시작일 (KST)
+            <input id="trendStartDate" type="date">
+        </label>
+        <label for="trendEndDate">조회 종료일 (KST)
+            <input id="trendEndDate" type="date">
+        </label>
+        <label for="trendMetric">표시 지표
+            <select id="trendMetric">
+                <option value="duration_seconds">예상 소요시간(분)</option>
+                <option value="congestion_ratio">정체·지체 거리 비율(%)</option>
+            </select>
+        </label>
+        <button id="loadTrafficTrendButton" type="submit">변화 조회</button>
+    </form>
+    <p id="trafficTrendStatus" class="trend-feedback" role="status" aria-live="polite">경로를 선택하면 조회 시점별 기록을 확인할 수 있습니다.</p>
+    <div id="trafficTrendChart" class="trend-figure" role="img" aria-label="교통 변화 그래프: 조회 전"></div>
+    <div class="trend-table-wrap">
+        <table class="trend-table" aria-label="저장된 시점별 교통 측정값">
+            <thead><tr><th>조회 완료 시각 (KST)</th><th>기사 ID</th><th>예상 소요시간 (분)</th><th>정체·지체 거리 비율 (%)</th></tr></thead>
+            <tbody id="trafficTrendTable"></tbody>
+        </table>
+    </div>
+</section>
 
 <!-- 저장된 뉴스 검색 / F16 -->
 <section class="history-section" id="historySection">
@@ -793,6 +841,167 @@ function displaySavedArticleRouteLinks(article) {
     section.hidden = list.children.length === 0;
 }
 
+// F17: F22와 같은 저장 경로 목록을 사용하되 기사 검색·CSV 선택값은 공유하지 않습니다.
+const trendRoutes = [];
+let trendRecords = [];
+
+function formatTrendKst(isoString) {
+    return new Date(isoString).toLocaleString("ko-KR", {
+        timeZone: "Asia/Seoul", year: "numeric", month: "2-digit",
+        day: "2-digit", hour: "2-digit", minute: "2-digit",
+        second: "2-digit", hour12: false
+    });
+}
+
+function renderTrafficTrend() {
+    const metric = document.getElementById("trendMetric").value;
+    const chart = document.getElementById("trafficTrendChart");
+    const table = document.getElementById("trafficTrendTable");
+    chart.replaceChildren();
+    table.replaceChildren();
+
+    // 표에는 두 지표 모두 표시해 그래프를 보기 어려운 환경에서도 확인 가능합니다.
+    trendRecords.forEach(function (item) {
+        const tr = document.createElement("tr");
+        const minutes = item.duration_seconds === null ? null : Number(item.duration_seconds) / 60;
+        const ratio = item.congestion_ratio === null ? null : Number(item.congestion_ratio);
+        const values = [
+            formatTrendKst(item.retrieved_at),
+            String(item.article_id),
+            minutes === null ? "자료 없음" : minutes.toFixed(2),
+            ratio === null ? "자료 없음" : ratio.toFixed(2)
+        ];
+        values.forEach(function (value) {
+            const td = document.createElement("td");
+            td.textContent = value;
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
+    const data = trendRecords.filter(function (item) {
+        const value = item[metric];
+        return value !== null && Number.isFinite(Number(value));
+    });
+    if (!data.length) {
+        chart.setAttribute("aria-label", "해당 지표에 저장된 데이터가 없습니다.");
+        return;
+    }
+
+    const unit = metric === "duration_seconds" ? "분" : "%";
+    const getValue = function (item) {
+        return metric === "duration_seconds"
+            ? Number(item.duration_seconds) / 60 : Number(item.congestion_ratio);
+    };
+    const values = data.map(getValue);
+    const times = data.map(function (item) { return new Date(item.retrieved_at).getTime(); });
+    const timeMin = Math.min.apply(null, times);
+    const timeMax = Math.max.apply(null, times);
+    const valueMin = Math.min.apply(null, values);
+    const valueMax = Math.max.apply(null, values);
+    const padding = 52;
+    const width = 760;
+    const height = 290;
+    const x = function (time) {
+        return timeMin === timeMax ? width / 2
+            : padding + (time - timeMin) / (timeMax - timeMin) * (width - padding * 2);
+    };
+    const y = function (value) {
+        return valueMin === valueMax ? height / 2
+            : height - padding - (value - valueMin) / (valueMax - valueMin) * (height - padding * 2);
+    };
+    const namespace = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(namespace, "svg");
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "저장 조회 기록 " + data.length + "건의 " +
+        (metric === "duration_seconds" ? "예상 소요시간" : "정체·지체 거리 비율") + " 점 그래프");
+
+    function addSvgText(text, px, py, anchor) {
+        const label = document.createElementNS(namespace, "text");
+        label.setAttribute("x", String(px));
+        label.setAttribute("y", String(py));
+        label.setAttribute("text-anchor", anchor);
+        label.setAttribute("fill", "#475569");
+        label.setAttribute("font-size", "12");
+        label.textContent = text;
+        svg.appendChild(label);
+    }
+    const axis = document.createElementNS(namespace, "path");
+    axis.setAttribute("d", "M " + padding + " " + padding + " V " +
+        (height - padding) + " H " + (width - padding));
+    axis.setAttribute("fill", "none");
+    axis.setAttribute("stroke", "#94a3b8");
+    svg.appendChild(axis);
+    addSvgText(valueMax.toFixed(2) + unit, padding - 6, padding + 4, "end");
+    addSvgText(valueMin.toFixed(2) + unit, padding - 6, height - padding, "end");
+    addSvgText("저장 조회 시점 (KST)", width / 2, height - 10, "middle");
+    addSvgText(formatTrendKst(data[0].retrieved_at), padding, height - padding + 20, "start");
+    if (timeMin !== timeMax) {
+        addSvgText(formatTrendKst(data[data.length - 1].retrieved_at),
+            width - padding, height - padding + 20, "end");
+    }
+    // 실제 존재하는 조회 지점만 원으로 표시: 빈 시간대의 값을 잇거나 추정하지 않습니다.
+    data.forEach(function (item, index) {
+        const circle = document.createElementNS(namespace, "circle");
+        circle.setAttribute("cx", String(x(times[index])));
+        circle.setAttribute("cy", String(y(values[index])));
+        circle.setAttribute("r", "5");
+        circle.setAttribute("fill", "#2463eb");
+        const tooltip = document.createElementNS(namespace, "title");
+        tooltip.textContent = formatTrendKst(item.retrieved_at) + " · " +
+            values[index].toFixed(2) + unit + " · 기사 #" + item.article_id;
+        circle.appendChild(tooltip);
+        svg.appendChild(circle);
+    });
+    chart.appendChild(svg);
+}
+
+document.getElementById("trendMetric").addEventListener("change", renderTrafficTrend);
+document.getElementById("trafficTrendForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const status = document.getElementById("trafficTrendStatus");
+    const button = document.getElementById("loadTrafficTrendButton");
+    const startDate = document.getElementById("trendStartDate").value;
+    const endDate = document.getElementById("trendEndDate").value;
+    const selected = document.getElementById("trendRoute").value;
+    trendRecords = [];
+    renderTrafficTrend();
+    if (!selected || !trendRoutes[Number(selected) - 1]) {
+        status.textContent = "먼저 저장 경로를 선택하세요.";
+        return;
+    }
+    if (startDate && endDate && startDate > endDate) {
+        status.textContent = "시작일은 종료일보다 늦을 수 없습니다.";
+        return;
+    }
+    const route = trendRoutes[Number(selected) - 1];
+    const params = new URLSearchParams({
+        origin: route.origin, destination: route.destination, limit: "100"
+    });
+    if (startDate) params.set("start_date", startDate);
+    if (endDate) params.set("end_date", endDate);
+    button.disabled = true;
+    status.textContent = "저장된 교통정보 기록을 읽는 중입니다.";
+    try {
+        const response = await fetch("/api/traffic/history?" + params.toString());
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || "조회에 실패했습니다.");
+        if (!Array.isArray(payload.records)) throw new Error("기록 형식이 올바르지 않습니다.");
+        trendRecords = payload.records;
+        renderTrafficTrend();
+        status.textContent = "저장된 조회 시점 " + trendRecords.length + "건 표시 (KST). " +
+            (trendRecords.length < 2
+                ? "비교할 기록이 부족합니다."
+                : "기록된 시점만 표시했으며, 빈 시간대의 값은 추정하지 않았습니다.");
+    } catch (error) {
+        trendRecords = [];
+        renderTrafficTrend();
+        status.textContent = "조회 오류: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+});
+
 // F22: 뉴스 검색 필터와 별도로 저장 경로 스냅샷을 내보냅니다.
 const exportRoutes = [];
 
@@ -810,6 +1019,11 @@ async function loadTrafficExportRoutes() {
             option.textContent = route.origin + " → " + route.destination;
             exportRoutes.push(route);
             select.appendChild(option);
+            const trendOption = document.createElement("option");
+            trendOption.value = String(trendRoutes.length + 1);
+            trendOption.textContent = route.origin + " → " + route.destination;
+            trendRoutes.push(route);
+            document.getElementById("trendRoute").appendChild(trendOption);
         });
         status.textContent = "전체 또는 특정 경로와 조회 날짜를 선택해 다운로드하세요.";
     } catch (error) {
