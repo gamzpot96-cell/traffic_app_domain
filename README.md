@@ -922,6 +922,14 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 
 **승인 상태: ✅ 사용자 F23 설계 승인(2026-10-19).** 승인된 방식은 '과거 저장 요약 + 현재 경로 별도 재조회'이며, 단계별 구현 및 로컬 검증을 수행합니다. D01 디자인의 전체 코드 개편은 별도 승인 전이므로 제외합니다.
 
+### 11.10 F23 단계 A 로컬 테스트 결과 (2026-10-19)
+
+- 사용자 Windows PowerShell에서 `python -m unittest discover -s tests -p "test_news_map_link.py" -v` 실행 결과 **3개 테스트 모두 `ok`**, 최종 `Ran 3 tests in 0.084s / OK`.
+- 확인 범위: 경로 링크 영역 HTML 구조, `article_id`/ `route_index` 링크 생성 코드, 기사 변경 시 이전 경로 링크 초기화 코드.
+- `StarletteDeprecationWarning`은 비치명적 라이브러리 경고.
+- **다음 검증:** 실제 `/news` 브라우저에서 저장 기사 열람 후 경로별 링크 3개·요약 표시를 확인. 실제 렌더링/링크 클릭은 아직 미검증. `/map` 쿼리 처리와 재조회는 F23 단계 B/C에서 구현 예정.
+- DB·API·기존 ITS 데이터 변경 없음.
+
 ### 11.9 F23 단계 A 코드 반영 (2026-10-19)
 
 - **구현:** `static/news.html` 저장 기사 상세에 `#savedArticleRoutes` 패널과 `#savedArticleRouteList`를 추가하고, 각 저장 경로의 출발지·목적지·거리·소요시간·정체·지체 비율 및 `/map?article_id=...&route_index=...` 링크를 출력하도록 함.
