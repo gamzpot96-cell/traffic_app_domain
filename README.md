@@ -2166,3 +2166,12 @@ git pull origin kakao
 - `RuntimeError: test DB error`, `private DB detail`, `secret DB`, '카카오 경로 조회 실패 (502): 조회 실패'는 예외 처리 mock 테스트의 예상 출력이며 해당 테스트는 `ok`. `StarletteDeprecationWarning`은 이번 테스트 실패를 뜻하지 않음.
 - **검증 한계:** 이 결과는 Python/FastAPI mock 기반 자동 회귀 테스트 성공이다. 사용자 Chrome에서 실제 `/map` 경로 선형과 `/api/route` 응답의 `X-Route-Cache: MISS/HIT` 헤더 및 30초 이후 재조회는 아직 실검증하지 않음. 관리자 기사 생성/저장·DB 변화 없음.
 - 다음 사용자 검증: Chrome 개발자도구 Network에서 동일 경로의 첫 호출 MISS, 30초 내 두 번째 호출 HIT, 30초 이후 MISS를 확인하고, 기존 지도 표시 및 Console 오류 유무를 점검. README 기록만 갱신하며 `kakao` 브랜치 외 변경 없음.
+
+### 15.10 F19-A Chrome 지도 실제 요청 MISS 헤더 확인 (2026-10-19)
+
+- 사용자 Chrome `http://127.0.0.1:8000/map` Network → Fetch/XHR의 실제 `/api/route?origin=...&destination=...` 응답 캡처를 확인함.
+- **실제 Response Headers:** `Status Code: 200 OK`, `X-Route-Cache: MISS`, `X-Route-Cache-Age-Seconds: 0`. 응답 JSON Content-Type도 표시됨.
+- 지도에는 서울역 → 잠실역 2호선, 예상 **59.1분**, 카카오 지도 타일·도로 경로 선형·출발/도착 마커가 표시됨. 수치는 해당 캡처 시점의 조회 결과로 이후 달라질 수 있음.
+- **판정:** F19-A 공개 경로의 **캐시 MISS 실브라우저 확인 합격**. 이 한 화면만으로 반복 요청 HIT, 30초 후 재조회 MISS, API 요청 수 감소량을 증명한 것은 아님.
+- 다음 확인: 같은 경로를 30초 안에 두 번 조회하여 Network 응답에서 HIT 여부 확인. 브라우저 HTTP 캐시와 서버 F19-A 헤더를 혼동하지 말 것.
+- `kakao` 루트 README 검증 기록만 갱신하며 코드/DB/`main` 변경 없음.
