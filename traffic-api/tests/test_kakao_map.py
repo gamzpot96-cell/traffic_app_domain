@@ -76,7 +76,7 @@ class KakaoMapTests(unittest.TestCase):
         """F23 기사 로더나 이벤트 핸들러 일부가 잘리는 회귀를 방지합니다."""
         source = self.client.get("/map").text
         self.assertIn(
-            "async function loadSavedArticleRouteFromUrl() {\\n"
+            "async function loadSavedArticleRouteFromUrl() {\n"
             "        const query = new URLSearchParams(window.location.search);",
             source
         )
@@ -86,7 +86,7 @@ class KakaoMapTests(unittest.TestCase):
         )
         self.assertEqual(source.count("    loadSavedArticleRouteFromUrl();"), 1)
         self.assertNotIn("async function (e    loadSavedArticleRouteFromUrl();", source)
-        self.assertNotIn("\\n new URLSearchParams(window.location.search);", source)
+        self.assertNotIn("\n new URLSearchParams(window.location.search);", source)
 
     def test_legacy_map_still_accessible(self):
         response = self.client.get("/static/legacy-map.html?article_id=8&route_index=0")
