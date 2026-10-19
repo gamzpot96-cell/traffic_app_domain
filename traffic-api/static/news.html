@@ -584,6 +584,12 @@ async function loadNewsHistory(page = 1) {
     const requestId = ++currentNewsRequestId;
 
     if (startDate && endDate && startDate > endDate) {
+        // 잘못된 검색 조건에서는 이전 기사 결과를 표시하지 않습니다.
+        historyList.replaceChildren();
+        currentNewsPage = 0;
+        currentNewsTotalPages = 0;
+        document.getElementById("newsPageIndicator").textContent = "0 / 0 페이지";
+        setNewsPageButtons(false);
         historyStatus.textContent = "시작일은 종료일보다 늦을 수 없습니다.";
         return;
     }
@@ -611,7 +617,7 @@ async function loadNewsHistory(page = 1) {
         }
         if (requestId !== currentNewsRequestId) return;
 
-        currentNewsPage = data.page;
+        currentNewsPage = data.total_pages === 0 ? 0 : data.page;
         currentNewsTotalPages = data.total_pages;
         historyList.replaceChildren();
 
@@ -647,7 +653,7 @@ async function loadNewsHistory(page = 1) {
         });
 
         document.getElementById("newsPageIndicator").textContent =
-            data.page + " / " + data.total_pages + " 페이지";
+            currentNewsPage + " / " + data.total_pages + " 페이지";
         historyStatus.textContent = data.total === 0
             ? "검색 조건에 맞는 저장 기사가 없습니다."
             : "검색 결과 " + data.total + "건 · 현재 " + data.articles.length + "건 표시";
