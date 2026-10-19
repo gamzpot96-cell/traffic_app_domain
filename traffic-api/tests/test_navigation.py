@@ -109,6 +109,22 @@ class SharedNavigationTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertIn(text, response.text)
 
+    def test_d01_map_layout_keeps_map_and_saved_article_route(self):
+        response = self.client.get("/map")
+        self.assertEqual(response.status_code, 200)
+        for required in (
+            'class="map-hero"', 'class="map-hero-inner"',
+            'class="map-content"', 'class="map-controls"',
+            'class="map-canvas-frame"', 'id="map"',
+            'id="savedArticlePanel"', 'id="savedArticleTitle"',
+            'id="mapArticleStatus"', 'id="mapRouteForm"',
+            'id="origin"', 'id="destination"', 'id="mapRouteSubmit"',
+            'id="result"', 'routeSource', 'loadSavedArticleRouteFromUrl()',
+            '@media (max-width: 850px)', '@media (max-width: 600px)'
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, response.text)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
