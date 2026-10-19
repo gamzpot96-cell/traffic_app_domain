@@ -92,6 +92,23 @@ class SharedNavigationTests(unittest.TestCase):
             with self.subTest(required=required):
                 self.assertIn(required, response.text)
 
+    def test_d01_news_layout_preserves_existing_features(self):
+        response = self.client.get("/news")
+        self.assertEqual(response.status_code, 200)
+        for text in (
+            'class="container news-layout"', 'class="news-intro"',
+            'id="loadNewsButton"', 'id="newsStatus"',
+            'id="trafficTrends"', 'id="historySection"',
+            'id="trafficExport"', 'id="trafficDashboard"',
+            'id="savedArticleRoutes"', 'id="newsTitle"',
+            'id="newsBody"', 'id="trafficTrendChart"',
+            'id="trafficTrendTable"', 'id="newsSearchForm"',
+            'id="trafficExportForm"', '@media (max-width: 850px)',
+            '@media (max-width: 600px)'
+        ):
+            with self.subTest(text=text):
+                self.assertIn(text, response.text)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
