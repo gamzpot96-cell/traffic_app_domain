@@ -1,6 +1,9 @@
 
 """카카오 기반 서울 교통 경로 조회 서비스."""
 import os
+import asyncio
+import time
+from collections import OrderedDict
 import httpx
 
 from pydantic import BaseModel
@@ -111,9 +114,21 @@ def kakao_map_sdk_config():
     )
 
 
+# F19-A: 공개 단일 경로만 30초 재사용. 캐시는 서버 메모리이며 재시작 시 초기화됩니다.
+ROUTE_CACHE_TTL_SECONDS = 30
+ROUTE_CACHE_MAX_ENTRIES = 128
+route_cache = OrderedDict()
+route_cache_lock = asyncio.Lock()
+
+
+def route_cache_key(origin: str, destination: str):
+    return (" ".join(origin.split()), " ".join(destination.split()))
+
+
 # 자동차 경로 및 교통 브리핑 조회
 @app.get("/api/route")
 async def route_search(
+    response: Response,
     origin: str = Query(
         ...,
         min_length=2,
@@ -129,35 +144,42 @@ async def route_search(
 ):
 
     try:
-        # 1. 출발지 검색
-        start_place = await find_place(origin)
+        key = route_cache_key(origin, destination)
+        # 잠금 안에서 중복 요청을 확인하므로 같은 경로의 동시 재조회도 1회만 수행합니다.
+        async with route_cache_lock:
+            now = time.monotonic()
+            # 만료된 기록 정리와 메모리 상한 유지
+            for old_key, (saved_at, _) in list(route_cache.items()):
+                if now - saved_at >= ROUTE_CACHE_TTL_SECONDS:
+                    del route_cache[old_key]
+            cached = route_cache.get(key)
+            if cached is not None:
+                saved_at, result = cached
+                route_cache.move_to_end(key)
+                response.headers["X-Route-Cache"] = "HIT"
+                response.headers["X-Route-Cache-Age-Seconds"] = str(int(now - saved_at))
+                return result
 
-        # 2. 목적지 검색
-        end_place = await find_place(destination)
-
-        # 3. 카카오 자동차 경로 조회
-        route = await get_car_route(
-            start_place,
-            end_place
-        )
-
-        # 4. 교통정보 정리
-        route_information = {
-            "origin": start_place,
-            "destination": end_place,
-            **summarize_route(route)
-        }
-
-        # 5. 교통 브리핑 생성
-        traffic_briefing = create_traffic_briefing(
-            route_information
-        )
-
-        # 6. 교통정보와 브리핑 반환
-        return {
-            **route_information,
-            "briefing": traffic_briefing
-        }
+            # Kakao API 오류는 저장되지 않으며 기존 HTTP 오류 처리로 전달합니다.
+            start_place = await find_place(origin)
+            end_place = await find_place(destination)
+            route = await get_car_route(start_place, end_place)
+            route_information = {
+                "origin": start_place,
+                "destination": end_place,
+                **summarize_route(route)
+            }
+            result = {
+                **route_information,
+                "briefing": create_traffic_briefing(route_information)
+            }
+            route_cache[key] = (time.monotonic(), result)
+            route_cache.move_to_end(key)
+            while len(route_cache) > ROUTE_CACHE_MAX_ENTRIES:
+                route_cache.popitem(last=False)
+            response.headers["X-Route-Cache"] = "MISS"
+            response.headers["X-Route-Cache-Age-Seconds"] = "0"
+            return result
 
     except KakaoApiError as error:
 
