@@ -104,3 +104,43 @@ def encode_csv(rows):
             as_unit(ratio, 1)
         ))
     return ("\ufeff" + output.getvalue()).encode("utf-8")
+
+
+def get_route_history(origin, destination, start_time=None, end_time=None, limit=100):
+    """F17: 실제 저장된 단일 경로 시점만 조회합니다. 집계/보간 없음."""
+    filters = ["start_place = %s", "end_place = %s"]
+    params = [origin, destination]
+    if start_time is not None:
+        filters.append("retrieved_at >= %s")
+        params.append(start_time)
+    if end_time is not None:
+        filters.append("retrieved_at < %s")
+        params.append(end_time)
+    sql = """
+        SELECT article_id, retrieved_at, distance_m, duration_seconds,
+               congested_distance_m, congestion_ratio
+        FROM public.traffic_route_snapshots
+        WHERE """ + " AND ".join(filters) + """
+        ORDER BY retrieved_at DESC, id DESC
+        LIMIT %s
+    """
+    params.append(limit + 1)
+    with get_database_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sql, tuple(params))
+            rows = cursor.fetchall()
+    if len(rows) > limit:
+        raise ValueError("조회 결과가 제한을 초과합니다. 조회 기간을 좁혀주세요.")
+    # 시간 흐름대로, 동일 시점에서는 기존 조회 정렬을 유지합니다.
+    rows.reverse()
+    return [
+        {
+            "article_id": row[0],
+            "retrieved_at": row[1].isoformat(),
+            "distance_m": row[2],
+            "duration_seconds": row[3],
+            "congested_distance_m": row[4],
+            "congestion_ratio": float(row[5]) if row[5] is not None else None
+        }
+        for row in rows
+    ]
