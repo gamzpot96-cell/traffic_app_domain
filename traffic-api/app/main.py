@@ -72,6 +72,30 @@ async def map_page():
     return FileResponse(ROOT / "static" / "map.html")
 
 
+# 선택적 CARTO 고해상도 배경 지도 설정.
+# CARTO 브라우저 타일용 키는 사용자 브라우저에 전달되는 공개용 값입니다.
+# Kakao/Supabase 등의 비밀키와 혼동하거나 응답에 포함하지 않습니다.
+@app.get("/api/map/basemap-config")
+def basemap_config():
+    from urllib.parse import quote
+
+    browser_key = os.getenv("CARTO_BASEMAP_KEY", "").strip()
+    if not browser_key:
+        return {"provider": "osm"}
+
+    if len(browser_key) > 256 or any(ord(character) < 33 for character in browser_key):
+        logger.warning("CARTO 지도 키 형식이 올바르지 않아 기존 OSM 배경 지도를 사용합니다.")
+        return {"provider": "osm"}
+
+    return {
+        "provider": "carto",
+        "tile_url": (
+            "https://basemaps.cartocdn.com/rastertiles/voyager/"
+            "{z}/{x}/{y}@2x.png?key=" + quote(browser_key, safe="")
+        )
+    }
+
+
 # 자동차 경로 및 교통 브리핑 조회
 @app.get("/api/route")
 async def route_search(
