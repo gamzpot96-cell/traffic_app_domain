@@ -8,10 +8,11 @@ from dotenv import load_dotenv
 import logging
 from app.news_database import (
     get_saved_news_articles,
-    get_saved_news_article
+    get_saved_news_article,
+    search_saved_news_articles
 )
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.responses import FileResponse
@@ -224,6 +225,47 @@ def get_news_history():
             status_code=503,
             detail="저장된 뉴스 목록을 가져오지 못했습니다."
         )
+
+# F16 저장된 뉴스 검색·기간 필터·페이지네이션
+@app.get("/api/news/search")
+def search_news(
+    q: str = Query("", max_length=100),
+    start_date: date | None = None,
+    end_date: date | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10)
+):
+    if page_size not in (10, 20, 50):
+        raise HTTPException(status_code=422, detail="페이지 크기는 10, 20, 50만 가능합니다.")
+    if start_date is not None and end_date is not None and start_date > end_date:
+        raise HTTPException(status_code=422, detail="시작일이 종료일보다 늦을 수 없습니다.")
+
+    korea = ZoneInfo("Asia/Seoul")
+    start_time = (
+        datetime.combine(start_date, time.min, tzinfo=korea)
+        if start_date is not None else None
+    )
+    # 종료일 자정까지가 아니라 그다음 날 자정 미만을 검색합니다.
+    try:
+        end_time = (
+            datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=korea)
+            if end_date is not None else None
+        )
+    except OverflowError:
+        raise HTTPException(status_code=422, detail="종료 날짜를 처리할 수 없습니다.")
+
+    try:
+        return search_saved_news_articles(
+            keyword=q.strip(),
+            start_time=start_time,
+            end_time=end_time,
+            page=page,
+            page_size=page_size
+        )
+    except Exception:
+        logger.exception("저장된 뉴스 검색 실패")
+        raise HTTPException(status_code=503, detail="뉴스 검색 중 오류가 발생했습니다.")
+
 
 # 저장된 뉴스 상세 조회 API
 @app.get("/api/news/history/{article_id}")
