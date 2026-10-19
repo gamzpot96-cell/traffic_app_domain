@@ -1220,6 +1220,14 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 - SQL에 5,001행을 조회해 초과 시 HTTP 422로 기간/경로 축소 안내; 안전한 정수·시간대·문자열 변환 후 CSV 인젝션 처리. DB 읽기만 사용. 요청 오류 422, DB 오류 503.
 - 구현 후보 파일: `app/traffic_export.py`(조회·CSV 직렬화), `app/main.py`(조회/CSV API), `static/news.html`(다운로드 UI), `tests/test_traffic_export.py`(가짜 DB 응답과 안전성 테스트). 이번 단계에서 F17 그래프와 D01 디자인은 아직 수정하지 않음.
 
+### 12.11 F22 Windows 로컬 CSV 자동 테스트 결과 (2026-10-19)
+
+- 사용자 PowerShell에서 `python -m unittest discover -s tests -p "test_traffic_export.py" -v` 실행 결과 **8개 전부 `ok`**, 최종 `Ran 8 tests in 0.203s / OK`를 확인함.
+- 검증 완료 범위: 한글 CSV BOM·단위, 수식 주입 방지, DB 오류 503 일반화, 빈 결과 헤더, KST 기간/경로 조건, 잘못된 조건 422, 5,000행 초과 차단, 경로 옵션·프런트 코드 구조.
+- `test_database_error_is_generic`의 `RuntimeError: private DB detail` 로그는 mock이 의도적으로 발생시킨 오류이며 테스트는 `ok`. `StarletteDeprecationWarning`은 비치명적 패키지 경고.
+- **검증 미완료:** 실제 Supabase 경로 옵션 조회, 브라우저 CSV 다운로드, Excel 또는 텍스트 편집기 한글 표시, 필터 적용값/다운로드 행 수, 전체 기존 21개 회귀 테스트. 이 확인 전 F22 최종 완료로 선언하지 않음.
+- **다음 단계:** `/news`에서 CSV 영역이 보이는지 확인하고 전체 저장 경로 CSV를 다운로드해 Excel에서 결과를 검증. 앱 코드·DB/스키마는 이 README 기록 단계에서 변경하지 않음.
+
 ### 12.10 F22 구현 코드 반영 (2026-10-19)
 
 - **변경 파일:** `traffic-api/app/traffic_export.py`(신규), `traffic-api/app/main.py`, `traffic-api/static/news.html`, `traffic-api/tests/test_traffic_export.py`(신규).
