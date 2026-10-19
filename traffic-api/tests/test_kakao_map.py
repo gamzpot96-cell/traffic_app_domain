@@ -72,6 +72,22 @@ class KakaoMapTests(unittest.TestCase):
                 self.assertIn(piece, source)
         self.assertNotIn("routeSource.clear()", source)
 
+    def test_map_script_function_boundaries_are_intact(self):
+        """F23 기사 로더나 이벤트 핸들러 일부가 잘리는 회귀를 방지합니다."""
+        source = self.client.get("/map").text
+        self.assertIn(
+            "async function loadSavedArticleRouteFromUrl() {\\n"
+            "        const query = new URLSearchParams(window.location.search);",
+            source
+        )
+        self.assertEqual(
+            source.count('document.getElementById("mapRouteForm").addEventListener("submit"'),
+            1
+        )
+        self.assertEqual(source.count("    loadSavedArticleRouteFromUrl();"), 1)
+        self.assertNotIn("async function (e    loadSavedArticleRouteFromUrl();", source)
+        self.assertNotIn("\\n new URLSearchParams(window.location.search);", source)
+
     def test_legacy_map_still_accessible(self):
         response = self.client.get("/static/legacy-map.html?article_id=8&route_index=0")
         self.assertEqual(response.status_code, 200)
