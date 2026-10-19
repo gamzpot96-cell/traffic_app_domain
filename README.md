@@ -1711,3 +1711,12 @@ git pull origin kakao
 - **수정:** `traffic-api/tests/test_kakao_map.py`의 해당 검사에서 응답 원문을 `source.replace("\r\n", "\n")`로 정규화해 CRLF/LF 양쪽을 수용. 그 밖의 손상 탐지, 단일 이벤트 등록 검사 그대로 유지.
 - **변경 범위:** `kakao` 브랜치 테스트 파일 및 최상위 README만 수정, `map.html`, Kakao REST API, Supabase DB 및 스키마 변경 없음.
 - **확인 대기:** Windows `git pull origin kakao` 후 전체 53개 테스트 재실행. 기대값 `Ran 53 tests ... OK`; 실제 통과 여부는 사용자 로그로 확정. 이후 Chrome 카카오맵 한글 기본 지도·기사 #8 요약·수동 교통 경로선 확인.
+
+### 13.12 Windows 카카오맵 수정 후 전체 53개 테스트 통과 (2026-10-19)
+
+- 사용자가 로컬 PowerShell에서 전체 unittest를 재실행한 결과: **Ran 53 tests in 0.229s / OK**, failures=0, errors=0.
+- 지난 실행에서 실패했던 `test_map_script_function_boundaries_are_intact`가 Windows CRLF 정규화 수정 뒤 **ok**로 통과했음을 확인. 신규 카카오맵 지도 구성 및 OpenLayers 복구, F23 뉴스→지도 연결, F16 검색, F17 기록 그래프, F22 CSV 다운로드, D01 디자인 등 나머지 회귀도 모두 `ok`.
+- `StarletteDeprecationWarning`은 비치명적. `CARTO 지도 키 형식...`은 잘못된 키 검사 중 예상 경고, `test DB error` / `private DB detail` / `secret DB`는 의도적 모의 DB 실패이며 관련 테스트 모두 통과.
+- **판정:** 전체 53개 자동 테스트 통과. 실제 Chrome에서 Kakao Maps SDK 로딩·한글 지도·기사 #8 저장 요약 표시 및 현재 경로 수동 조회 후 Polyline/마커 렌더링은 아직 별도 화면 검증 필요.
+- **다음 확인:** Uvicorn 재시작 → `http://127.0.0.1:8000/map?article_id=8&route_index=0` 접속 → `Ctrl+F5` → 기사 과거 정보와 카카오맵 배경이 함께 나오는 초기 화면 캡처. 정상인 경우 버튼 클릭 후 현재 경로선·상태 색상 캡처. 실패 시 F12 Console 오류 메시지를 API 키 노출 없이 공유.
+- README 기록만 갱신. 앱 코드·DB·키·스키마 변경 없음, `kakao` 브랜치만 수정.
