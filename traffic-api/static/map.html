@@ -21,8 +21,11 @@
         #result { margin: 0 12px 12px; }
         .note { color: #64748b; padding: 0 12px; font-size: 13px; }
     </style>
+    <link rel="stylesheet" href="/static/navigation.css">
+    <script src="/static/navigation.js" defer></script>
 </head>
 <body>
+    <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
 <header><strong>서울 교통 경로 지도</strong><a href="/">목록으로 돌아가기</a></header>
 <form id="mapRouteForm">
     <label>출발지 <input id="origin" value="서울역" required minlength="2"></label>
