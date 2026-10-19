@@ -2157,3 +2157,12 @@ git pull origin kakao
 - **승인 범위 후속 수정:** `import time as monotonic_clock`로 별칭을 주고, 두 곳의 호출을 `monotonic_clock.monotonic()`으로 변경. 기존 날짜·시간 기능의 `datetime.time` 이름과 충돌하지 않도록 수정. `app/main.py`만 변경, GitHub `kakao` 커밋 `14d42df`.
 - **재검증 대기:** 수정 후 사용자 Windows 66개 전체 테스트의 실제 결과를 아직 받지 않았으며 이 단계에서 합격 주장 금지. `git pull origin kakao` 후 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v`로 재실행.
 - 캐시 TTL 30초·128개 상한·공개 `/api/route` 한정 방침 유지. 기존 기사·Supabase DB·관리자 권한·카카오 키·`main` 변경 없음.
+
+### 15.9 F19-A Windows 전체 66개 자동 테스트 재검증 통과 (2026-10-19)
+
+- 사용자가 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 로그를 제출함.
+- **실제 결과: `Ran 66 tests in 0.328s`, `OK`**, 실패 0건/오류 0건. 기존 60개와 F19-A 신규 6개(`test_route_cache.py`: 보관 상한, 동시 동일 경로, 경로 방향 분리, TTL 만료, 오류 결과 미캐시, 경로 키 정규화·재사용) 모두 `ok`.
+- 직전 15.8의 `datetime.time`과 `time` 이름 충돌을 `monotonic_clock` 별칭으로 수정한 뒤 Windows에서 검증한 결과로서, 앞선 66개 오류 상태와 구분함.
+- `RuntimeError: test DB error`, `private DB detail`, `secret DB`, '카카오 경로 조회 실패 (502): 조회 실패'는 예외 처리 mock 테스트의 예상 출력이며 해당 테스트는 `ok`. `StarletteDeprecationWarning`은 이번 테스트 실패를 뜻하지 않음.
+- **검증 한계:** 이 결과는 Python/FastAPI mock 기반 자동 회귀 테스트 성공이다. 사용자 Chrome에서 실제 `/map` 경로 선형과 `/api/route` 응답의 `X-Route-Cache: MISS/HIT` 헤더 및 30초 이후 재조회는 아직 실검증하지 않음. 관리자 기사 생성/저장·DB 변화 없음.
+- 다음 사용자 검증: Chrome 개발자도구 Network에서 동일 경로의 첫 호출 MISS, 30초 내 두 번째 호출 HIT, 30초 이후 MISS를 확인하고, 기존 지도 표시 및 Console 오류 유무를 점검. README 기록만 갱신하며 `kakao` 브랜치 외 변경 없음.
