@@ -62,6 +62,21 @@ class SharedNavigationTests(unittest.TestCase):
         for target in ('id="trafficTrends"', 'id="trafficExport"', 'id="historySection"'):
             self.assertIn(target, news.text)
 
+    def test_d01_menu_uses_hover_only_for_background_highlighting(self):
+        # 현재 URL이나 열린 메뉴 여부가 배경색을 고정하지 않아야 합니다.
+        css = self.client.get("/static/navigation.css").text
+        javascript = self.client.get("/static/navigation.js").text
+        self.assertIn(".site-nav-trigger:hover{background:", css)
+        self.assertIn(".site-nav-item a:hover{background:", css)
+        self.assertNotIn(".site-nav-trigger.site-nav-current{background:", css)
+        self.assertNotIn('.site-nav-trigger[aria-expanded="true"]', css)
+        self.assertNotIn('.site-nav-item a[aria-current="page"]', css)
+        self.assertNotIn('trigger.classList.add("site-nav-current")', javascript)
+        self.assertIn("linkUrl.hash === currentHash", javascript)
+        self.assertIn('link.setAttribute("aria-current", "page")', javascript)
+        # 키보드 포커스 강조를 지우지 않아야 합니다.
+        self.assertIn(".site-nav-item a:focus-visible", css)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
