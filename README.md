@@ -1729,3 +1729,12 @@ git pull origin kakao
 - **재발 방지:** `tests/test_kakao_map.py`에 `test_map_html_closes_inline_script_and_document` 추가, script 열기/닫기 개수, 문서 끝 `</html>`, 인라인 JS 안에 SDK 초기화와 기사 로더 호출 포함 검사. 기존 53개에 1개 추가돼 전체 **54개 예상**. 실제 로컬 전체 테스트와 Chrome 재검증은 아직 완료 전.
 - **다음:** `git pull origin kakao` → `.\\.venv\\Scripts\\python.exe -m unittest discover -s tests -p "test_*.py" -v` (54개 `OK` 확인) → 서버 재시작 및 `Ctrl+F5`로 `/map?article_id=8&route_index=0` 확인. 카카오맵 로딩 또는 기사 카드가 여전히 실패하면 Chrome F12 Console의 첫 오류 문구를 키/SDK URL 없이 확인.
 - 기존 REST API 경로, 기사 저장, 지도 Polyline/마커, OpenLayers 복구 파일, Supabase DB/스키마·API 키는 변경하지 않음. 오직 `kakao` 브랜치의 HTML, 테스트, 문서 수정.
+
+### 13.13 빈 지도 원인: HTML 종료 태그 복원 및 회귀 검사 추가 (2026-10-19)
+
+- 사용자 브라우저에서 `/map?article_id=8&route_index=0` 페이지가 계속 `카카오맵을 불러오는 중입니다.`에 머물고 과거 기사 #8 정보도 로딩되지 않는 것을 확인. 53개 Python 문자열 기반 자동 테스트는 통과했지만 지도 실화면은 실패.
+- GitHub `kakao`의 `traffic-api/static/map.html` 실제 파일 끝에 `</script>`, `</body>`, `</html>` 종료 태그가 모두 빠져 있음을 확인. HTML 파서가 스크립트 끝을 인식하지 못해 지도 초기화와 F23 기사 연결이 실행되지 않는 현상을 설명함.
+- `map.html` 맨 끝에 세 종료 태그를 복원함(커밋 `d7134d5`). 복원된 전체 inline JavaScript를 분리하여 V8 JavaScript 문법 파서로 확인: **PASS**, script 시작/끝 태그 각각 2개(외부 공통 메뉴 script 1개 + 지도 inline 1개).
+- 사용자 재적용 요청에 따라 `tests/test_kakao_map.py`에 **`test_map_html_tags_close_correctly`** 추가. `<script>` 시작/끝 수 일치 및 정확한 `</script>`, `</body>`, `</html>` 문서 끝을 CRLF/LF 모두에서 검사하여 동일 장애 재발을 방지. 기존 53개 + 신규 1개 = **54개 자동 테스트 예상**. 사용자 로컬 실행 전에는 통과 단정하지 않음.
+- `kakao` 브랜치만 수정. 앱 데이터/스키마, REST API 키, Supabase, 기존 교통 경로선/마커/F23 기능 변경 없음.
+- 다음 검증: `git pull origin kakao` → 전체 54개 unittest → FastAPI 재시작 후 `Ctrl+F5` → 카카오맵 한글 도로명과 기사 #8 저장 정보 표시 여부 캡처. 문제 재현 시 Chrome F12 Console 첫 에러만 키/SDK 전체 URL 가리고 공유.
