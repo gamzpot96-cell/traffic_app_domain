@@ -68,6 +68,30 @@ class NewsSearchApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertNotIn("test DB error", response.text)
 
+    def test_paginated_search_passthrough(self):
+        # DB를 실제로 변경하지 않고 2페이지 결과 전달을 검사합니다.
+        fake_result = {
+            "total": 23,
+            "page": 2,
+            "page_size": 10,
+            "total_pages": 3,
+            "articles": [{"id": 6, "title": "테스트 기사"}]
+        }
+        with patch("app.main.search_saved_news_articles", return_value=fake_result) as search:
+            response = self.client.get("/api/news/search", params={"page": 2})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["page"], 2)
+        self.assertEqual(response.json()["total_pages"], 3)
+        self.assertEqual(response.json()["articles"][0]["id"], 6)
+        self.assertEqual(search.call_args.kwargs["page"], 2)
+
+    def test_page_state_reset_code_present(self):
+        # DOM 조작 자체는 실제 브라우저에서 별도 확인합니다.
+        response = self.client.get("/news")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('currentNewsPage = data.total_pages === 0 ? 0 : data.page;', response.text)
+        self.assertIn('historyList.replaceChildren();\n        currentNewsPage = 0;', response.text)
+
     def test_old_history_api_still_exists(self):
         with patch("app.main.get_saved_news_articles", return_value=[]):
             response = self.client.get("/api/news/history")
