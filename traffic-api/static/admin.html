@@ -8,91 +8,63 @@
     <title>관리자 로그인 - 서울 교통 뉴스</title>
 
     <style>
-        body {
-            margin: 0;
-            background-color: #f3f5f9;
-            color: #172033;
-            font-family: Arial, "Malgun Gothic", sans-serif;
-        }
-
-        body.admin-active .login-container { max-width: 900px; }
-
-        .login-container {
-            max-width: 420px;
-            margin: 80px auto;
-            padding: 35px;
-            background-color: white;
-            border-radius: 12px;
-        }
-
-        .site-title {
-            color: #2563eb;
-            font-weight: bold;
-        }
-
-        label {
-            display: block;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        input {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 15px;
-        }
-
-        button {
-            width: 100%;
-            padding: 13px;
-            margin-top: 25px;
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-        }
-
-        button:disabled {
-            background-color: #94a3b8;
-        }
-
-        .message {
-            margin-top: 20px;
-            line-height: 1.6;
-        }
-
-        .admin-panel {
-            display: none;
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #f1f5f9;
-            border-radius: 8px;
-        }
-
-        .draft-preview { margin-top: 20px; padding: 18px; background: white; border-radius: 8px; }
-        .draft-preview h3 { line-height: 1.5; }
-        .draft-preview p { line-height: 1.8; white-space: pre-line; }
-        .draft-preview table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .draft-preview th, .draft-preview td { padding: 9px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .draft-preview .table-scroll { overflow-x: auto; }
-        .draft-preview .small-note { font-size: 13px; color: #64748b; }
-        .draft-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-        .draft-actions button { width: auto; margin-top: 12px; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--d01-page); color: var(--d01-text); font-family: "Malgun Gothic", Arial, sans-serif; }
+        .login-container { max-width: 1168px; padding: 32px 24px 72px; margin: 0 auto; }
+        .admin-login-layout { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: 24px; align-items: stretch; }
+        .admin-hero { padding: 58px 48px; background: var(--d01-navy); border-radius: 18px; color: #fff; display: flex; flex-direction: column; justify-content: center; min-height: 430px; }
+        .site-title { color: #b2e7ea; font-weight: 800; letter-spacing: .12em; font-size: 13px; margin: 0 0 24px; }
+        .admin-hero h1 { font-size: clamp(28px, 3vw, 40px); line-height: 1.3; margin: 0 0 22px; }
+        .admin-hero p { line-height: 1.85; max-width: 48ch; }
+        .hero-note { padding-left: 16px; border-left: 3px solid #73d4dc; color: #dfebf7; }
+        .login-card { background: #fff; border: 1px solid var(--d01-border); box-shadow: 0 12px 30px #13243b12; border-radius: 18px; padding: 42px 36px; }
+        .login-card h2 { font-size: 26px; margin: 0 0 8px; }
+        .login-card > p { color: var(--d01-muted); line-height: 1.65; }
+        label { display: block; margin: 22px 0 8px; font-weight: 700; }
+        input { width: 100%; padding: 13px 14px; border: 1px solid #a9b8cc; border-radius: var(--d01-control-radius); font: inherit; background: #fff; }
+        button { cursor: pointer; border: 0; border-radius: var(--d01-control-radius); background: var(--d01-blue); color: #fff; padding: 13px 20px; font: inherit; font-weight: 700; }
+        button:disabled { background: #8796a8; cursor: not-allowed; }
+        #loginButton { display: block; width: 100%; margin-top: 28px; }
+        .message { margin: 18px 0 0; line-height: 1.65; overflow-wrap: anywhere; }
+        .admin-panel { display: none; }
+        body.admin-active .admin-login-layout { display: none; }
+        .workspace-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding: 26px 30px; background: var(--d01-navy); border-radius: 16px; color: #fff; }
+        .workspace-header h1 { margin: 6px 0; font-size: 29px; }
+        .workspace-header p { margin: 0; color: #dce8f7; line-height: 1.6; }
+        .workspace-eyebrow { color: #9fe0e5 !important; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+        .draft-actions button { margin: 0; }
         .draft-actions .secondary { background: #475569; }
-        @media(max-width:600px) { .login-container { margin: 12px; padding: 20px; } }
-        .navigation {
-            margin-top: 25px;
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin: 24px 0; }
+        .step-card { background: #fff; border: 1px solid var(--d01-border); border-radius: 12px; padding: 19px; }
+        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 29px; height: 29px; border-radius: 50%; color: #fff; background: var(--d01-teal); font-weight: 800; margin-bottom: 10px; }
+        .step-card h2 { margin: 0 0 7px; font-size: 17px; }
+        .step-card p { margin: 0; color: var(--d01-muted); line-height: 1.6; font-size: 14px; }
+        .workspace-section { background: #fff; border: 1px solid var(--d01-border); border-radius: 14px; padding: 26px 30px; margin-top: 18px; }
+        .workspace-section h2 { margin: 0 0 12px; font-size: 21px; }
+        .workspace-section > p { line-height: 1.75; }
+        .draft-preview[hidden] { display: none !important; }
+        .draft-preview h3 { line-height: 1.5; overflow-wrap: anywhere; }
+        .draft-preview p { line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
+        .draft-preview table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .draft-preview th, .draft-preview td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--d01-border); }
+        .draft-preview th { background: #eef4fa; white-space: nowrap; }
+        .table-scroll { overflow-x: auto; }
+        .small-note { font-size: 13px; color: var(--d01-muted); }
+        .save-note { color: var(--d01-muted); }
+        #savedArticleLink { overflow-wrap: anywhere; }
+        #savedArticleLink a { color: #1556c0; font-weight: 700; }
+        @media (max-width: 850px) {
+            .admin-login-layout { grid-template-columns: 1fr; }
+            .admin-hero { min-height: 230px; padding: 32px; }
+            .steps { grid-template-columns: 1fr; }
         }
-
-        .navigation a {
-            color: #2563eb;
-            margin-right: 15px;
+        @media (max-width: 600px) {
+            .login-container { padding: 16px 12px 40px; }
+            .login-card, .workspace-section { padding: 22px 18px; }
+            .admin-hero { padding: 26px 22px; }
+            .workspace-header { padding: 23px 18px; align-items: stretch; }
+            .workspace-header h1 { font-size: 24px; }
+            .draft-actions button, #generateDraftButton, #saveDraftButton, #logoutButton { width: 100%; }
         }
     </style>
     <link rel="stylesheet" href="/static/design-system.css">
@@ -103,81 +75,74 @@
 <body>
     <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
     <main class="login-container">
-
-        <p class="site-title">SEOUL TRAFFIC NEWS</p>
-
-        <h1>관리자 로그인</h1>
-
-        <p>교통 뉴스 저장 및 관리를 위한 인증 페이지입니다.</p>
-
-        <form id="loginForm">
-
-            <label for="adminEmail">이메일</label>
-            <input
-                type="email"
-                id="adminEmail"
-                autocomplete="username"
-                required
-            >
-
-            <label for="adminPassword">비밀번호</label>
-            <input
-                type="password"
-                id="adminPassword"
-                autocomplete="current-password"
-                required
-            >
-
-            <button type="submit" id="loginButton">
-                로그인
-            </button>
-
-        </form>
-
-        <p id="loginMessage" class="message" role="status"></p>
+        <div class="admin-login-layout">
+            <section class="admin-hero" aria-labelledby="adminIntroTitle">
+                <p class="site-title">SEOUL TRAFFIC NEWS</p>
+                <h1 id="adminIntroTitle">서울 교통 뉴스<br>관리자 작업실</h1>
+                <p>관리자 인증 후 선택된 서울 자동차 경로의 교통정보를 바탕으로 뉴스 초안을 생성하고 검토할 수 있습니다.</p>
+                <p class="hero-note">초안을 생성해도 자동 저장되지 않습니다. 내용을 검토한 뒤 저장 버튼을 직접 눌러야 합니다.</p>
+            </section>
+            <section class="login-card" aria-labelledby="loginTitle">
+                <h2 id="loginTitle">관리자 로그인</h2>
+                <p>승인된 관리자 계정으로 로그인하세요.</p>
+                <form id="loginForm">
+                    <label for="adminEmail">이메일</label>
+                    <input type="email" id="adminEmail" autocomplete="username" required>
+                    <label for="adminPassword">비밀번호</label>
+                    <input type="password" id="adminPassword" autocomplete="current-password" required>
+                    <button type="submit" id="loginButton">로그인</button>
+                </form>
+                <p id="loginMessage" class="message" role="status"></p>
+            </section>
+        </div>
 
         <section id="adminPanel" class="admin-panel">
-            <h2>관리자 인증 완료</h2>
-            <p>관리자 계정으로 로그인했습니다.</p>
-            <p>먼저 기사를 생성하고 내용을 확인한 후 저장하세요.</p>
-            <div class="draft-actions">
-                <button type="button" id="generateDraftButton">
-                    새 교통 뉴스 생성
-                </button>
-                <button type="button" id="saveDraftButton" disabled>
-                    확인한 뉴스 저장
-                </button>
-                <button type="button" id="logoutButton" class="secondary">
-                    로그아웃
-                </button>
-            </div>
-            <p id="draftStatus" class="message" role="status">
-                아직 생성된 기사가 없습니다.
-            </p>
-            <div id="draftPreview" class="draft-preview" hidden>
-                <h3 id="draftTitle"></h3>
-                <p id="draftRetrievedAt" class="small-note"></p>
-                <p id="draftLead"></p>
-                <p id="draftBody"></p>
-                <p id="draftNotice" class="small-note"></p>
-                <h3>경로별 분석 데이터</h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr><th>경로</th><th>거리(km)</th><th>시간(분)</th><th>정체·지체 비율</th></tr>
-                        </thead>
-                        <tbody id="draftRoutes"></tbody>
-                    </table>
+            <div class="workspace-header">
+                <div>
+                    <p class="workspace-eyebrow">SEOUL TRAFFIC NEWS · ADMIN</p>
+                    <h1>관리자 작업실</h1>
+                    <p>관리자 권한 확인 완료 · 생성 → 검토 → 직접 저장</p>
+                </div>
+                <div class="draft-actions">
+                    <button type="button" id="logoutButton" class="secondary">로그아웃</button>
                 </div>
             </div>
-            <p id="savedArticleLink"></p>
-
-            <!-- 인증 완료 후 위의 기사 작업실을 사용합니다. -->
- 
+            <div class="steps" aria-label="기사 작업 순서">
+                <div class="step-card"><span class="step-number">1</span><h2>새 교통 뉴스 생성</h2><p>서울의 3개 선택 경로를 조회해 초안을 만듭니다.</p></div>
+                <div class="step-card"><span class="step-number">2</span><h2>내용과 수치 검토</h2><p>조회 시각, 기사 내용, 경로별 자료를 확인합니다.</p></div>
+                <div class="step-card"><span class="step-number">3</span><h2>확인한 뉴스 저장</h2><p>직접 저장 버튼을 누른 경우에만 저장을 요청합니다.</p></div>
+            </div>
+            <section class="workspace-section" aria-labelledby="generateHeading">
+                <h2 id="generateHeading">1. 뉴스 초안 생성</h2>
+                <p>먼저 교통정보를 조회하고 새 기사를 생성하세요.</p>
+                <button type="button" id="generateDraftButton">새 교통 뉴스 생성</button>
+                <p id="draftStatus" class="message" role="status">아직 생성된 기사가 없습니다.</p>
+            </section>
+            <section class="workspace-section" aria-labelledby="previewHeading">
+                <h2 id="previewHeading">2. 뉴스 미리보기 및 검토</h2>
+                <p class="small-note">조회된 실제 경로 정보와 기사 문구를 확인하세요. 초안 생성 전에는 미리보기가 표시되지 않습니다.</p>
+                <div id="draftPreview" class="draft-preview" hidden>
+                    <h3 id="draftTitle"></h3>
+                    <p id="draftRetrievedAt" class="small-note"></p>
+                    <p id="draftLead"></p>
+                    <p id="draftBody"></p>
+                    <p id="draftNotice" class="small-note"></p>
+                    <h3>경로별 분석 데이터</h3>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>경로</th><th>거리(km)</th><th>시간(분)</th><th>정체·지체 비율</th></tr></thead>
+                            <tbody id="draftRoutes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section class="workspace-section" aria-labelledby="saveHeading">
+                <h2 id="saveHeading">3. 검토 후 저장</h2>
+                <p class="save-note">기사와 경로별 수치를 검토한 경우에만 저장하세요. 초안 생성만으로는 Supabase에 저장되지 않습니다.</p>
+                <button type="button" id="saveDraftButton" disabled>확인한 뉴스 저장</button>
+                <p id="savedArticleLink" role="status"></p>
+            </section>
         </section>
-
-
-
     </main>
 
     <script>
