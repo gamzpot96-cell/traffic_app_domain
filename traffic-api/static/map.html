@@ -34,6 +34,37 @@
             form label { display: flex; flex-direction: column; flex: 1 1 100%; gap: 6px; }
             form input { box-sizing: border-box; max-width: 100%; }
         }
+        /* D01 지도 전용 화면 개선: 지도 엔진과 기존 ID/JS는 그대로 둡니다. */
+        .map-hero { padding: 25px max(18px, calc((100% - 1180px) / 2)); background: #13243b; color: #fff; }
+        .map-hero-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+        .map-hero strong { font-size: 23px; line-height: 1.4; }
+        .map-hero a { color: #bfdbfe; font-weight: 600; margin: 0; }
+        .map-content { max-width: 1180px; padding: 18px 16px 0; margin: 0 auto; box-sizing: border-box; }
+        .map-content .saved-article-panel { margin: 0 0 18px; padding: 24px; border: 1px solid #dce5f0; background: #fff; border-left: 4px solid #2463eb; border-radius: 14px; box-shadow: 0 4px 16px #13243b0a; }
+        .map-content .saved-article-panel h2 { font-size: 22px; color: #17253a; }
+        .map-content .saved-article-panel p { line-height: 1.8; }
+        .map-content .map-article-status { margin: 12px 0; }
+        .map-controls { padding: 20px 24px; background: #fff; border: 1px solid #dee6f0; border-radius: 14px; margin: 0 0 16px; box-shadow: 0 4px 16px #13243b0a; }
+        .map-controls #mapRouteForm { padding: 0; gap: 14px; align-items: end; }
+        .map-controls label { display: flex; flex: 1 1 210px; flex-direction: column; gap: 8px; font-weight: 600; color: #17253a; }
+        .map-controls input { min-height: 45px; width: 100%; box-sizing: border-box; font: inherit; border-radius: 8px; }
+        .map-controls #mapRouteSubmit { min-height: 45px; font: inherit; font-weight: 700; background: #2463eb; border-radius: 8px; }
+        .map-controls #result { margin: 14px 0 7px; line-height: 1.6; color: #334155; }
+        .map-controls .note { padding: 0; margin: 8px 0 0; line-height: 1.6; }
+        .map-canvas-frame { max-width: 1180px; margin: 0 auto 24px; padding: 0 16px; box-sizing: border-box; }
+        .map-canvas-frame #map { height: clamp(440px, 62vh, 740px); min-height: 320px; background: #e5edf4; border: 1px solid #dee6f0; border-radius: 14px; overflow: hidden; }
+        @media (max-width: 850px) {
+            .map-hero { padding: 24px 18px; }
+            .map-content { padding: 14px 12px 0; }
+            .map-canvas-frame { padding: 0 12px; }
+        }
+        @media (max-width: 600px) {
+            .map-content .saved-article-panel { padding: 16px; }
+            .map-controls { padding: 16px; }
+            .map-controls label { flex-basis: 100%; }
+            .map-controls #mapRouteSubmit { width: 100%; }
+            .map-canvas-frame #map { height: 55vh; min-height: 360px; }
+        }
     </style>
     <link rel="stylesheet" href="/static/design-system.css">
     <link rel="stylesheet" href="/static/navigation.css">
@@ -41,7 +72,8 @@
 </head>
 <body>
     <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
-<header><strong>서울 교통 경로 지도</strong><a href="/">목록으로 돌아가기</a></header>
+<header class="map-hero"><div class="map-hero-inner"><strong>서울 교통 경로 지도</strong><a href="/">홈으로 돌아가기</a></div></header>
+<main class="map-content">
 <section id="savedArticlePanel" class="saved-article-panel" hidden aria-label="과거 기사 저장 분석 정보">
     <h2 id="savedArticleTitle">과거 기사에서 선택한 경로</h2>
     <p id="savedArticleTime"></p>
@@ -51,6 +83,7 @@
     <a id="backToSavedArticle" href="/news">뉴스 기사로 돌아가기</a>
 </section>
 <p id="mapArticleStatus" class="map-article-status" role="status" aria-live="polite" hidden></p>
+<section class="map-controls" aria-label="현재 자동차 경로 검색">
 <form id="mapRouteForm">
     <label>출발지 <input id="origin" value="서울역" required minlength="2"></label>
     <label>목적지 <input id="destination" value="잠실역" required minlength="2"></label>
@@ -58,7 +91,9 @@
 </form>
 <p id="result" role="status">출발지와 목적지를 입력하세요.</p>
 <p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
-<div id="map"></div>
+</section>
+</main>
+<div class="map-canvas-frame"><div id="map"></div></div>
 <script>
     const routeSource = new ol.source.Vector();
     const routeLayer = new ol.layer.Vector({ source: routeSource });
