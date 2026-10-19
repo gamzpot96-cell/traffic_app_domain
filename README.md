@@ -1569,3 +1569,12 @@ git pull origin kakao
 - **다음 검사:** `git pull origin kakao` 후 새 unittest 4개 및 전체 46개 실행. 키 설정 전 OSM 배경+상태문구 확인. CARTO 키 발급·설정한 이후 `/map?article_id=8&route_index=0`에서 새로고침, 고해상도 타일 출처 표기와 실제 선명도·경로선 유지 확인.
 - **진행 상태:** 코드 반영 완료 / 로컬 자동 테스트 및 CARTO 실제 타일 선명도 사용자 실확인 대기. D01 관리자 화면 디자인은 별도 다음 단계.
 
+
+### 12.46 HiDPI 배경 지도 Windows 전체 회귀 46개 통과 (2026-10-19)
+
+- 사용자 Windows PowerShell `python -m unittest discover -s tests -p "test_*.py" -v` 실행 출력: **Ran 46 tests in 0.258s / OK**, 실패/에러 0개.
+- 고해상도 지도 구성 테스트 4개(무키 OSM 기본값, 유효 브라우저 키의 2x CARTO URL, 부적절 키 OSM 복귀, 지도 렌더링/출처/기존 경로 JS 보존) 모두 `ok`. 공통 네비게이션/D01 10개, 관리자 서명 4개, F23 6개, F16 7개, F22 8개, F17 7개도 모두 통과.
+- `CARTO 지도 키 형식이 올바르지 않아 기존 OSM 배경 지도를 사용합니다.` 경고는 잘못된 키를 의도적으로 전달한 단위 테스트에서 예상되는 기록. `test DB error`, `private DB detail`, `secret DB`는 오류 비노출 검증을 위한 mock 예외. StarletteDeprecationWarning은 비치명적.
+- **현재 판정:** 키 없는/키 있는 설정 분기와 지도 코드 구조의 **모의 테스트는 통과**. CARTO 발급키 입력, 실제 외부 타일 로딩·사용 약관/도메인 허용·시각적 선명도 개선 여부는 아직 사용자 Chrome에서 실증하지 않음.
+- **다음 단계:** CARTO 공식 대시보드에서 지도 브라우저용 키를 발급(사용 조건 확인), `traffic-api/.env`에 `CARTO_BASEMAP_KEY` 설정·서버 재시작 → `/api/map/basemap-config`에서 provider가 carto인지 확인(키가 있는 전체 URL은 외부 공유 금지) → 지도에서 `고해상도 CARTO 배경 지도 표시 중` 및 출처·해상도 직접 확인. 실패 시 기본 OSM 복귀 여부 확인.
+- README 기록만 반영, GitHub `kakao` 브랜치의 코드/DB 변경 없음.
