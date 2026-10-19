@@ -12,7 +12,7 @@ load_dotenv()
 
 
 # 뉴스 기사와 경로 정보를 하나의 작업으로 저장
-def save_news_article(news_data):
+def save_news_article(news_data, generation_id=None):
 
     routes = news_data.get("routes", [])
 
@@ -81,30 +81,73 @@ def save_news_article(news_data):
         with connection.cursor() as cursor:
 
             # 3. 뉴스 기사 저장
-            cursor.execute(
-                """
-                INSERT INTO public.traffic_news_articles (
-                    title,
-                    lead,
-                    body,
-                    scope_notice,
-                    analyzed_route_count,
-                    retrieved_at
+            # 관리자 웹 저장은 generation_id를 UNIQUE로 관리
+            # 기존 CLI 호출(None)은 이전 방식과 호환
+            if generation_id is not None:
+                cursor.execute(
+                    """
+                    INSERT INTO public.traffic_news_articles (
+                        title, lead, body, scope_notice,
+                        analyzed_route_count, retrieved_at, generation_id
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (generation_id) DO NOTHING
+                    RETURNING id
+                    """,
+                    (
+                        news_data["title"],
+                        news_data["lead"],
+                        news_data["body"],
+                        news_data["scope_notice"],
+                        len(route_values),
+                        retrieved_at,
+                        generation_id
+                    )
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    news_data["title"],
-                    news_data["lead"],
-                    news_data["body"],
-                    news_data["scope_notice"],
-                    len(route_values),
-                    retrieved_at
-                )
-            )
+                inserted = cursor.fetchone()
 
-            article_id = cursor.fetchone()[0]
+                if inserted is None:
+                    # 동일 ID가 이미 저장되어 있으면 경로 재삽입 없이 반환
+                    cursor.execute(
+                        """
+                        SELECT id FROM public.traffic_news_articles
+                        WHERE generation_id = %s
+                        """,
+                        (generation_id,)
+                    )
+                    old_article = cursor.fetchone()
+                    if old_article is None:
+                        raise RuntimeError("중복 기사 ID를 확인할 수 없습니다.")
+                    return {
+                        "article_id": old_article[0],
+                        "saved_route_count": 0,
+                        "already_saved": True,
+                        "message": "이미 저장된 뉴스입니다."
+                    }
+
+                article_id = inserted[0]
+
+            else:
+                # 기존 CLI 저장 테스트용 경로
+                cursor.execute(
+                    """
+                    INSERT INTO public.traffic_news_articles (
+                        title, lead, body, scope_notice,
+                        analyzed_route_count, retrieved_at
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        news_data["title"],
+                        news_data["lead"],
+                        news_data["body"],
+                        news_data["scope_notice"],
+                        len(route_values),
+                        retrieved_at
+                    )
+                )
+                article_id = cursor.fetchone()[0]
 
             # 4. 경로별 교통정보 저장
             for route in route_values:
@@ -146,6 +189,7 @@ def save_news_article(news_data):
     return {
         "article_id": article_id,
         "saved_route_count": len(route_values),
+        "already_saved": False,
         "message": "뉴스 기사와 경로 정보 저장 완료"
     }
 
