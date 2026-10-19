@@ -516,6 +516,14 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 
 **다음 게이트:** 자동 테스트 4개 통과. 실브라우저 PC·모바일 메뉴 동작, 키보드 Tab/Enter/Escape, 지도·기존 뉴스·관리자 기능 회귀 검증 후 M01·M02 완료 처리하고 F16을 시작합니다.
 
+### 9.15 F16 Windows 줄바꿈 환경 테스트 수정 (2026-10-19)
+
+- 사용자 로컬 `test_news_search.py` 실행 결과: **7개 중 6개 통과, 1개 실패**. 실패 테스트는 `test_page_state_reset_code_present`.
+- 원인: 웹 응답의 Windows `CRLF (\r\n)` 줄바꿈과 테스트에서 문자열로 기대한 `LF (\n)`가 달라 `assertIn`이 실패함. 응답에는 `historyList.replaceChildren();` 및 `currentNewsPage = 0;` 코드가 모두 존재함.
+- 해결: 테스트의 단순 문자열 비교를 줄바꿈·들여쓰기 차이를 허용하는 `assertRegex`로 변경함. **뉴스 HTML·검색 API·DB는 변경하지 않음.**
+- `test_database_failure_returns_503`에서 출력되는 `RuntimeError: test DB error`의 traceback은 오류 로깅을 확인하기 위한 의도된 가짜 DB 예외로 테스트는 `ok`.
+- 변경 반영 후 7개 전부 통과 여부를 사용자 로컬에서 **재실행 필요**. 재검증 전까지 F16 전체 통과로 표시하지 않음.
+
 ### 9.14 F16 날짜 역전 검사 및 페이지 상태 UI 보완 명세 (2026-10-19)
 
 - **사용자 화면 검증:** 조회 시작일 `2026-10-20`, 종료일 `2026-10-19` 검색 시 `시작일은 종료일보다 늦을 수 없습니다.` 안내를 정상 표시함. F16 역전 날짜 브라우저 검증 통과.
