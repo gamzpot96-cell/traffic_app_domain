@@ -202,7 +202,26 @@
     font-size: 14px;
 }
 
-    </style>
+    
+/* F16 뉴스 아카이브 검색 */
+.news-search-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 15px 0; }
+.news-search-field { display: flex; flex-direction: column; gap: 7px; flex: 1 1 165px; min-width: 0; }
+.news-search-field.news-keyword { flex: 2 1 230px; }
+.news-search-field label { font-size: 13px; font-weight: 600; color: #334155; }
+.news-search-field input, .news-search-field select { min-height: 43px; width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; padding: 9px 10px; font: inherit; background: white; }
+.news-search-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.news-search-actions button, .news-pagination button { padding: 10px 14px; }
+.news-search-actions .news-reset-button { background: #475569; }
+.news-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
+.news-pagination button:disabled { cursor: not-allowed; }
+#newsPageIndicator { font-size: 14px; color: #475569; }
+@media(max-width:650px) {
+  .news-search-field { flex-basis: 100%; }
+  .news-search-actions { width: 100%; }
+  .news-search-actions button { flex: 1; }
+}
+
+</style>
     <link rel="stylesheet" href="/static/navigation.css">
     <script src="/static/navigation.js" defer></script>
 </head>
@@ -229,23 +248,44 @@
             버튼을 누르면 교통정보를 조회합니다.
         </p>
 
-<!-- 과거 뉴스 조회 -->
+<!-- 저장된 뉴스 검색 / F16 -->
 <section class="history-section" id="historySection">
-
     <h2>저장된 교통 뉴스</h2>
-
-    <button
-        type="button"
-        id="loadHistoryButton"
-        onclick="loadNewsHistory()"
-    >
-        저장된 뉴스 목록 불러오기
-    </button>
-
-    <p id="historyStatus" role="status"></p>
-
+    <form id="newsSearchForm" class="news-search-form">
+        <div class="news-search-field news-keyword">
+            <label for="newsSearchKeyword">기사 제목·리드 검색</label>
+            <input id="newsSearchKeyword" name="q" type="search"
+                   placeholder="예: 서울역" maxlength="100">
+        </div>
+        <div class="news-search-field">
+            <label for="newsStartDate">조회 시작일</label>
+            <input id="newsStartDate" type="date">
+        </div>
+        <div class="news-search-field">
+            <label for="newsEndDate">조회 종료일</label>
+            <input id="newsEndDate" type="date">
+        </div>
+        <div class="news-search-field">
+            <label for="newsPageSize">페이지당 기사 수</label>
+            <select id="newsPageSize">
+                <option value="10" selected>10개</option>
+                <option value="20">20개</option>
+                <option value="50">50개</option>
+            </select>
+        </div>
+        <div class="news-search-actions">
+            <button type="submit" id="loadHistoryButton">검색</button>
+            <button type="button" class="news-reset-button" id="resetNewsSearchButton">초기화</button>
+        </div>
+    </form>
+    <p class="chart-notice">날짜는 교통정보 조회 완료 시각(한국 시간) 기준이며, 저장된 기사만 검색합니다.</p>
+    <p id="historyStatus" role="status" aria-live="polite">검색 버튼을 눌러 저장된 기사를 확인하세요.</p>
     <div id="historyList"></div>
-
+    <div class="news-pagination" aria-label="기사 목록 페이지 이동">
+        <button type="button" id="newsPreviousPage" disabled>이전</button>
+        <span id="newsPageIndicator">0 / 0 페이지</span>
+        <button type="button" id="newsNextPage" disabled>다음</button>
+    </div>
 </section>
 
         <hr>
@@ -522,95 +562,132 @@ function displayTrafficDashboard(routes) {
 }
 
 // Supabase에 저장된 뉴스 목록 조회
-async function loadNewsHistory() {
+// F16: 검색 상태를 유지하며 페이지를 전환합니다.
+let currentNewsPage = 1;
+let currentNewsTotalPages = 0;
+let currentNewsRequestId = 0;
 
-    const historyButton = document.getElementById(
-        "loadHistoryButton"
-    );
+function setNewsPageButtons(isLoading) {
+    const previous = document.getElementById("newsPreviousPage");
+    const next = document.getElementById("newsNextPage");
+    previous.disabled = isLoading || currentNewsPage <= 1;
+    next.disabled = isLoading || currentNewsPage >= currentNewsTotalPages;
+}
 
-    const historyStatus = document.getElementById(
-        "historyStatus"
-    );
+async function loadNewsHistory(page = 1) {
+    const searchButton = document.getElementById("loadHistoryButton");
+    const historyStatus = document.getElementById("historyStatus");
+    const historyList = document.getElementById("historyList");
+    const startDate = document.getElementById("newsStartDate").value;
+    const endDate = document.getElementById("newsEndDate").value;
+    const requestedPage = page;
+    const requestId = ++currentNewsRequestId;
 
-    const historyList = document.getElementById(
-        "historyList"
-    );
+    if (startDate && endDate && startDate > endDate) {
+        historyStatus.textContent = "시작일은 종료일보다 늦을 수 없습니다.";
+        return;
+    }
 
-    historyButton.disabled = true;
-    historyStatus.textContent = "저장된 뉴스를 불러오는 중입니다.";
+    const searchParameters = new URLSearchParams({
+        q: document.getElementById("newsSearchKeyword").value.trim(),
+        page: String(requestedPage),
+        page_size: document.getElementById("newsPageSize").value
+    });
+    if (startDate) searchParameters.set("start_date", startDate);
+    if (endDate) searchParameters.set("end_date", endDate);
+
+    searchButton.disabled = true;
+    document.getElementById("resetNewsSearchButton").disabled = true;
+    document.getElementById("newsPreviousPage").disabled = true;
+    document.getElementById("newsNextPage").disabled = true;
+    historyStatus.textContent = "저장된 뉴스를 검색하는 중입니다.";
 
     try {
-
-        const response = await fetch("/api/news/history");
-
-        const historyData = await response.json();
-
+        const response = await fetch("/api/news/search?" + searchParameters.toString());
+        const data = await response.json();
         if (!response.ok) {
-            throw new Error(
-                typeof historyData.detail === "string"
-                    ? historyData.detail
-                    : "뉴스 목록 조회 실패"
-            );
+            throw new Error(typeof data.detail === "string"
+                ? data.detail : "뉴스 검색에 실패했습니다.");
         }
+        if (requestId !== currentNewsRequestId) return;
 
-        // 이전 목록 제거
+        currentNewsPage = data.page;
+        currentNewsTotalPages = data.total_pages;
         historyList.replaceChildren();
 
-        if (historyData.articles.length === 0) {
-            historyStatus.textContent = "저장된 뉴스가 없습니다.";
-            return;
-        }
-
-        // 각 기사의 제목과 조회 시각 표시
-        historyData.articles.forEach(function (article) {
-
+        data.articles.forEach(function (article) {
             const item = document.createElement("div");
             item.className = "history-item";
 
             const dateText = document.createElement("p");
             dateText.className = "history-date";
-
-            const articleDate = new Date(article.retrieved_at);
-
-            dateText.textContent =
-                "기사 #" + article.id + " · " +
-                articleDate.toLocaleString("ko-KR", {
-                    timeZone: "Asia/Seoul"
-                });
+            const retrievedAt = new Date(article.retrieved_at);
+            dateText.textContent = "기사 #" + article.id + " · 조회 완료: " +
+                retrievedAt.toLocaleString("ko-KR", {timeZone: "Asia/Seoul"});
 
             const title = document.createElement("span");
             title.className = "history-title";
             title.textContent = article.title;
 
+            const lead = document.createElement("p");
+            lead.textContent = article.lead;
+
             const viewButton = document.createElement("button");
             viewButton.type = "button";
             viewButton.textContent = "이 기사 읽기";
-
             viewButton.addEventListener("click", function () {
                 loadSavedNews(article.id);
             });
 
             item.appendChild(dateText);
             item.appendChild(title);
+            item.appendChild(lead);
             item.appendChild(viewButton);
-
             historyList.appendChild(item);
         });
 
-        historyStatus.textContent =
-            "저장된 뉴스 " + historyData.count + "건을 불러왔습니다.";
-
+        document.getElementById("newsPageIndicator").textContent =
+            data.page + " / " + data.total_pages + " 페이지";
+        historyStatus.textContent = data.total === 0
+            ? "검색 조건에 맞는 저장 기사가 없습니다."
+            : "검색 결과 " + data.total + "건 · 현재 " + data.articles.length + "건 표시";
     } catch (error) {
-
-        historyStatus.textContent =
-            "오류: " + error.message;
-
+        if (requestId === currentNewsRequestId) {
+            historyStatus.textContent = "오류: " + error.message;
+            historyList.replaceChildren();
+            currentNewsTotalPages = 0;
+            document.getElementById("newsPageIndicator").textContent = "0 / 0 페이지";
+        }
     } finally {
-
-        historyButton.disabled = false;
-
+        if (requestId === currentNewsRequestId) {
+            searchButton.disabled = false;
+            document.getElementById("resetNewsSearchButton").disabled = false;
+            setNewsPageButtons(false);
+        }
     }
 }
+
+document.getElementById("newsSearchForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    loadNewsHistory(1);
+});
+
+document.getElementById("resetNewsSearchButton").addEventListener("click", function () {
+    document.getElementById("newsSearchForm").reset();
+    loadNewsHistory(1);
+});
+
+document.getElementById("newsPreviousPage").addEventListener("click", function () {
+    if (currentNewsPage > 1) loadNewsHistory(currentNewsPage - 1);
+});
+
+document.getElementById("newsNextPage").addEventListener("click", function () {
+    if (currentNewsPage < currentNewsTotalPages) loadNewsHistory(currentNewsPage + 1);
+});
+
+document.getElementById("newsPageSize").addEventListener("change", function () {
+    loadNewsHistory(1);
+});
 
 
 // 선택한 과거 뉴스 상세 조회
