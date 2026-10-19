@@ -1671,3 +1671,15 @@ git pull origin kakao
 - [ ] 코드 적용 전후 DB 저장 건수와 기존 46개 테스트 및 신규 회귀 완료 확인
 
 **현재 상태:** 카카오맵으로 **전환할 방향은 선택**, 본 13장 상세 계획/SDK 필수 설정을 사용자에게 제시했고 **설계 승인 및 키/도메인 준비 확인 이전이므로 코드·DB 변경 없음**.
+
+### 13.8 D01 카카오맵 SDK 최초 구현 및 로컬 검증 대기 (2026-10-19)
+
+- **승인 확인:** 사용자 기존 Kakao Developers 앱의 카카오맵 사용 설정 ON, JavaScript SDK 허용 도메인 등록 완료, 로컬 `traffic-api/.env`에 `KAKAO_MAP_JS_KEY` 설정 완료. README 13장 설계 및 기존 기능 보존·`kakao` 브랜치만 수정·DB 무변경 구현을 명시적으로 승인함.
+- **실제 변경:** `static/map.html`의 표시 엔진 OpenLayers→Kakao Maps JavaScript SDK 전환. `GET /api/map/sdk-config`(키 없으면 `{provider:'unconfigured'}`, 있으면 `{provider:'kakao',javascript_key:...}`, `Cache-Control:no-store`)를 `app/main.py`에 추가. 기존 REST API 키/DB 연결 키는 노출하지 않음. 지도 SDK는 브라우저용 키이므로 공개 가능한 키이며 콘솔 허용 도메인 제한 필요.
+- **프런트:** `kakao.maps.Map`, `Polyline` 도로별 상태색 `#16a34a/#eab308/#dc2626/#64748b`, `Marker` 출발/도착 라벨 및 색 구분, `LatLngBounds` 전체 경로 맞춤. 좌표 `vertexes`가 [경도, 위도]이면 `LatLng(위도, 경도)` 순서로 정확히 변환. 직전 Polyline/Marker를 `setMap(null)`로 지우고 다음 현재 경로를 표시함.
+- **기존 F23 보존:** `/map?article_id=8&route_index=0` 기사 ID/경로 번호 검증, `/api/news/history/{id}` 불러오기, 과거 저장 거리·소요시간·정체 비율 및 KST, 기존 폼 자동 입력, **버튼 클릭 전 현재 API 미호출** 및 사용자 수동 `/api/route` 제출 후 실제 현재 경로 표시. 기존 ID/내비게이션/디자인 유지, Supabase 쓰기/스키마 변경 없음.
+- **복구:** 최초 변경 직전 `static/map.html`의 실제 사본을 `static/legacy-map.html`로 보존. 새 지도에서 키 없음/SDK 로딩 실패/초기화 실패 시 사용자에게 오류 문구와 `/static/legacy-map.html` 링크(기존 article_id/route_index query 보존)를 제공. 해당 복구 페이지에서 구 OpenLayers+OSM/CARTO 모드 그대로 사용. 새 SDK 로드 완료 전에 사용자가 조회 버튼을 누르면 대기 메시지와 복구 링크를 표시. **기존 CARTO 설정 API 및 .env 키는 변경하지 않음**.
+- **테스트 코드:** 기존 `test_basemap_config.py` 네 번째 테스트는 보존된 legacy 지도 대상으로 전환, `test_navigation.py`의 OpenLayers 구조 검사는 새로운 `drawCurrentRoute` 검사로 변경(기능 검사는 유지). 신규 `tests/test_kakao_map.py`에 **6개 테스트** 추가: 설정 없음/정상/잘못된 키, 카카오맵 렌더링·마커·Polyline·확대·복구 HTML, F23 과거 기사/수동 현재 조회, 기존 지도 복구 페이지. 이전 전체 46개와 합해 **52개 테스트 예상**.
+- **별도 문법 검사:** GitHub의 현재 `static/map.html` inline JavaScript를 V8 함수 파서로 검사해 **syntax PASS** 확인. 실제 브라우저 SDK 로딩과 52개 Python unittest는 아직 실행되지 않았으므로 성공이라고 단정하지 않음.
+- **로컬 검증 명령:** `cd C:\\workspace\\traffic_app_domain\\traffic-api` → `git pull origin kakao` → `.\\.venv\\Scripts\\python.exe -m unittest discover -s tests -p "test_*.py" -v` → FastAPI 재시작 → `/map?article_id=8&route_index=0`에서 카카오맵 한글 라벨/기사 과거값·현재 수동 조회 색 선·마커 확인. 문제가 있으면 브라우저 개발자 도구 Console 오류(키 문자열 제거)를 확인.
+- **검증 상태:** 저장소 `kakao` 코드와 문서 반영 완료, 전체 테스트·브라우저 렌더링 **사용자 실행 대기**. D01 관리자 페이지 디자인은 그 다음 단계.
