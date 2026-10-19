@@ -2149,3 +2149,11 @@ git pull origin kakao
 - **추가 회귀 테스트:** `traffic-api/tests/test_route_cache.py`에 Kakao API를 호출하지 않는 mock 기반 테스트 6개 추가: 동일/공백 정규화 경로 HIT, 역방향 및 다른 경로 분리, TTL 만료, 오류 미캐시, 같은 경로 동시 요청 1회, 캐시 128개 상한.
 - **커밋:** 공개 API 코드 `6a943d3`, 테스트 `6a5805c`. 본 README에 구현 이력 기록. **사용자 Windows 가상환경에서 아직 테스트를 실행하지 않았으므로 통과 판정 금지**. 이전 60개 + 신규 6개 = 전체 66개 예상.
 - **다음 검증:** `git pull origin kakao` → Windows 전체 `unittest` → 브라우저 `/map`에서 동일 경로 반복 호출 시 `X-Route-Cache` 헤더 MISS/HIT(개발자도구 Network) 확인, TTL 30초 이후 MISS, 실제 지도 색상·경로 표시 정상 및 Console 확인. 새 기사 생성·저장·DB 변경 금지.
+
+### 15.8 F19-A Windows 신규 6개 오류 원인과 time 이름 충돌 수정 (2026-10-19)
+
+- **사용자 Windows 실제 실행 결과:** `Ran 66 tests in 0.728s`, `FAILED (errors=6)`. F19-A 신규 `test_route_cache.py`의 6개가 전부 `AttributeError: type object 'datetime.time' has no attribute 'monotonic'` 오류로 중단됨. 기존 60개 테스트는 전부 `ok`.
+- **확인한 원인:** `app/main.py`에서 새 `import time` 이후 기존 `from datetime import datetime, date, time, timedelta`의 `time` 클래스가 모듈 이름을 덮어썼음. `time.monotonic()`은 표준 시간 모듈이 아닌 `datetime.time`을 가리켜 실패. 실제 Kakao API/DB 장애가 아니며 신규 캐시 로직의 구현 오류.
+- **승인 범위 후속 수정:** `import time as monotonic_clock`로 별칭을 주고, 두 곳의 호출을 `monotonic_clock.monotonic()`으로 변경. 기존 날짜·시간 기능의 `datetime.time` 이름과 충돌하지 않도록 수정. `app/main.py`만 변경, GitHub `kakao` 커밋 `14d42df`.
+- **재검증 대기:** 수정 후 사용자 Windows 66개 전체 테스트의 실제 결과를 아직 받지 않았으며 이 단계에서 합격 주장 금지. `git pull origin kakao` 후 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v`로 재실행.
+- 캐시 TTL 30초·128개 상한·공개 `/api/route` 한정 방침 유지. 기존 기사·Supabase DB·관리자 권한·카카오 키·`main` 변경 없음.
