@@ -20,6 +20,9 @@ body {
     color: var(--d01-text);
     font-family: "Malgun Gothic", "Noto Sans KR", Arial, sans-serif;
 }
+:where(input, textarea, select):focus {
+    outline: none;
+}
 :where(button, a):focus-visible {
     outline: 3px solid #f59e0b;
     outline-offset: 3px;
