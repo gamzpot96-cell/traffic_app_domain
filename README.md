@@ -518,7 +518,10 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 
 ### 9.10 F16 승인된 범위 코드 반영 및 로컬 테스트 대기 (2026-10-19)
 
-**구현 상태: 🟡 GitHub 코드 반영, 사용자 로컬 테스트/브라우저 검증 대기.** 수정 설계 v2 사용자 승인 범위 이내이며 신규 DB 마이그레이션은 수행하지 않았습니다.
+| 2026-10-19 | F16 API 단위 테스트 | 사용자 PowerShell에서 F16 검색 테스트 5개 `ok`(HTTP 503 처리, KST 기간, 입력 검증, 기본값, 기존 API 호환) | 실 DB 및 브라우저 테스트 대기 |
+
+
+**구현 상태: 🟡 GitHub 코드 반영 및 사용자 로컬 F16 API 단위 테스트 5/5 통과, 실제 Supabase 검색·브라우저 검증 대기.** 수정 설계 v2 사용자 승인 범위 이내이며 신규 DB 마이그레이션은 수행하지 않았습니다.
 
 | 대상 | 반영 내용 |
 |---|---|
@@ -536,6 +539,8 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_news_search.py" -v
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_navigation.py" -v
 ```
+
+**사용자 로컬 테스트 결과 (2026-10-19):** `test_news_search.py`의 5개 테스트 모두 `ok`, 최종 `OK`(0.099초). `test_database_failure_returns_503`의 `RuntimeError: test DB error` traceback은 mock으로 의도적으로 유발한 예외를 서버가 로깅한 것이며 테스트 실패가 아님. StarletteDeprecationWarning은 현재 테스트 결과에 영향 없음. 실제 데이터 검색/DB 계수 검사는 아직 실행하지 않았음.
 
 **추가 확인(실제 데이터):** 서버 기동 후 `http://127.0.0.1:8000/news`에서 전체 검색, 일부 키워드, KST 조회일자, 기간 역전, 페이지 이동, 기사 읽기를 확인. `/api/news/history`와 관리자 저장 기능 유지 및 DB 행 수 변화 없음 검증. 동시 검색 요청·배포 환경·운영 부하 검사는 추가로 확인할 수 있습니다.
 
