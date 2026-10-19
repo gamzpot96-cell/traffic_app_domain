@@ -33,7 +33,8 @@
 | 2026-10-19 | 테스트 설계 | F14 동시 재전송 및 필수 화면/API 회귀 검사 절차 추가 | 기능 변경 없음 |
 | 2026-10-19 | 테스트 스크립트 | 로컬 관리자 입력·동시 저장·공개 페이지 및 미인증 차단 회귀 검사용 스크립트 추가 | 테스트 코드만 변경 |
 | 2026-10-19 | 통합 테스트 완료 | 기사 #8 동시 저장 2회 HTTP 200: 신규 1회·중복 1회, DB 같은 generation_id 1건·경로 3건. 홈·지도·뉴스·관리자·이력 HTTP 200, 미인증 요청 HTTP 401 확인 | F13~F15 로컬 핵심 테스트 완료, 운영 배포 검증 별도 |
-| 2026-10-19 | 다음 기능 설계 수정 v2 | 실제 메뉴 우선·정적 파일 라우팅·단계별 개발·KST 검색 조건 보완 | README만 수정, 재승인 대기 |
+| 2026-10-19 | 다음 기능 설계 수정 v2 | 실제 메뉴 우선·정적 파일 라우팅·단계별 개발·KST 검색 조건 보완 | 문서 승인됨 |
+| 2026-10-19 | M01·M02 구현 | 공통 CSS/JS, 4개 페이지 연결, StaticFiles 정적 라우팅, 회귀 검사 코드 추가 | GitHub 구현 완료, 로컬 테스트 대기; F16 미착수 |
 | 추후 | 예정 | 관리자 전용 뉴스 저장 API, 중복 방지, 웹 UI 연결 | 사용자 승인 후 진행 |
 
 ## 1. 서비스 개요
@@ -474,7 +475,34 @@ py -m venv .venv
 - **2단계 F16:** 새 검색 SQL/API와 /news 검색 UI를 구현한 뒤 필터·KST 날짜 경계·페이지 이동·결과 상세 조회를 테스트합니다.
 - 두 단계를 나눠 커밋하고 각각 최상위 README의 기능 상태·검증 결과를 갱신합니다. Vercel Preview는 배포 시 별도 검증합니다.
 
-**이 v2 설계도 사용자 승인 전까지 미구현 상태로 유지합니다.**
+**v2 설계 승인됨:** M01·M02 코드를 kakao 브랜치에 적용했습니다. F16은 메뉴 검사 완료 전까지 미착수입니다.
+
+### 9.8 M01·M02 구현 반영 및 로컬 검증 대기 (2026-10-19)
+
+**현재 진행 상태:** 메뉴 JS/CSS 및 HTML·FastAPI·테스트 코드 GitHub 반영 완료. 실브라우저 모바일·키보드 테스트와 로컬 자동 테스트 통과는 아직 확인하지 않았으므로 구현 완료로 확정하지 않습니다. F16 뉴스 검색은 아직 구현하지 않았습니다.
+
+| 분류 | 실제 변경 파일 | 변경 내용 |
+|---|---|---|
+| 정적 자산 | `traffic-api/static/navigation.css` · `navigation.js` | 클릭형 5개 상위 메뉴, 모바일 메뉴, 준비 중 항목, 현재 페이지 강조·키보드 Escape 처리 |
+| 화면 | `static/index.html`, `map.html`, `news.html`, `admin.html` | 동일한 공통 내비게이션 삽입. `/news#historySection`, `/news#trafficDashboard` 앵커 활용 |
+| 백엔드 | `traffic-api/app/main.py` | `/static` → 기존 static 폴더를 읽는 FastAPI StaticFiles mount 추가 |
+| 자동 테스트 | `traffic-api/tests/test_navigation.py` | 정적 자산, 4개 페이지, 뉴스 앵커, 관리자 API 비로그인 차단 검사 |
+| DB | 변경 없음 | 기존 Supabase 스키마·행 데이터 무변경 |
+| 개발환경 | 새 패키지·비밀키 추가 없음 | 기존 의존 FastAPI·Starlette 정적 자산 기능 활용; Vercel Preview 추후 확인 |
+
+**로컬 검증 명령 (PowerShell, `traffic-api` 작업 디렉터리):**
+
+```powershell
+git status
+# 커밋되지 않은 변경 사항이 없는지 확인한 뒤
+git pull origin kakao
+.\.venv\Scripts\python.exe -m py_compile app/main.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_navigation.py" -v
+```
+
+Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클릭, 모바일 폭에서 햄버거 메뉴, 키보드 Tab/Enter/Escape, '준비 중' 항목의 링크 없음, 기사 생성·저장 및 지도 동작을 확인합니다. 정적 파일 `/static/navigation.css`, `/static/navigation.js`가 HTTP 200인지 확인하며 Vercel 배포 검사는 별도로 기록합니다.
+
+**다음 게이트:** M01·M02 로컬 검증과 README 상태 갱신을 마친 후 F16 상세 코드 구현을 시작합니다.
 
 ## 8. 다음 구현 전 승인 체크리스트
 
