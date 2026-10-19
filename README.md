@@ -1260,6 +1260,26 @@ git pull origin kakao
 
 통과 후 `/news`에서 저장된 경로를 선택해 다운로드한 CSV를 Excel/텍스트 편집기로 확인하고 DB 건수를 재검증해야 함. 사용자 승인 없이 DB 쓰기나 F17/D01 전체 코드 적용을 테스트 완료로 선언하지 않음.
 
+### 12.22 D01 1단계 공통 디자인 시스템·내비게이션 코드 반영 (2026-10-19)
+
+- **적용 완료(코드):** 새 `traffic-api/static/design-system.css` 파일의 10개 의미별 CSS 토큰(남색 `#13243B`, 파랑 `#2463EB`, 청록 `#087E8B`, 페이지 배경 `#F3F6FA` 등), 키보드 포커스 및 움직임 감소 기초 스타일을 작성. 홈 `/`, 뉴스 `/news`, 지도 `/map`, 관리자 `/admin` 네 페이지의 `head`에 공통 CSS 추가.
+- 기존 `navigation.css`를 D01 색상·간격·헤더 브랜드 크기 중심으로 변경하되 **`.site-nav` 범위를 유지**, 모바일 850px 메뉴/드롭다운/현재 페이지 강조의 기존 구조와 이벤트는 유지.
+- `navigation.js`에서 이미 구현된 F17 `/news#trafficTrends`, F22 `/news#trafficExport`, F16 검색 `/news#historySection`을 실제 메뉴 링크로 변경. 뉴스 CSV 패널에는 명시적 `id="trafficExport"` 추가. 미래 미구현 기능은 계속 '준비 중'으로 표시.
+- **회귀 테스트 보강:** `tests/test_navigation.py`에 디자인 CSS·네 페이지 연결 검증과 실제 메뉴 링크의 문서 앵커 대응 검증 **2개 추가**. 지난 36개 테스트에 더해 **총 38개 실행 예상**이며 실행 통과는 아직 확인하지 않았음.
+- **보존:** API 라우트·DB 및 스키마·관리자 인증·지도 라이브러리·F16/F17/F22/F23 데이터 처리 코드는 변경하지 않음. 4개 페이지 전면 배치 개편은 아직 미적용.
+- **검증 상태: 🟡 GitHub `kakao` 브랜치 코드 반영, 사용자 Windows 로컬 테스트 및 실제 데스크톱·모바일 화면 검증 대기.** CSS가 기존 인라인 스타일에 미치는 영향·지도 크기·모바일 햄버거·메뉴의 키보드 접근성은 브라우저 점검 필요.
+
+#### D01 1단계 로컬 테스트
+
+```powershell
+cd C:\workspace\traffic_app_domain\traffic-api
+git status
+git pull origin kakao
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
+```
+
+테스트가 통과하면 `http://127.0.0.1:8000/news`에서 `Ctrl+F5` 후 공통 헤더 및 분석·통계 메뉴의 '날짜·시간대별 교통 변화'와 '교통정보 CSV 다운로드' 링크를 실제 클릭해 해당 영역으로 이동하는지 확인. 이후 홈 → 뉴스 → 지도 → 관리자 순서로 시각 배치를 단계적으로 개편하며 각 단계마다 테스트.
+
 ### 12.21 전체 회귀 자동 테스트 36개 통과 및 D01 착수 (2026-10-19)
 
 - 사용자 Windows 가상환경에서 `python -m unittest discover -s tests -p "test_*.py" -v` 실행 결과 **Ran 36 tests in 0.186s / OK**, 실패/에러 없이 모두 통과.
