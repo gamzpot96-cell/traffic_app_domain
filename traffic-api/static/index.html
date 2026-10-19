@@ -23,6 +23,43 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
         th { background: #f1f5f9; }
         .scroll { overflow-x: auto; }
+
+        /* D01-B 홈페이지 전용 레이아웃: 원래 조회/표/브리핑 DOM 보존 */
+        .home-hero { background: #13243b; padding: 44px 24px 46px; }
+        .home-hero-inner { max-width: 1180px; margin: 0 auto; }
+        .home-eyebrow { margin: 0 0 10px; color: #b4d9fb!important; font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+        .home-hero h1 { font-size: clamp(27px, 3vw, 38px); margin-bottom: 12px; letter-spacing: -.04em; }
+        .home-hero p { font-size: 15px; }
+        .home-main { max-width: 1180px; margin: 28px auto 52px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; align-items: stretch; }
+        .home-main > section { min-width: 0; margin: 0; padding: 28px; border: 1px solid #dee6f0; border-radius: 14px; box-shadow: 0 4px 18px #13243b0c; }
+        .home-main > section:first-child, .home-main > section:nth-child(n+4) { grid-column: 1 / -1; }
+        .home-main h2 { margin-top: 0; font-size: 23px; color: #17253a; letter-spacing: -.03em; }
+        .home-main h3 { line-height: 1.5; }
+        .home-main .home-search { border-top: 4px solid #2463eb; }
+        .home-main form { gap: 14px; }
+        .home-main .field { min-width: min(100%, 230px); }
+        .home-main input { min-height: 45px; font: inherit; border-color: #c8d5e5; border-radius: 8px; }
+        .home-main button, .home-main .link { min-height: 45px; box-sizing: border-box; border-radius: 8px; font-weight: 700; }
+        .home-main button { background: #2463eb; }
+        .home-main button:disabled { opacity: .65; cursor: wait; }
+        .home-main .link { background: #087e8b; }
+        .home-main #summary { font-size: 17px; line-height: 1.8; color: #17253a; word-break: keep-all; }
+        .home-main #briefingContent, .home-main #overviewBriefingText { white-space: pre-line; line-height: 1.8; }
+        .home-main table { font-size: 14px; }
+        .home-main th { color: #334155; }
+        .home-main .muted { color: #52647a; line-height: 1.7; }
+        @media (max-width: 850px) {
+            .home-main { grid-template-columns: minmax(0,1fr); gap: 16px; margin-top: 18px; }
+            .home-main > section, .home-main > section:first-child, .home-main > section:nth-child(n+4) { grid-column: 1; }
+            .home-hero { padding: 32px 22px; }
+        }
+        @media (max-width: 600px) {
+            .home-main { padding: 0 12px; }
+            .home-main > section { padding: 20px 16px; }
+            .home-main .field, .home-main form button { flex-basis: 100%; width: 100%; }
+            .home-main .link { display: block; text-align: center; }
+            .home-main th, .home-main td { white-space: nowrap; }
+        }
     </style>
     <link rel="stylesheet" href="/static/design-system.css">
     <link rel="stylesheet" href="/static/navigation.css">
@@ -30,12 +67,15 @@
 </head>
 <body>
     <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
-<header>
-    <h1>서울 도로교통 브리핑</h1>
-    <p>카카오 장소 검색 · 자동차 경로별 교통정보</p>
+<header class="home-hero">
+    <div class="home-hero-inner">
+        <p class="home-eyebrow">SEOUL TRAFFIC BRIEFING</p>
+        <h1>서울 도로교통 브리핑</h1>
+        <p>출발지와 목적지로 선택한 자동차 경로의 교통정보를 조회합니다.</p>
+    </div>
 </header>
-<main>
-    <section>
+<main class="home-main">
+    <section class="home-search">
         <h2>출발지와 목적지 검색</h2>
         <form id="routeForm">
             <div class="field"><label for="origin">출발지</label><input id="origin" value="서울역" required minlength="2"></div>
