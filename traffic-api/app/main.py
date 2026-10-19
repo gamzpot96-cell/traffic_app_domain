@@ -2,7 +2,7 @@
 """카카오 기반 서울 교통 경로 조회 서비스."""
 import os
 import asyncio
-import time
+import time as monotonic_clock
 from collections import OrderedDict
 import httpx
 
@@ -147,7 +147,7 @@ async def route_search(
         key = route_cache_key(origin, destination)
         # 잠금 안에서 중복 요청을 확인하므로 같은 경로의 동시 재조회도 1회만 수행합니다.
         async with route_cache_lock:
-            now = time.monotonic()
+            now = monotonic_clock.monotonic()
             # 만료된 기록 정리와 메모리 상한 유지
             for old_key, (saved_at, _) in list(route_cache.items()):
                 if now - saved_at >= ROUTE_CACHE_TTL_SECONDS:
@@ -173,7 +173,7 @@ async def route_search(
                 **route_information,
                 "briefing": create_traffic_briefing(route_information)
             }
-            route_cache[key] = (time.monotonic(), result)
+            route_cache[key] = (monotonic_clock.monotonic(), result)
             route_cache.move_to_end(key)
             while len(route_cache) > ROUTE_CACHE_MAX_ENTRIES:
                 route_cache.popitem(last=False)
