@@ -54,6 +54,7 @@
     ];
 
     const currentPath = window.location.pathname;
+    const currentHash = window.location.hash;
     const mobileWidth = window.matchMedia("(max-width: 850px)");
 
     const inner = document.createElement("div");
@@ -137,10 +138,11 @@
                 const link = document.createElement("a");
                 link.href = item.href;
                 link.textContent = item.name;
-                const linkPath = new URL(item.href, window.location.origin).pathname;
-                if (linkPath === currentPath) {
+                // 해시까지 일치하는 링크만 현재 위치로 표시합니다.
+                // 현재 위치 표시는 접근성용이며 상시 파란 배경은 사용하지 않습니다.
+                const linkUrl = new URL(item.href, window.location.origin);
+                if (linkUrl.pathname === currentPath && linkUrl.hash === currentHash) {
                     link.setAttribute("aria-current", "page");
-                    trigger.classList.add("site-nav-current");
                 }
                 li.appendChild(link);
             }
