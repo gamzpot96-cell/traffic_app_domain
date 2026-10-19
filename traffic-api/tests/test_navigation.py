@@ -50,6 +50,14 @@ class SharedNavigationTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn('/static/design-system.css', response.text)
 
+    def test_d01_form_fields_do_not_receive_orange_outline(self):
+        css = self.client.get("/static/design-system.css").text
+        self.assertIn(":where(button, a):focus-visible {", css)
+        self.assertNotIn(":where(button, input, select, textarea, a):focus-visible", css)
+        self.assertIn("outline: 3px solid #f59e0b;", css)
+        navigation_css = self.client.get("/static/navigation.css").text
+        self.assertIn(".site-nav-item a:focus-visible", navigation_css)
+
     def test_d01_menu_links_refer_to_implemented_features(self):
         navigation = self.client.get("/static/navigation.js")
         self.assertEqual(navigation.status_code, 200)
