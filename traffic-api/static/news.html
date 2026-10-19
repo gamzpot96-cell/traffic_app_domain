@@ -213,6 +213,16 @@
 .saved-route-link:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
 .saved-route-link:hover { background: #1d4ed8; }
 
+/* F22 저장 경로 CSV 다운로드 - 기사 검색과 구분된 폼 */
+.traffic-export { margin: 24px 0; padding: 18px; background: #f8fafc; border: 1px solid #dbe4ee; border-radius: 10px; }
+.traffic-export h3 { margin: 0 0 10px; }
+.traffic-export-form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+.traffic-export-form label { display: flex; flex-direction: column; gap: 7px; flex: 1 1 180px; font-size: 13px; font-weight: 600; }
+.traffic-export-form select, .traffic-export-form input { box-sizing: border-box; min-height: 42px; width: 100%; padding: 9px 10px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit; }
+.traffic-export-form button { min-height: 42px; }
+.traffic-export-status { color: #475569; font-size: 14px; }
+@media (max-width:650px) { .traffic-export-form label { flex-basis: 100%; } .traffic-export-form button { width: 100%; } }
+
 /* F16 뉴스 아카이브 검색 */
 .news-search-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 15px 0; }
 .news-search-field { display: flex; flex-direction: column; gap: 7px; flex: 1 1 165px; min-width: 0; }
@@ -289,6 +299,28 @@
         </div>
     </form>
     <p class="chart-notice">날짜는 교통정보 조회 완료 시각(한국 시간) 기준이며, 저장된 기사만 검색합니다.</p>
+    <section class="traffic-export" aria-labelledby="trafficExportTitle">
+        <h3 id="trafficExportTitle">저장된 교통정보 CSV 다운로드</h3>
+        <p class="chart-notice">기사 본문이 아닌, 저장된 자동차 경로별 조회 수치입니다. 최대 5,000행을 다운로드합니다.</p>
+        <form id="trafficExportForm" class="traffic-export-form">
+            <label for="exportRoute">저장 경로
+                <select id="exportRoute">
+                    <option value="">전체 저장 경로</option>
+                </select>
+            </label>
+            <label for="exportStartDate">조회 시작일 (KST)
+                <input type="date" id="exportStartDate">
+            </label>
+            <label for="exportEndDate">조회 종료일 (KST)
+                <input type="date" id="exportEndDate">
+            </label>
+            <button type="submit" id="downloadTrafficCsvButton">CSV 다운로드</button>
+        </form>
+        <p id="trafficExportStatus" class="traffic-export-status" role="status" aria-live="polite">
+            저장 경로 목록을 불러오는 중입니다.
+        </p>
+    </section>
+
     <p id="historyStatus" role="status" aria-live="polite">검색 버튼을 눌러 저장된 기사를 확인하세요.</p>
     <div id="historyList"></div>
     <div class="news-pagination" aria-label="기사 목록 페이지 이동">
@@ -760,6 +792,84 @@ function displaySavedArticleRouteLinks(article) {
 
     section.hidden = list.children.length === 0;
 }
+
+// F22: 뉴스 검색 필터와 별도로 저장 경로 스냅샷을 내보냅니다.
+const exportRoutes = [];
+
+async function loadTrafficExportRoutes() {
+    const select = document.getElementById("exportRoute");
+    const status = document.getElementById("trafficExportStatus");
+    try {
+        const response = await fetch("/api/traffic/routes");
+        if (!response.ok) throw new Error("저장 경로 목록을 가져오지 못했습니다.");
+        const payload = await response.json();
+        if (!Array.isArray(payload.routes)) throw new Error("경로 목록 형식이 올바르지 않습니다.");
+        payload.routes.forEach(function (route) {
+            const option = document.createElement("option");
+            option.value = String(exportRoutes.length);
+            option.textContent = route.origin + " → " + route.destination;
+            exportRoutes.push(route);
+            select.appendChild(option);
+        });
+        status.textContent = "전체 또는 특정 경로와 조회 날짜를 선택해 다운로드하세요.";
+    } catch (error) {
+        status.textContent = "경로 목록 오류: " + error.message + " 전체 경로 CSV는 다운로드할 수 있습니다.";
+    }
+}
+
+document.getElementById("trafficExportForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const start = document.getElementById("exportStartDate").value;
+    const end = document.getElementById("exportEndDate").value;
+    const select = document.getElementById("exportRoute");
+    const button = document.getElementById("downloadTrafficCsvButton");
+    const status = document.getElementById("trafficExportStatus");
+    if (start && end && start > end) {
+        status.textContent = "시작일은 종료일보다 늦을 수 없습니다.";
+        return;
+    }
+    const params = new URLSearchParams();
+    if (start) params.set("start_date", start);
+    if (end) params.set("end_date", end);
+    if (select.value !== "") {
+        const route = exportRoutes[Number(select.value)];
+        if (!route) {
+            status.textContent = "선택한 경로를 확인할 수 없습니다.";
+            return;
+        }
+        params.set("origin", route.origin);
+        params.set("destination", route.destination);
+    }
+    button.disabled = true;
+    status.textContent = "CSV 파일을 준비하는 중입니다.";
+    try {
+        const response = await fetch("/api/traffic/export.csv?" + params.toString());
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(typeof error.detail === "string" ? error.detail : "다운로드에 실패했습니다.");
+        }
+        const blob = await response.blob();
+        const count = Number(response.headers.get("X-Export-Row-Count"));
+        const fileUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        link.download = "traffic_routes.csv";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        // 다운로드 시작 후 임시 브라우저 URL을 해제합니다.
+        window.setTimeout(function () { URL.revokeObjectURL(fileUrl); }, 30000);
+        status.textContent = Number.isFinite(count)
+            ? "저장된 경로 " + count + "건 CSV 다운로드를 시작했습니다."
+            : "CSV 다운로드를 시작했습니다.";
+    } catch (error) {
+        status.textContent = "CSV 다운로드 오류: " + error.message;
+    } finally {
+        button.disabled = false;
+    }
+});
+
+loadTrafficExportRoutes();
 
 // 선택한 과거 뉴스 상세 조회
 async function loadSavedNews(articleId) {
