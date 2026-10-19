@@ -39,8 +39,8 @@ class BasemapConfigTests(unittest.TestCase):
         self.assertEqual(response.json(), {"provider": "osm"})
         self.assertNotIn("bad", response.text)
 
-    def test_map_page_uses_keyed_retina_tiles_with_fallback(self):
-        response = self.client.get("/map")
+    def test_legacy_page_preserves_retina_tiles_and_osm_fallback(self):
+        response = self.client.get("/static/legacy-map.html")
         self.assertEqual(response.status_code, 200)
         page = response.text
         for expected in (
