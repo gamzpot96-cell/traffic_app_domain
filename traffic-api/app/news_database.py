@@ -237,6 +237,74 @@ def get_saved_news_articles(limit=10):
 
     return articles
 
+
+# F16: 저장된 기사만 읽는 키워드/조회 시각/페이지 검색
+def search_saved_news_articles(
+    keyword="", start_time=None, end_time=None, page=1, page_size=10
+):
+    if page < 1 or page_size not in (10, 20, 50):
+        raise ValueError("페이지 또는 페이지 크기가 올바르지 않습니다.")
+
+    # 키워드를 SQL 패턴이 아닌 일반 문자열로 검색합니다.
+    conditions = []
+    parameters = []
+    if keyword:
+        conditions.append(
+            "(POSITION(LOWER(%s) IN LOWER(title)) > 0 "
+            "OR POSITION(LOWER(%s) IN LOWER(lead)) > 0)"
+        )
+        parameters.extend([keyword, keyword])
+    if start_time is not None:
+        conditions.append("retrieved_at >= %s")
+        parameters.append(start_time)
+    if end_time is not None:
+        conditions.append("retrieved_at < %s")
+        parameters.append(end_time)
+
+    where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+    offset = (page - 1) * page_size
+
+    with get_database_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM public.traffic_news_articles" + where_clause,
+                tuple(parameters)
+            )
+            total = cursor.fetchone()[0]
+
+            cursor.execute(
+                """
+                SELECT id, title, lead, analyzed_route_count,
+                       retrieved_at, created_at
+                FROM public.traffic_news_articles
+                """ + where_clause + """
+                ORDER BY retrieved_at DESC, id DESC
+                LIMIT %s OFFSET %s
+                """,
+                tuple(parameters) + (page_size, offset)
+            )
+            rows = cursor.fetchall()
+
+    articles = []
+    for row in rows:
+        articles.append({
+            "id": row[0],
+            "title": row[1],
+            "lead": row[2],
+            "analyzed_route_count": row[3],
+            "retrieved_at": row[4].isoformat(),
+            "created_at": row[5].isoformat()
+        })
+
+    return {
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+        "articles": articles
+    }
+
+
 # 저장된 뉴스 기사 1건과 연결된 경로 조회
 def get_saved_news_article(article_id):
 
