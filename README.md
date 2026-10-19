@@ -1219,3 +1219,25 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 - 서버 응답: 최대 5,000개 경로 행, KST 조회시각, 기사 ID, 출발/도착, 거리 km, 예상 소요시간 분, 정체·지체 거리 km·비율 %, UTF-8 BOM, 헤더 포함. 빈 검색 결과도 헤더만 내보내며 UI는 '0건 CSV'를 구분해 안내.
 - SQL에 5,001행을 조회해 초과 시 HTTP 422로 기간/경로 축소 안내; 안전한 정수·시간대·문자열 변환 후 CSV 인젝션 처리. DB 읽기만 사용. 요청 오류 422, DB 오류 503.
 - 구현 후보 파일: `app/traffic_export.py`(조회·CSV 직렬화), `app/main.py`(조회/CSV API), `static/news.html`(다운로드 UI), `tests/test_traffic_export.py`(가짜 DB 응답과 안전성 테스트). 이번 단계에서 F17 그래프와 D01 디자인은 아직 수정하지 않음.
+
+### 12.10 F22 구현 코드 반영 (2026-10-19)
+
+- **변경 파일:** `traffic-api/app/traffic_export.py`(신규), `traffic-api/app/main.py`, `traffic-api/static/news.html`, `traffic-api/tests/test_traffic_export.py`(신규).
+- **경로 선택 API:** `GET /api/traffic/routes`는 `traffic_route_snapshots`에서 DISTINCT 출발·목적지 목록을 조회. 공개 읽기 전용이며 DB 데이터를 수정하지 않음.
+- **CSV API:** `GET /api/traffic/export.csv`는 저장 경로 쌍과 KST 시작/종료 날짜 조건을 바인딩된 SELECT로 조회. 최대 5,000행이며 5,001행째가 있으면 422로 다운로드 범위 축소 요구.
+- **출력:** 기사 ID, 조회 완료 시각(KST), 출발지, 목적지, 거리(km), 예상 소요시간(분), 정체·지체 거리(km), 비율(%). 한글 CSV UTF-8 BOM과 Content-Disposition 다운로드, 0건일 때 헤더만 반환. 스프레드시트의 잠재적 수식 문자열 시작을 안전하게 처리.
+- **뉴스 페이지:** 기존 기사 검색과 분리된 `저장된 교통정보 CSV 다운로드` 패널을 추가하여 저장 경로·기간을 선택하고 클릭으로 내려받도록 구성. 기존 F16 검색과 F23 기사 지도 이동 기능의 DOM ID를 그대로 유지함.
+- **테스트 추가:** `test_traffic_export.py`의 CSV 포맷/BOM/단위, 수식 안전 처리, 0건, KST/경로 필터, 잘못된 요청, 5,000행 제한, 503 오류, UI 및 옵션 조회 등 **8개** 테스트. 아직 사용자 Windows 환경에서 실행하지 않음.
+- **상태: 🟡 GitHub 구현 반영, 로컬 테스트 및 CSV 다운로드 브라우저 검증 대기.** F17 그래프와 D01 전체 디자인 코드는 아직 적용하지 않음. DB 스키마/저장자료/관리자 인증/기존 Kakao API 불변.
+
+#### F22 1차 로컬 검증 명령
+
+```powershell
+cd C:\workspace\traffic_app_domain\traffic-api
+git status
+git pull origin kakao
+.\.venv\Scripts\python.exe -m py_compile app/main.py app/traffic_export.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_traffic_export.py" -v
+```
+
+통과 후 `/news`에서 저장된 경로를 선택해 다운로드한 CSV를 Excel/텍스트 편집기로 확인하고 DB 건수를 재검증해야 함. 사용자 승인 없이 DB 쓰기나 F17/D01 전체 코드 적용을 테스트 완료로 선언하지 않음.
