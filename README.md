@@ -1849,3 +1849,11 @@ git pull origin kakao
 - **반영 커밋:** 관리자 UI `4d785a1`, 신규 테스트 `b55f921` (둘 다 `kakao`). 그 외 API/DB/환경 파일 변경 없음. 최종 설계/결과 기록 커밋은 별도 안내.
 - **다음 사용자 검증 (한 번에 하나):** Windows PowerShell에서 `cd C:\workspace\traffic_app_domain\traffic-api` → `git pull origin kakao` → `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 순서. 테스트 결과를 확인한 뒤 `/admin` 로그인 전 Chrome 화면부터 검증. 관리자 계정이나 비밀번호·토큰을 채팅으로 전달하지 말 것.
 - **잔여 확인:** 사용자 Chrome에서 로그인 전 레이아웃, 관리자 인증 후 작업실, 저장 없이 미리보기·로그아웃, 모바일 320/390/768/1280px 및 Tab 포커스/Console 상태. **기사 저장 버튼은 테스트 목적으로 클릭하지 않음.** 새 초안 생성은 Kakao API 호출 가능성이 있어 사용자 선택 후 진행. 문제 발견 시 승인된 범위 내 최소 수정 및 README 검증 기록 추가.
+
+### 14.8 D01 관리자 화면 Windows 전체 59개 자동 테스트 통과 (2026-10-19)
+
+- 사용자가 `kakao` 브랜치에서 `git pull origin kakao` 완료한 뒤 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 결과를 제출함.
+- **실제 결과: `Ran 59 tests in 0.340s / OK`**, 실패 0, 오류 0. 신규 `test_admin_design.py` 4개(HTML·script 종료, 로그인/작업실 배치, 비밀번호/기사 저장 계약, DOM ID 고유성) 모두 `ok`; 기존 55개 회귀 검사도 `ok`.
+- `RuntimeError: test DB error`, `private DB detail`, `secret DB` 추적은 기존 오류 응답 비노출 mock 테스트에서 의도적으로 출력됐으며 각 테스트가 `ok`로 끝남. `StarletteDeprecationWarning`은 비치명적 라이브러리 경고로 이번 실패를 뜻하지 않음.
+- **검증 범위 구분:** 자동 테스트 합격은 Chrome의 실제 배치·인터랙션 확인을 대체하지 않음. 미인증 로그인 화면, 로그인 후 작업실, 반응형·Tab 포커스·Console 및 안전한 로그아웃은 사용자 브라우저 검증 대기. 기사 저장 호출·DB 데이터 변경 없음.
+- **다음 단계:** 서버 시작 후 `http://127.0.0.1:8000/admin`에서 로그인 전 화면을 Chrome으로 확인하고 스크린샷 검토. 계정·비밀번호·토큰은 공유하지 않음. `main` 브랜치, 관리자 API 및 DB 변경 없이 `kakao` 루트 README에 테스트 결과만 기록.
