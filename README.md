@@ -1260,6 +1260,27 @@ git pull origin kakao
 
 통과 후 `/news`에서 저장된 경로를 선택해 다운로드한 CSV를 Excel/텍스트 편집기로 확인하고 DB 건수를 재검증해야 함. 사용자 승인 없이 DB 쓰기나 F17/D01 전체 코드 적용을 테스트 완료로 선언하지 않음.
 
+### 12.16 F17 저장된 조회 시점별 교통 변화 그래프 1차 구현 (2026-10-19)
+
+- **기존 통합 설계 12장 승인 범위 구현.** 이번 변경 파일: `traffic-api/app/traffic_export.py`(경로별 기록 SELECT), `app/main.py`(읽기 전용 GET), `static/news.html`(차트/기간/경로/지표 UI), `tests/test_traffic_history.py`(신규 7개 자동 검사).
+- **API:** `GET /api/traffic/history?origin=...&destination=...&start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&limit=100`, 1~500건 범위. KST 날짜 기준 포함 조회(종료일 다음날 자정 미만), 출발·도착 정확히 일치하는 실제 저장 `traffic_route_snapshots`만 조회. 최신 행 먼저 LIMIT(+1) 검사 후 오래된 순으로 응답. 기록 수가 제한을 초과하면 조용히 자르지 않고 HTTP 422. 잘못된 요청은 422, DB 예외는 민감한 정보 없는 503.
+- **뉴스 화면:** `/news#trafficTrends`에 저장 경로 선택·조회 시작/종료일·지표(예상 소요시간 분/정체·지체 거리 비율 %) 전환, 시점 기반 SVG 점 그래프, 모든 기록을 보여주는 접근 가능한 4열 표 추가. F22와 같은 저장 경로 목록 데이터를 재사용하되 선택 상태 및 날짜 입력은 분리. 기존 뉴스 검색, CSV 다운로드, F23 기사 지도 링크의 ID/기능은 보존.
+- **해석:** 그래프는 실제 기록된 조회 시점의 점만 표시함. 빈 시간대 임의값·연결선 보간·시간대 평균·전국/서울 전체 일반화 없음. 0/1/N건 별 안내와 수치표, KST 시간·기사 ID·소요시간·비율 명시. 같은 날짜 반복 저장된 여러 기사는 개별 점으로 남김.
+- **테스트:** 조회 조건·KST 범위, 오류 422/503, 빈 기록, SQL 읽기 전용 파라미터 바인딩 및 시간 순서, 제한 초과, 화면 요소 존재 등의 7개 테스트를 추가함. **작성/커밋 완료이나 아직 사용자 로컬에서 실행하지 않았으므로 F17 동작 검증은 보류.** 모바일 차트, 실제 DB 호출, 전체 기존 회귀는 사용자 검증 필요.
+- **DB 및 환경:** 테이블·RLS·스냅샷 내용 변경 없음. 새 라이브러리·환경변수·배포 설정 추가 없음. D01 홈/뉴스/지도/관리자 전면 디자인 개편은 다음 단계이고 아직 미적용.
+
+#### F17 1차 Windows 테스트
+
+```powershell
+cd C:\workspace\traffic_app_domain\traffic-api
+git status
+git pull origin kakao
+.\.venv\Scripts\python.exe -m py_compile app/main.py app/traffic_export.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_traffic_history.py" -v
+```
+
+테스트 통과 후 `/news`에서 실제 경로 **서울역 → 잠실역 2호선**을 선택해 지표를 변경해 보고, 표의 시점·값이 실제 저장 CSV와 일치하는지 브라우저 화면 확인. 이후 전체 `unittest discover` 회귀 테스트 및 DB 보존 확인.
+
 ### 12.15 F22 경로·KST 날짜 동시 필터 실제 CSV 검증 (2026-10-19)
 
 - 사용자가 `서울역 → 잠실역 2호선`, `2026-10-19` 시작일 및 종료일로 내려받은 `traffic_routes (3).csv`를 제출함. 실제 파일에서 **449바이트·UTF-8 BOM 포함·8열 헤더와 데이터 4행**을 확인함.
