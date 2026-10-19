@@ -2045,3 +2045,11 @@ git pull origin kakao
 - 앞선 `/news` Console 확인(14.30)과 `/admin` Console 확인(14.31)을 합쳐 **주요 3개 페이지 Console 빨간 오류 미발견**. 자동 테스트 60개 통과(14.13)는 첫 CSS 보완 전 결과이므로 후속 CSS 변경 이후의 재실행 증거로 오인하지 않음.
 - **잔여 점검:** 반응형 320px·768px, 입력창 자체 Tab 초점 식별, 보완 CSS 이후 전체 Windows 자동 테스트 재실행 등. 추가 기사 저장·DB 수정 없음.
 - `kakao` 루트 README 검증 결과만 추가. 앱 코드/DB/API 키/관리자 인증/`main` 브랜치 변경 없음.
+
+### 14.33 Windows 최종 자동 테스트 CRLF 줄바꿈 비교 실패 및 테스트 보완 (2026-10-19)
+
+- 사용자 Windows PowerShell `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 재실행 로그: **`Ran 60 tests in 0.250s`, `FAILED (failures=1)`**. 실패는 `test_navigation.SharedNavigationTests.test_d01_form_fields_do_not_receive_orange_outline` 하나이며 다른 59개는 통과.
+- 원인: 테스트가 `:where(input, textarea, select):focus {\n    outline: none;\n}`처럼 LF 줄바꿈만 포함한 고정 문자열을 검사했으나, 실제 FastAPI 정적 CSS 응답의 줄바꿈은 Windows CRLF(`\r\n`)이었음. 오류 메시지에 **동일 CSS 규칙 자체는 존재**하며 보완 CSS가 작동하지 않은 것과 구분해야 함.
+- 승인된 후속 보완: `traffic-api/tests/test_navigation.py`에서 해당 검사에 사용되는 CSS 문자열을 `.replace("\r\n", "\n")`으로 정규화하도록 최소 수정. **CSS 디자인·일반 기능 변경 없음**. 테스트 수정 커밋 `c3eee91`.
+- 아직 수정 뒤 Windows 전체 테스트를 재실행하지 않았으므로 **60개 합격이라고 기재하지 않음**. `git pull origin kakao` 후 같은 명령으로 재검증 필요. 의도된 mock 예외 메시지 및 StarletteDeprecationWarning은 본 실패와 무관.
+- `kakao` 루트 README만 기록·`main`/DB/API/인증/.env 변경 없음.
