@@ -1586,3 +1586,88 @@ git pull origin kakao
 - **대안 검토:** 기존 OSM 배경 복귀(변경 최소, 한국어 표기·흐림 문제가 일부 남을 수 있음), 스타일·한국어 설정을 검증해야 하는 별도 고해상도 타일 서비스, 공식 카카오맵 JavaScript API(국내 상세 지도·한글 지명 지향, OpenLayers 배경 교체 수준을 넘어 지도 엔진/마커/경로선 구현과 JS 키·도메인 승인 필요).
 - **권장:** 사용자가 원하는 지도 품질 수준과 변경 범위를 확정한 뒤 별도 지도 교체 설계·승인을 받아 진행. OpenLayers 교체 전 현재 Kakao REST 길찾기 결과, 상태 색상·마커·기사 #8 저장 경로 안내·수동 최신 경로 조회 등 기능 동등성 테스트 계획을 포함해야 함.
 - **상태:** 사용성 피드백 문서 반영만 수행. 앱 코드·DB·API 키 값 변경 없음. 지도 공급자/엔진 교체 승인 대기.
+
+---
+
+## 13. D01 카카오맵 JavaScript SDK 전환 설계 (2026-10-19)
+
+> **사용자 의사:** 현재 OpenLayers + CARTO Voyager 배경은 선명해졌지만 국내 지도 정보의 상세함과 한글 레이블이 부족하여 **카카오맵으로 전환 선택**. 사용자는 **기존 기능을 보존하는 상세 설계 및 필요한 설정을 먼저 제시**하도록 요청. 따라서 **이 커밋은 설계 문서만 변경**하며 JavaScript/Python/DB·환경설정 값을 변경하지 않음. 설계 확인 후 별도 코드 구현 승인·로컬 구성 확인을 거쳐 착수.
+
+### 13.1 도입 목표·정확한 범위
+
+- 목표: 서울 도로명·장소명을 한글로 확인하기 쉬운 카카오맵 웹 SDK에 교통 상태별 경로선을 표시하고 기존 D01 지도 페이지의 정보를 유지.
+- 지도 **표시 기술**만 OpenLayers 6.9.0의 OSM/CARTO 타일 + vector overlay에서 `kakao.maps.Map`, `kakao.maps.Polyline`, `kakao.maps.Marker`로 교체.
+- **유지할 서버 기능:** `GET /api/route?origin=...&destination=...` (Kakao Local 장소 검색 → Kakao Mobility 자동차 경로 → 기존 `summarize_route` 반환). 서버의 장소 찾기·자동차 길찾기·교통 상태 분석·뉴스 생성·F16/F17/F22 데이터 API 변경 없음.
+- **유지할 F23 기능:** `/map?article_id=8&route_index=0` URL, 기존 `GET /api/news/history/{article_id}`, 선택 기사·경로 번호 유효성 검증, 저장 거리/예상 시간/정체·지체 비율·KST, 출발/도착 자동 입력, 뉴스 복귀, **사용자 버튼 클릭 전 실시간 경로 재조회 금지**, 과거 경로 선형 생성 금지.
+- **지도 색상:** traffic_state 1 원활 `#16a34a`, 2 서행 `#eab308`, 3 정체 `#dc2626`, 그 외 미확인 `#64748b`; 기존 범례 유지. Kakao 지도 기본 배경의 색은 실제 교통 상태라는 의미로 사용하지 않음.
+- 새 DB 테이블/컬럼/RLS·데이터 쓰기/정기 수집 없음. 새 AI·지도 데이터·가상 사고 수치 없음.
+
+### 13.2 공식 API와 2026 정책 확인
+
+- 공식 카카오맵 이해하기 https://developers.kakao.com/docs/ko/kakaomap/common : Map Web SDK에는 **JavaScript 키** 사용, 기존 REST API 키를 SDK에 전달하면 안 됨.
+- 공식 지도 Web API 가이드 https://apis.map.kakao.com/web/guide/ 및 레퍼런스 https://apis.map.kakao.com/web/documentation/ : JavaScript SDK 지도·마커·Polyline·LatLngBounds 지원, 로딩에 SDK JavaScript 키 필요.
+- 앱 개발자 콘솔 https://developers.kakao.com/console/app : **[앱] → [플랫폼 키] → [JavaScript 키] → [JavaScript SDK 도메인]** (예전 '사이트 도메인'과 혼동 금지). 로컬 `http://127.0.0.1:8000`, 필요시 `http://localhost:8000` 등록하고 Vercel 배포 도메인은 별도 추가. URL 등록 규칙은 해당 대시보드 현재 허용 형식 확인. 카카오맵 서비스는 **[카카오맵] → [사용 설정] → [ON]** 상태 요구.
+- **2026-07-21 무료 쿼터 정책 변경:** 개발자 계정 기준 **첫 번째로 카카오맵 API를 활성화한 앱**에만 무료 쿼터 제공. 두 번째 활성화 앱 또는 무료 범위 초과 사용은 비즈월렛/유료 API 설정 필요할 수 있음. 신규 비용 유발 설정은 사용자 확인·승인 전 수행하지 않음. 앱 대시보드의 무료 쿼터 적용 뱃지·쿼터·이용 약관 확인 필수.
+- 현재 CARTO 지도 키는 별개. 카카오 REST 키·Supabase 관리자 키·환경비밀을 SDK 응답에 넣지 않음.
+
+### 13.3 키·환경변수·보안 설계
+
+- 신규 로컬 `traffic-api/.env`(Git 제외) 항목 제안: `KAKAO_MAP_JS_KEY=<카카오 JavaScript 키>`. 실제 키를 GitHub/README/채팅에 공유하지 않고 등록 여부만 확인.
+- 카카오 **JavaScript 키는 브라우저 SDK에서 요구되어 요청 URL/개발자 도구에 보이는 플랫폼 키**이므로 서버 비밀 키처럼 절대 숨길 수 있다는 설명을 금지; 카카오 콘솔 JavaScript SDK 도메인 제한·앱 정책 적용 필수.
+- 제안 `GET /api/map/sdk-config` (신규 읽기 전용) 또는 기존 `/api/map/basemap-config`의 호환 확장: `provider=kakao`와 **JavaScript 키만** 반환. 설정 미완료/키 없음이면 오해를 부르지 않도록 안내 후 기존 OpenLayers/CARTO/OSM 지도 사용. 다른 키 반환 금지, no-store 캐시 고려.
+- **초기 이행 기간 기존 카카오맵 옵션/기존 지도 복구 기능 유지**. 최종 전환·복구 검증 및 관리자 승인 후 선택적으로 CARTO 코드와 `CARTO_BASEMAP_KEY` 제거를 별도 커밋에서 수행.
+
+### 13.4 좌표·경로 변환과 프런트 구현 계약
+
+- 현행 Kakao Mobility 응답 `data.roads[].vertexes`의 `[longitude, latitude, longitude, latitude, ...]` → `new kakao.maps.LatLng(latitude, longitude)`로 순서를 바꿔 다수 Polyline의 path 생성. 위경도 값 범위/유한성 및 꼭짓점이 2개 미만인 구간은 기존과 동일하게 그리지 않음.
+- OpenLayers `routeSource.clear()`의 기능을 `displayedPolylines`, `displayedMarkers` 관리 배열에 저장한 Kakao 오버레이 각각 `setMap(null)`로 재현; 연속 검색 시 선형/마커가 누적되지 않도록 검사.
+- 각 도로 구간의 기존 상태 색을 `new kakao.maps.Polyline({map, path, strokeWeight:5, strokeColor:..., strokeOpacity:...})`에 적용. 미확인 구간도 회색으로 명시.
+- 출발 마커는 파랑, 도착 마커는 어두운 색을 유지하는 **Kakao MarkerImage/CustomOverlay 또는 접근 가능한 HTML 범례** 사용을 우선 검토. 기본 `kakao.maps.Marker`만 사용하면 기존 파랑/검정의 시각 구분이 달라질 수 있으므로 테스트에서 구분성 요구.
+- 전체 오버레이의 좌표를 `new kakao.maps.LatLngBounds()`에 포함하고 `map.setBounds(bounds, padding...)`로 경로 영역 맞춤. 좌표가 없으면 기본 중심 서울 시청 인근(37.5665, 126.9780), 과도한 확대 방지·초기 화면을 실제 Chrome에서 검증.
+- 카카오 JavaScript SDK 초기화 실패(키/도메인/쿼터/네트워크) 시 오류가 화면에 글자로 나타나야 하며, 기존 OpenLayers 지도 복구는 **별도 엔진 로딩 경로로 재초기화**해야 함. 단순 `tileSource` 스위치처럼 취급 금지.
+- 기존 `mapRouteForm`, `origin`, `destination`, `mapRouteSubmit`, `result`, `savedArticlePanel`, `mapArticleStatus`, `backToSavedArticle`, `map`, `mapBasemapStatus` ID와 현재 D01 헤더·카드·반응형 CSS 유지.
+- HTML 삽입 대신 `textContent`로 실측·기사 문자열 출력, 기사 ID와 route_index 검증 유지. 타일/SDK 안내는 지도 데이터의 관측 시각으로 오인되지 않게 구분.
+
+### 13.5 사용자 화면/처리 순서
+
+~~~text
+[서울 교통 경로 지도 | 홈으로 돌아가기]
+[과거 기사 저장 카드 (article_id 및 route_index가 유효한 경우에만 표시)]
+  기사 #8 · 교통정보 조회 완료(KST) · 저장된 거리/예상 시간/정체 비율
+  [뉴스 기사로 돌아가기]   ※ 저장된 요약이며 과거 도로 경로선은 저장되지 않음
+[현재 경로 검색 카드]
+  [출발지] [목적지] [현재 경로 새로 조회]
+  [조회 전/진행/성공/오류 텍스트]
+  [회색 미확인 · 녹색 원활 · 노랑 서행 · 빨강 정체]
+[카카오맵 한글 배경]
+  수동 조회 전: 카카오 기본 지도만 표시(과거 경로선을 임의로 그리지 않음)
+  수동 조회 후: 현재 경로 폴리라인·출발/도착 마커·경로 구간 상태색
+~~~
+
+- PC 1280px/850px, 모바일 390px/320px에서 지도 높이·입력·확대 컨트롤·범례 겹침 점검.
+- SDK 실패 시 사용자에게 '지도 표시를 불러오지 못했습니다. 키/도메인/쿼터를 확인하세요.' 안내와 재시도 또는 기존 지도 표시를 제공; 경로 조회 API 오류는 기존대로 텍스트 처리.
+
+### 13.6 코드·API·DB 변경 계획과 검증
+
+| 파일 | 구현 승인 후 변경 |
+|---|---|
+| `traffic-api/static/map.html` | OpenLayers 지도를 Kakao Map SDK 중심으로 전환, marker/polyline/bounds 구현, UI 유지, 복구 경로 |
+| `traffic-api/app/main.py` | 새 읽기 전용 `GET /api/map/sdk-config` 제안, 공개용 JS 키만 전달, 기존 `/api/map/basemap-config` 호환 유지 |
+| `traffic-api/tests/test_news_map_link.py` | F23 기사→지도, 버튼 이전 미조회, 저장 요약·오류 메시지 회귀 검사 |
+| 신규 `tests/test_kakao_map.py` | 키/도메인 미설정 안내, 좌표 순서, 구간별 색/마커, 새 조회 후 정리, bounds, SDK 오류와 fallback 정적/모의 테스트 |
+| `README.md` | 배포/환경 설정/실제 테스트 값/인증 및 정책/데이터 무변경 기록 |
+
+- 기존 unittest **46개 전체**가 최근 사용자 환경에서 성공했음. SDK 교체 시 OpenLayers 엔진 문자열을 검사하는 `test_basemap_config.py` 및 `test_news_map_link.py` 등은 **기능동등성에 맞게 정정·보강**, 실제 동작 보존 검사 없이 삭제/무력화 금지.
+- 검증 순서: ① 앱·JS 키·SDK 도메인/카카오맵 ON·비용/쿼터 확인 → ② 로컬 지도 첫 렌더링 및 한글 지명/선명도 확인 → ③ 새 경로 검색/상태색/마커/범위, 연속 검색 중복 방지 → ④ F23 기사 #8 첫 경로 자동 입력·40.4분 과거 값 유지·버튼 수동 후 최신 경로 표시 → ⑤ 잘못된 기사·경로 번호/404/외부 API 실패 → ⑥ 320/390/850/1280px/키보드 및 확대 → ⑦ 기존 + 신규 unittest 전체/DB 읽기 전용 건수 확인 → ⑧ README 증거 기록.
+- **DB 영향 0**: `traffic_information` 레거시 30,538행 및 뉴스·스냅샷 저장 데이터, Supabase RLS/스키마 불변. 지도 업그레이드만으로 새 기사/경로를 DB에 쓰지 않음.
+- 기존 `main` 브랜치는 수정하지 않고 `kakao`만 사용.
+
+### 13.7 착수 전 승인 체크
+
+- [ ] 기존 Kakao Developers 앱 중 지도 SDK를 사용할 앱 확정, 카카오맵 기능 ON 및 무료 적용 앱·쿼터/비용 확인
+- [ ] JavaScript 플랫폼 키를 확보하고 SDK 허용 도메인 `127.0.0.1:8000` 등 등록(값은 공유하지 않음)
+- [ ] 사용자에게 OpenLayers→카카오맵 화면 엔진 교체 및 임시 구 지도 복구 범위 최종 승인 확인
+- [ ] 키 없는 환경과 SDK/쿼터 오류에 대한 사용자 안내, 기존 기사·지도 기능 보존 테스트 방법 승인
+- [ ] 코드 적용 전후 DB 저장 건수와 기존 46개 테스트 및 신규 회귀 완료 확인
+
+**현재 상태:** 카카오맵으로 **전환할 방향은 선택**, 본 13장 상세 계획/SDK 필수 설정을 사용자에게 제시했고 **설계 승인 및 키/도메인 준비 확인 이전이므로 코드·DB 변경 없음**.
