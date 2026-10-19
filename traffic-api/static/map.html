@@ -4,12 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>서울 도로교통 경로 지도</title>
-    <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/css/ol.css"
-    type="text/css"
->
-<script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/build/ol.js"></script>
+
     <style>
         body { margin: 0; font-family: Arial, "Noto Sans KR", sans-serif; }
         header { padding: 16px; background: #182437; color: #fff; }
@@ -34,7 +29,7 @@
             form label { display: flex; flex-direction: column; flex: 1 1 100%; gap: 6px; }
             form input { box-sizing: border-box; max-width: 100%; }
         }
-        /* D01 지도 전용 화면 개선: 지도 엔진과 기존 ID/JS는 그대로 둡니다. */
+        /* D01 지도 화면 디자인은 유지하고 카카오맵 SDK로 지도 표시만 교체합니다. */
         .map-hero { padding: 25px max(18px, calc((100% - 1180px) / 2)); background: #13243b; color: #fff; }
         .map-hero-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
         .map-hero strong { font-size: 23px; line-height: 1.4; }
@@ -93,102 +88,143 @@
 <p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
 </section>
 </main>
-<div class="map-canvas-frame"><p id="mapBasemapStatus" class="note" role="status" aria-live="polite">기본 배경 지도 표시 중</p><div id="map"></div></div>
+<div class="map-canvas-frame"><p id="mapBasemapStatus" class="note" role="status" aria-live="polite">카카오맵을 불러오는 중입니다.</p><p id="mapRecovery" class="note" hidden>지도가 표시되지 않나요? <a id="legacyMapLink" href="/static/legacy-map.html">기존 OpenLayers 지도로 열기</a></p><div id="map"></div></div>
 <script>
-    const routeSource = new ol.source.Vector();
-    const routeLayer = new ol.layer.Vector({ source: routeSource });
-    // 기존 OSM을 기본값으로 유지합니다. 고해상도 지도 설정 실패 시에도 지도가 동작합니다.
-    const standardOsmSource = new ol.source.OSM();
-    const backgroundLayer = new ol.layer.Tile({ source: standardOsmSource });
-    const map = new ol.Map({
-        target: "map",
-        layers: [
-            backgroundLayer,
-            routeLayer
-        ],
-        view: new ol.View({ center: ol.proj.fromLonLat([126.9780, 37.5665]), zoom: 11 })
-    });
-
-    // 고해상도 이미지 타일은 실제 512px를 제공할 때만 tilePixelRatio 2를 사용합니다.
-    // CARTO 키는 브라우저 지도용 공개키이며 로컬 .env/CARTO 대시보드에서 관리합니다.
-    async function configureRetinaBasemap() {
-        const status = document.getElementById("mapBasemapStatus");
-        try {
-            const response = await fetch("/api/map/basemap-config");
-            if (!response.ok) throw new Error("배경 지도 설정을 읽을 수 없습니다.");
-            const config = await response.json();
-            if (config.provider !== "carto") {
-                status.textContent = "기본 OpenStreetMap 배경 지도 사용 중 · 고해상도 지도는 별도 키 설정 후 이용할 수 있습니다.";
-                return;
-            }
-            const prefix = "https://basemaps.cartocdn.com/rastertiles/voyager/";
-            if (typeof config.tile_url !== "string" ||
-                !config.tile_url.startsWith(prefix) ||
-                !config.tile_url.includes("/{z}/{x}/{y}@2x.png?key=")) {
-                throw new Error("고해상도 배경 지도 설정이 유효하지 않습니다.");
-            }
-            const retinaSource = new ol.source.XYZ({
-                url: config.tile_url,
-                tilePixelRatio: 2,
-                crossOrigin: "anonymous",
-                attributions: [
-                    '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-                    '© <a href="https://carto.com/attribution/">CARTO</a>'
-                ]
-            });
-            let fallbackApplied = false;
-            retinaSource.on("tileloaderror", function () {
-                if (fallbackApplied) return;
-                fallbackApplied = true;
-                backgroundLayer.setSource(standardOsmSource);
-                status.textContent = "고해상도 배경 지도 연결에 실패하여 기본 OpenStreetMap 지도로 돌아왔습니다.";
-            });
-            backgroundLayer.setSource(retinaSource);
-            status.textContent = "고해상도 CARTO 배경 지도 표시 중 · © OpenStreetMap contributors · © CARTO";
-        } catch (error) {
-            backgroundLayer.setSource(standardOsmSource);
-            status.textContent = "고해상도 지도 설정을 사용할 수 없어 기본 OpenStreetMap 지도를 표시합니다.";
-        }
-    }
-    configureRetinaBasemap();
-
-    function makeMarker(place, color) {
-        const feature = new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([place.longitude, place.latitude]))
-        });
-        feature.setStyle(new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 7,
-                fill: new ol.style.Fill({ color: color }),
-                stroke: new ol.style.Stroke({ color: "#ffffff", width: 2 })
-            })
-        }));
-        routeSource.addFeature(feature);
-    }
-
+    // 지도 표시 엔진만 카카오맵으로 교체합니다. 기사 연결/F23은 아래 기존 로직을 유지합니다.
+    let kakaoMap = null;
+    let displayedPolylines = [];
+    let displayedMarkers = [];
+    let mapReady = false;
     const roadColors = { 1: "#16a34a", 2: "#eab308", 3: "#dc2626" };
-    function drawRoad(road) {
-        const vertexes = road.vertexes || [];
-        const coordinates = [];
-        for (let index = 0; index + 1 < vertexes.length; index += 2) {
-            coordinates.push(ol.proj.fromLonLat([vertexes[index], vertexes[index + 1]]));
-        }
-        if (coordinates.length < 2) {
-            return;
-        }
-        const feature = new ol.Feature({ geometry: new ol.geom.LineString(coordinates) });
-        feature.setStyle(new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: roadColors[road.traffic_state] || "#64748b",
-                width: 5
-            })
-        }));
-        routeSource.addFeature(feature);
+    const mapStatus = document.getElementById("mapBasemapStatus");
+    const recovery = document.getElementById("mapRecovery");
+    document.getElementById("legacyMapLink").href =
+        "/static/legacy-map.html" + window.location.search;
+
+    function showMapError(message) {
+        mapReady = false;
+        mapStatus.textContent = message;
+        recovery.hidden = false;
     }
 
-    // F23: 뉴스 기사에서 넘어온 저장 경로를 현재 지도 조회와 구분해 표시합니다.
-    async function loadSavedArticleRouteFromUrl() {
-        const query = new URLSearchParams(window.location.search);
+    // 키가 없는 환경에서는 지도 SDK URL을 만들지 않습니다.
+    async function initializeKakaoMap() {
+        try {
+            const response = await fetch("/api/map/sdk-config", { cache: "no-store" });
+            if (!response.ok) throw new Error("카카오맵 설정 API에 연결할 수 없습니다.");
+            const config = await response.json();
+            if (config.provider !== "kakao" || typeof config.javascript_key !== "string" ||
+                !config.javascript_key.trim()) {
+                throw new Error("카카오맵 JavaScript 키가 설정되지 않았습니다.");
+            }
+            const script = document.createElement("script");
+            script.src = "https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=" +
+                encodeURIComponent(config.javascript_key);
+            script.onload = function () {
+                if (!window.kakao || !kakao.maps) {
+                    showMapError("카카오맵 SDK를 사용할 수 없습니다. 키·도메인·사용 설정을 확인하세요.");
+                    return;
+                }
+                kakao.maps.load(function () {
+                    try {
+                        kakaoMap = new kakao.maps.Map(document.getElementById("map"), {
+                            center: new kakao.maps.LatLng(37.5665, 126.9780),
+                            level: 8
+                        });
+                        kakaoMap.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+                        mapReady = true;
+                        mapStatus.textContent = "카카오맵 지도 표시 중 · 한국어 지명과 도로명";
+                        recovery.hidden = true;
+                    } catch (error) {
+                        showMapError("카카오맵을 초기화하지 못했습니다. 기존 지도를 사용해 주세요.");
+                    }
+                });
+            };
+            script.onerror = function () {
+                showMapError("카카오맵 SDK 로딩 실패: 네트워크·SDK 도메인·쿼터를 확인해 주세요.");
+            };
+            document.head.appendChild(script);
+        } catch (error) {
+            showMapError("카카오맵 연결 오류: " + error.message);
+        }
+    }
+
+    function placeLatLng(place) {
+        const latitude = Number(place.latitude);
+        const longitude = Number(place.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+            latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            throw new Error("지도에 표시할 장소 좌표가 올바르지 않습니다.");
+        }
+        return new kakao.maps.LatLng(latitude, longitude);
+    }
+
+    function clearDisplayedRoute() {
+        displayedPolylines.forEach(function (line) { line.setMap(null); });
+        displayedMarkers.forEach(function (marker) { marker.setMap(null); });
+        displayedPolylines = [];
+        displayedMarkers = [];
+    }
+
+    function makeMarker(place, color, bounds) {
+        const position = placeLatLng(place);
+        // 색상과 텍스트가 있는 커스텀 SVG 마커로 출발·도착을 구분합니다.
+        const label = color === "#2563eb" ? "출발" : "도착";
+        const safeColor = color === "#2563eb" ? "#2563eb" : "#111827";
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="52">' +
+            '<circle cx="22" cy="21" r="19" fill="' + safeColor + '" stroke="white" stroke-width="3"/>' +
+            '<text x="22" y="25" text-anchor="middle" font-size="11" font-weight="bold" fill="white">' +
+            label + '</text><path d="M15 38 L22 49 L29 38" fill="' + safeColor + '"/></svg>';
+        const imageUrl = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+        const image = new kakao.maps.MarkerImage(
+            imageUrl, new kakao.maps.Size(44, 52), { offset: new kakao.maps.Point(22, 49) }
+        );
+        const marker = new kakao.maps.Marker({ map: kakaoMap, position: position, image: image });
+        displayedMarkers.push(marker);
+        bounds.extend(position);
+    }
+
+    function drawRoad(road, bounds) {
+        const vertexes = Array.isArray(road.vertexes) ? road.vertexes : [];
+        const path = [];
+        for (let index = 0; index + 1 < vertexes.length; index += 2) {
+            const longitude = Number(vertexes[index]);
+            const latitude = Number(vertexes[index + 1]);
+            if (Number.isFinite(longitude) && Number.isFinite(latitude) &&
+                latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+                const point = new kakao.maps.LatLng(latitude, longitude);
+                path.push(point);
+                bounds.extend(point);
+            }
+        }
+        if (path.length < 2) return;
+        const polyline = new kakao.maps.Polyline({
+            map: kakaoMap,
+            path: path,
+            strokeWeight: 5,
+            strokeColor: roadColors[road.traffic_state] || "#64748b",
+            strokeOpacity: 0.9
+        });
+        displayedPolylines.push(polyline);
+    }
+
+    function drawCurrentRoute(data) {
+        if (!mapReady) throw new Error("카카오맵 준비가 완료되지 않았습니다. 기존 지도 링크를 이용할 수 있습니다.");
+        if (!Array.isArray(data.roads) || !data.origin || !data.destination) {
+            throw new Error("경로 데이터가 올바르지 않습니다.");
+        }
+        // 먼저 새 결과를 검증한 뒤 기존 오버레이를 제거해 화면 누적을 방지합니다.
+        clearDisplayedRoute();
+        const bounds = new kakao.maps.LatLngBounds();
+        data.roads.forEach(function (road) { drawRoad(road, bounds); });
+        makeMarker(data.origin, "#2563eb", bounds);
+        makeMarker(data.destination, "#111827", bounds);
+        kakaoMap.setBounds(bounds);
+    }
+
+    initializeKakaoMap();
+
+ new URLSearchParams(window.location.search);
         const articleIdText = query.get("article_id");
         const routeIndexText = query.get("route_index");
 
@@ -270,9 +306,18 @@
 
     loadSavedArticleRouteFromUrl();
 
+    document.getElementById("mapRouteForm").addEventListener("submit", async function (e    loadSavedArticleRouteFromUrl();
+
     document.getElementById("mapRouteForm").addEventListener("submit", async function (event) {
         event.preventDefault();
         const result = document.getElementById("result");
+        if (!mapReady) {
+            result.textContent = "지도 준비 중이거나 연결에 실패했습니다. 아래 기존 지도 링크를 이용하세요.";
+            recovery.hidden = false;
+            return;
+        }
+        const submitButton = document.getElementById("mapRouteSubmit");
+        submitButton.disabled = true;
         result.textContent = "경로 조회 중...";
         try {
             const params = new URLSearchParams({
@@ -284,20 +329,13 @@
             if (!response.ok) {
                 throw new Error(typeof data.detail === "string" ? data.detail : "조회 실패");
             }
-            routeSource.clear();
-            data.roads.forEach(drawRoad);
-            makeMarker(data.origin, "#2563eb");
-            makeMarker(data.destination, "#111827");
-            const extent = routeSource.getExtent();
-            if (!ol.extent.isEmpty(extent)) {
-                map.getView().fit(extent, { padding: [40, 40, 40, 40], maxZoom: 15 });
-            }
-            const minutes = data.total_duration_seconds == null ? "정보 없음" : (data.total_duration_seconds / 60).toFixed(1) + "분";
+            drawCurrentRoute(data);
+            const minutes = data.total_duration_seconds == null
+                ? "정보 없음" : (data.total_duration_seconds / 60).toFixed(1) + "분";
             result.textContent = data.origin.name + " → " + data.destination.name + " | 예상 " + minutes;
         } catch (error) {
             result.textContent = "오류: " + error.message;
+        } finally {
+            submitButton.disabled = false;
         }
     });
-</script>
-</body>
-</html>
