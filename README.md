@@ -516,13 +516,21 @@ Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클
 
 **다음 게이트:** 자동 테스트 4개 통과. 실브라우저 PC·모바일 메뉴 동작, 키보드 Tab/Enter/Escape, 지도·기존 뉴스·관리자 기능 회귀 검증 후 M01·M02 완료 처리하고 F16을 시작합니다.
 
+### 9.16 F16 줄바꿈 수정 후 7개 테스트 재검증 (2026-10-19)
+
+- 사용자가 로컬 PowerShell에서 `python -m unittest discover -s tests -p "test_news_search.py" -v`를 재실행한 결과, **7개 테스트 전부 `ok`**, 최종 `Ran 7 tests in 0.074s / OK` 확인.
+- 이전 `test_page_state_reset_code_present`의 CRLF/LF 비교 실패는 수정 후 통과함.
+- `test_database_failure_returns_503`에서 출력된 `RuntimeError: test DB error` traceback은 의도적으로 주입된 mock 예외를 로깅한 것이며 해당 검사는 `ok`. `StarletteDeprecationWarning`은 비치명적 라이브러리 경고.
+- **검증 완료:** 검색 API 기본값/검증, KST 기간, 기존 이력 API 호환, 모의 2페이지 요청 전달, 0건 화면 코드 존재 검사.
+- **미검증:** 페이지 이동의 실제 브라우저 DOM 동작(현재 저장 기사 5건으로 2페이지 생성 불가), 모바일 입력 배치, 관리자 저장·기존 지도 전체 회귀 및 배포 테스트. 기존 Supabase 데이터 추가 없이 별도 모의 데이터 검사를 계획.
+
 ### 9.15 F16 Windows 줄바꿈 환경 테스트 수정 (2026-10-19)
 
 - 사용자 로컬 `test_news_search.py` 실행 결과: **7개 중 6개 통과, 1개 실패**. 실패 테스트는 `test_page_state_reset_code_present`.
 - 원인: 웹 응답의 Windows `CRLF (\r\n)` 줄바꿈과 테스트에서 문자열로 기대한 `LF (\n)`가 달라 `assertIn`이 실패함. 응답에는 `historyList.replaceChildren();` 및 `currentNewsPage = 0;` 코드가 모두 존재함.
 - 해결: 테스트의 단순 문자열 비교를 줄바꿈·들여쓰기 차이를 허용하는 `assertRegex`로 변경함. **뉴스 HTML·검색 API·DB는 변경하지 않음.**
 - `test_database_failure_returns_503`에서 출력되는 `RuntimeError: test DB error`의 traceback은 오류 로깅을 확인하기 위한 의도된 가짜 DB 예외로 테스트는 `ok`.
-- 변경 반영 후 7개 전부 통과 여부를 사용자 로컬에서 **재실행 필요**. 재검증 전까지 F16 전체 통과로 표시하지 않음.
+- 변경 반영 후 7개 전부 통과 여부를 사용자 로컬에서 **재실행 필요**. 7개 전체 재검증 통과함. 단, 브라우저 다중 페이지와 운영 회귀는 별도 검증 대상.
 
 ### 9.14 F16 날짜 역전 검사 및 페이지 상태 UI 보완 명세 (2026-10-19)
 
