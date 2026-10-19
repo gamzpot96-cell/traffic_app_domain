@@ -1399,6 +1399,15 @@ git pull origin kakao
 - **상태:** 수정 계획 작성, 코드 적용 및 실사용 검증 대기.
 
 
+### 12.28 D01 홈페이지 레이아웃 개선 1차 코드 반영 (2026-10-19)
+
+- **코드 변경:** `traffic-api/static/index.html`에 홈 전용 `.home-hero` 남색 소개 헤더, `.home-main` 반응형 그리드, `.home-search` 검색 우선 카드 스타일 추가. 데스크톱에서 경로 요약과 단일 경로 브리핑은 2열, 상세 구간 표와 주요 3경로 브리핑은 전체 폭. 850px 이하에서 단일 열, 600px 이하에서는 폼 버튼 100% 너비 및 기존 표 영역 내부 스크롤 유지.
+- 기존 `routeForm`, `origin`, `destination`, `summary`, `roadRows`, `briefingContent`, `overviewButton`, `overviewTableBody`, `overviewBriefingText` 등 기존 ID와 전체 API 호출 JS는 수정하지 않음. 새 수치/뉴스 사진/실시간 전체 서울 정보는 추가하지 않음.
+- `tests/test_navigation.py`에 `test_d01_home_layout_keeps_existing_query_and_briefing` 1개 추가해 신규 반응형 화면 구조와 기존 검색/브리핑 ID 보존을 확인. **예상 전체 40개 테스트, 사용자 Windows 실행은 아직 안 했으므로 통과로 표시하지 않음.**
+- 서버 API, Supabase 데이터, 관리자 인증, 외부 라이브러리/환경변수/지도 경로 관련 변경 없음. 변경은 GitHub `kakao` 브랜치에만 반영.
+- **다음 검증:** 사용자 `git pull origin kakao` 후 전체 40개 unittest 실행, PC 홈 `/` 화면 캡처 확인, 경로 조회 및 3경로 종합 조회 기능·모바일 배치 확인 후 D01 뉴스 화면 디자인 단계로 진행.
+- **상태:** 🟡 홈페이지 디자인 코드 반영 완료, 로컬 실행·브라우저 회귀 검증 대기.
+
 ### 12.27 D01 홈페이지 레이아웃 개선 1차 구현 설계 (2026-10-19)
 
 - **디자인 목표:** `/` 홈의 검색을 가장 우선 보이는 전체 폭 히어로 검색 카드로 배치하고, 경로 요약·단일 경로 브리핑을 데스크톱 2열 카드로 나란히 표시. 상세 도로 구간 표와 3경로 종합 브리핑은 전체 폭의 하위 섹션으로 구분.
