@@ -96,6 +96,21 @@ def basemap_config():
     }
 
 
+# 카카오맵 JavaScript SDK 플랫폼 키: 브라우저에 공개되는 용도의 키만 반환합니다.
+# 기존 REST API/Supabase 키는 브라우저로 전달하지 않습니다.
+@app.get("/api/map/sdk-config")
+def kakao_map_sdk_config():
+    from fastapi.responses import JSONResponse
+
+    key = os.getenv("KAKAO_MAP_JS_KEY", "").strip()
+    if not key or len(key) > 256 or any(ord(char) < 33 for char in key):
+        return JSONResponse({"provider": "unconfigured"}, headers={"Cache-Control": "no-store"})
+    return JSONResponse(
+        {"provider": "kakao", "javascript_key": key},
+        headers={"Cache-Control": "no-store"}
+    )
+
+
 # 자동차 경로 및 교통 브리핑 조회
 @app.get("/api/route")
 async def route_search(
