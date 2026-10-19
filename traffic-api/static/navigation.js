@@ -20,9 +20,9 @@
             name: "분석·통계",
             items: [
                 {name: "경로별 비교 현황", href: "/news#trafficDashboard"},
-                {name: "시간대별 교통 추세", planned: true},
+                {name: "날짜·시간대별 교통 변화", href: "/news#trafficTrends"},
                 {name: "일별·주별 비교", planned: true},
-                {name: "CSV 다운로드", planned: true}
+                {name: "교통정보 CSV 다운로드", href: "/news#trafficExport"}
             ]
         },
         {
@@ -30,7 +30,7 @@
             items: [
                 {name: "최신 교통 뉴스", href: "/news"},
                 {name: "저장된 기사 아카이브", href: "/news#historySection"},
-                {name: "기사 검색·기간 필터", planned: true},
+                {name: "기사 검색·기간 필터", href: "/news#historySection"},
                 {name: "기사 공유·읽기 모드", planned: true}
             ]
         },
