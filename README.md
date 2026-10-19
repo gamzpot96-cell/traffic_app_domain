@@ -1544,3 +1544,15 @@ git pull origin kakao
 - 1차 개선 제안: OpenLayers 지도 엔진·Kakao 경로 API·마커·교통 상태별 선·과거 기사 저장 정보·DB는 유지하고, **고해상도(Retina) 배경 타일 제공 방식만 변경**하는 별도 소규모 수정. 외부 지도 서비스의 키, 속도/요금·사용 조건을 먼저 검토하고 제공자 변경 여부에 대한 사용자 승인 확보.
 - 단순 CSS `filter:contrast(...)`/ `image-rendering:pixelated`나 DPR 강제는 실제 원본 해상도를 높이지 않으므로 핵심 수정으로 채택하지 않음.
 - **상태:** 현상 재현 및 원인 후보 분석 완료, 지도 배경 공급자 변경 및 코드 적용 승인 대기. D01 지도 기존 기능 및 42개 자동 회귀는 마지막 확인 상태 유지.
+
+### 12.44 승인된 HiDPI 지도 배경 전환 상세 계약 (2026-10-19)
+
+- **사용자 승인:** 기존 흐릿한 OSM 배경을 지원되는 **고해상도 타일**로 개선하는 변경을 명시적으로 승인함.
+- **2026-09-29 CARTO Basemaps 조건 확인:** 현재 무료 비상업 용도(월 5백만 타일 호출 이하)에서도 **CARTO가 발급한 API 키 필요**, 지도 내 **© OpenStreetMap contributors, © CARTO** 표시 필요. 상업 용도와 호스팅 서비스에는 제공자의 별도 한도/조건이 적용되며, 키 없는 CARTO 타일 URL의 무단 사용이나 워터마크 우회는 금지. 공식 안내 https://carto.com/legal/basemap-terms/index.html 및 https://www.carto.com/basemaps/apikey/index.html 참고.
+- **기술 선택:** 기존 OpenLayers 6.9.0 엔진과 `ol.source.OSM()` 기본 지도를 그대로 둔 상태에서, 배경 레이어만 `ol.source.XYZ`로 교체할 수 있도록 한다. 선택적 `CARTO_BASEMAP_KEY` 환경변수가 설정돼 있으면 실제 제공되는 `rastertiles/voyager/{z}/{x}/{y}@2x.png`(512px 영상)과 `tilePixelRatio: 2`를 결합. OSM/CARTO 양쪽 출처를 OpenLayers attribution에 표시. 키 없거나 초기 설정 요청 실패 또는 고해상도 타일 로드 실패 시 **기존 OSM**으로 자동/기본 복귀.
+- **키 전달:** 새 읽기전용 FastAPI `GET /api/map/basemap-config`는 키 유무에 따라 `{provider:'osm'}` 또는 `{provider:'carto',tile_url:'https://...@2x.png?key=...'}`를 반환. 제공자의 브라우저 타일 API는 **클라이언트에서 키가 노출되는 공개용 브라우저 키**이므로 CARTO 대시보드에서 사용할 도메인 제한을 권장하며, 서버 비밀키(Kakao/Supabase 등)는 절대로 반환하지 않음. `CARTO_BASEMAP_KEY`는 사용자 로컬 `.env`와 배포 환경변수에만 보관하고 GitHub/README에 값 복사 금지.
+- **유지:** `routeSource`·`routeLayer`, 도로 상태별 색상, 마커·경로 fit, F23 `article_id`/`route_index`, 뉴스 복귀 링크, 현재 경로 수동 조회, DB·Supabase·인증은 불변.
+- **변경 예정:** `app/main.py` 설정 API, `static/map.html` OSM 기본→선택적 retina 배경 교체 및 상태 문구, 새 `tests/test_basemap_config.py` 검증, README 기록. 사용자 키 발급/등록 전에는 실제 retina 표시를 검증 완료로 선언하지 않음.
+- **테스트 계획:** 키 없음 OSM 정상, 키 있을 때 URL·attribution·2x 선택, 키에 다른 비밀정보 미포함, 지도 구조/JS 보존, 타일 오류 fallback, 기존 전체 42개 회귀. 타일 서비스 실제 선명도는 사용자가 키 설정 후 Chrome에서 캡처로 검증.
+- **상태:** 사용자 승인 및 공식 사용조건 재검증 완료, 구현 착수.
+
