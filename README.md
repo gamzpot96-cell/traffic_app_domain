@@ -1881,3 +1881,11 @@ git pull origin kakao
 - **접근성 주의:** 입력란은 마우스 포커스와 키보드 포커스 모두에서 공통 주황색 외곽선이 사라질 수 있으며, 기존 테두리만으로 키보드 사용자가 현재 위치를 충분히 구분하기 어려울 수 있음. 요청에 따라 외곽선을 없애되 키보드 접근성 손실을 실제 Tab 검증에서 명확히 알리고, 추가 대체 표시가 필요하면 **별도 설계·승인**을 받는다. 순수 CSS `:focus-visible`만으로 텍스트 입력의 마우스 클릭/키보드 이동을 항상 정확하게 구분한다고 주장하지 않는다.
 - **승인 후 테스트 계획:** (1) `kakao` 브랜치 확인, (2) 공통 CSS의 선택자·다른 버튼/링크/메뉴 포커스 보존에 대한 정적 회귀검사 추가 또는 기존 테스트 확대, (3) 사용자 Windows PowerShell 전체 `unittest discover -s tests -p "test_*.py" -v` 재실행 (직전 59개 합격 기록을 새 결과로 간주하지 않음), (4) Chrome `/map` 출발지·목적지 입력창 마우스 클릭에서 주황색 외곽선 소멸 확인, (5) Tab 이동 시 입력창과 버튼의 초점 식별 가능 여부, `/admin` 로그인 입력창, 모바일 레이아웃, Console 확인, (6) 결과를 루트 README에 추가 기록.
 - **금지:** `main` 브랜치 변경, API/DB/스키마/인증/저장 절차 및 환경 키 수정, 기사 자동 생성·저장, 불필요한 전체 CSS 재작성.
+
+### 14.12 D01 입력창 주황색 포커스 외곽선 제거 코드 반영 (2026-10-19)
+
+- **승인:** 사용자가 14.11 설계를 확인한 뒤 CSS 수정·커밋·푸시를 명시적으로 요청함. 작업 브랜치는 **`kakao`**.
+- **실제 수정:** `traffic-api/static/design-system.css`의 공통 포커스 선택자 `:where(button, input, select, textarea, a):focus-visible`을 `:where(button, a):focus-visible`로 제한. 입력·선택 컨트롤에서 공통 주황색 아웃라인을 제외하고, 버튼/링크의 기존 주황색 포커스 규칙은 유지. 새 파란색 테두리나 `outline:none` 강제 규칙은 추가하지 않음. 일부 입력창에는 브라우저 기본 아웃라인 등이 남을 수 있으므로 실제 Chrome 확인 필요.
+- **테스트 추가:** `traffic-api/tests/test_navigation.py`에 `test_d01_form_fields_do_not_receive_orange_outline`을 추가하여 공통 포커스 선택자와 공유 메뉴 키보드 포커스 규칙 보존을 검증. 전체 테스트는 기존 59개에서 **60개 예상**이나, 사용자 Windows 환경에서 아직 실행하지 않았으므로 통과를 단정하지 않음.
+- **GitHub 커밋:** CSS `1069602`, 테스트 `fad7864`. GitHub `kakao`에서 두 파일을 다시 읽어 수정된 선택자와 신규 테스트 함수가 있음을 확인함. 서버 코드/관리자 인증/뉴스 저장/DB/`.env`/`main` 브랜치 변경 없음.
+- **다음 사용자 검증:** `git pull origin kakao` → `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` (실제 결과 확인) → Chrome `/map`에서 출발지 입력창 클릭 후 주황색 외곽선 유무 확인 → 필요시 Tab/관리자 입력 화면 확인. 실제 웹 UI와 키보드 접근성 판정은 사용자 캡처 후 README에 기록.
