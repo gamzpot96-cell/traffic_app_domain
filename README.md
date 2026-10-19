@@ -1260,6 +1260,14 @@ git pull origin kakao
 
 통과 후 `/news`에서 저장된 경로를 선택해 다운로드한 CSV를 Excel/텍스트 편집기로 확인하고 DB 건수를 재검증해야 함. 사용자 승인 없이 DB 쓰기나 F17/D01 전체 코드 적용을 테스트 완료로 선언하지 않음.
 
+### 12.17 F17 Windows 로컬 자동 테스트 7개 통과 (2026-10-19)
+
+- 사용자 PowerShell에서 `python -m unittest discover -s tests -p "test_traffic_history.py" -v` 실행 결과 **7개 테스트 모두 `ok`**, 최종 `Ran 7 tests in 0.160s / OK` 확인.
+- 검증: 빈 기록 처리, 초과 건수 및 DB 오류 422/503, 그래프·수치표 HTML 요소, 입력 유효성, KST 날짜 포함 조회, 100/500개 제한, DB SQL SELECT 및 파라미터 바인딩·시간 정렬.
+- `RuntimeError: secret DB` traceback은 `test_excess_records_and_system_errors`가 의도적으로 mock 예외를 만들어 내부 오류가 API 응답에 노출되지 않는지 확인한 것으로 해당 테스트 `ok`. StarletteDeprecationWarning 또한 비치명적 경고.
+- **상태:** F17 자동 테스트 7/7 통과; 실제 `/news` 브라우저에서 선택 경로의 5개 시점 점 그래프·표, 소요시간↔비율 전환, 날짜 필터/빈 결과, 모바일 화면 및 전체 회귀 테스트는 아직 검증 전. DB·기존 페이지 수정은 이번 기록에 없음.
+- **다음 확인:** 사용자 브라우저 `/news`에서 '서울역 → 잠실역 2호선' 선택 → '변화 조회' → '저장된 조회 시점 5건 표시' 메시지·그래프·수치표 확인.
+
 ### 12.16 F17 저장된 조회 시점별 교통 변화 그래프 1차 구현 (2026-10-19)
 
 - **기존 통합 설계 12장 승인 범위 구현.** 이번 변경 파일: `traffic-api/app/traffic_export.py`(경로별 기록 SELECT), `app/main.py`(읽기 전용 GET), `static/news.html`(차트/기간/경로/지표 UI), `tests/test_traffic_history.py`(신규 7개 자동 검사).
