@@ -1905,3 +1905,11 @@ git pull origin kakao
 - **사용자 승인 대기 보완안:** `static/design-system.css`에서 `:where(input, textarea, select):focus { outline: none; }` 추가로 폼 컨트롤의 포커스 시 브라우저 기본 외곽선을 제거. 기존 페이지에서 지정한 `border`는 유지. 버튼/링크의 기존 `:focus-visible` 강조와 내비게이션 포커스 강조는 손대지 않음. 전역 폼 포커스 표시가 사라지는 키보드 접근성 단점이 있으므로 별도 피드백 필요하면 별도 설계·승인.
 - **예정 검증:** 관련 테스트를 수정해 `outline: none` 범위가 폼 컨트롤로 한정됨을 확인, 전체 Windows 단위 테스트 실행, Chrome `/map` 출발지/목적지 마우스 포커스/Tab 포커스 및 `/admin` 입력창 확인. **스크린샷 검증 성공 전에는 해결 완료로 간주하지 않음.**
 - **현 단계:** README 기록만 추가. CSS, 테스트, 인증, DB, Kakao API, 저장 기능은 변경하지 않음. `main` 제외, `kakao` 브랜치만 사용.
+
+### 14.15 D01 검은 기본 포커스 외곽선 보완 반영 (2026-10-19)
+
+- **사용자 지시:** 이전에 승인된 입력창 포커스 외곽선 제거 작업의 후속 수정은 별도 승인 질문 없이 자동으로 커밋·푸시하도록 요청. 기존 범위(입력창 테두리 및 회귀 검증)에 한정하며 새 기능·DB·인증 변경은 포함하지 않음.
+- **실제 보완:** `traffic-api/static/design-system.css`에 `:where(input, textarea, select):focus { outline: none; }` 추가. Chrome에서 보였던 기본 검은 포커스 외곽선을 폼 컨트롤에 한정해 없앰. 별도 `border` 색상 변경 없음; `:where(button, a):focus-visible`과 공통 내비게이션 접근성 규칙은 유지.
+- **회귀 테스트 보강:** `traffic-api/tests/test_navigation.py`의 `test_d01_form_fields_do_not_receive_orange_outline`에 폼 컨트롤 한정 `outline: none` 규칙과 버튼 포커스 규칙 보존 검증을 추가. 기존 테스트 개수는 **60개 예상**이며 로컬 Windows 전체 테스트 실행 전이라 합격 여부 미확인.
+- **GitHub kakao 반영:** CSS `3904f44`, 테스트 `97b419a`; 루트 README에 반영 이력 기록. `main`, API, DB, 관리자 인증, 뉴스 생성·저장은 변경하지 않음.
+- **검증 대기:** Windows에서 `git pull origin kakao`, 전체 60개 자동 테스트, Chrome 강력 새로고침 후 `/map` 입력창 클릭 시 검은/주황 외곽선이 모두 없는지 스크린샷 확인. Tab 이동 시 입력창 시각적 포커스 구분이 사라지는 접근성 단점이 있어 별도 디자인 검토 필요. 실제 Chrome 검증 전 완료 판정 금지.
