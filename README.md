@@ -1897,3 +1897,11 @@ git pull origin kakao
 - 로그의 `RuntimeError: test DB error`, `private DB detail`, `secret DB`는 의도적인 예외 처리 테스트에서 출력되며 최종 결과는 모두 `ok`. `StarletteDeprecationWarning`은 비치명적 의존성 경고.
 - **검증 한계:** 이 테스트는 CSS 선택자 및 서버·정적 응답 회귀를 확인할 뿐, Chrome의 실제 입력창 포커스 테두리 상태나 Tab 키보드 접근성을 검증하지 않음. 실제 Chrome `/map` 출발지·목적지 입력창 클릭 및 `/admin` 입력창, Tab 이동 시 초점 식별 가능성 확인 대기.
 - 이 단계에서 기사 생성·저장, DB 변경, 관리자 설정 수정 없음.
+
+### 14.14 D01 Chrome 검증: 기본 검은 포커스 외곽선 잔존 — 보완 설계 (2026-10-19)
+
+- **사용자 Chrome 실제 화면:** `/map` 목적지 '용산역' 입력창에 포커스가 있는 상태에서 검은색 테두리가 보임. 출발지 '중각역' 입력창은 기존 연회색 테두리. 주황색 D01 3px 외곽선은 사라졌지만 요구한 '포커스 때 추가 외곽선 없음'은 미달. 실제 화면 검증은 **미통과**.
+- **진단:** `static/design-system.css`에서 공통 `input`의 `:focus-visible` 규칙을 제외했으나 브라우저 기본 `outline`이 적용될 수 있음. `static/map.html`에는 기존 `input { border:1px solid #cbd5e1; ... }`, `.map-controls input { ... }`이 있으며, 현재 공통 CSS에는 폼 컨트롤의 기본 `outline`을 명시적으로 제거한 규칙이 없음.
+- **사용자 승인 대기 보완안:** `static/design-system.css`에서 `:where(input, textarea, select):focus { outline: none; }` 추가로 폼 컨트롤의 포커스 시 브라우저 기본 외곽선을 제거. 기존 페이지에서 지정한 `border`는 유지. 버튼/링크의 기존 `:focus-visible` 강조와 내비게이션 포커스 강조는 손대지 않음. 전역 폼 포커스 표시가 사라지는 키보드 접근성 단점이 있으므로 별도 피드백 필요하면 별도 설계·승인.
+- **예정 검증:** 관련 테스트를 수정해 `outline: none` 범위가 폼 컨트롤로 한정됨을 확인, 전체 Windows 단위 테스트 실행, Chrome `/map` 출발지/목적지 마우스 포커스/Tab 포커스 및 `/admin` 입력창 확인. **스크린샷 검증 성공 전에는 해결 완료로 간주하지 않음.**
+- **현 단계:** README 기록만 추가. CSS, 테스트, 인증, DB, Kakao API, 저장 기능은 변경하지 않음. `main` 제외, `kakao` 브랜치만 사용.
