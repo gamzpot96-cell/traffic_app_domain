@@ -39,6 +39,29 @@ class SharedNavigationTests(unittest.TestCase):
         self.assertIn('id="historySection"', response.text)
         self.assertIn('id="trafficDashboard"', response.text)
 
+    def test_d01_design_css_and_four_pages(self):
+        asset = self.client.get("/static/design-system.css")
+        self.assertEqual(asset.status_code, 200)
+        for token in ("--d01-navy", "--d01-blue", "--d01-border"):
+            self.assertIn(token, asset.text)
+        for route in ("/", "/news", "/map", "/admin"):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('/static/design-system.css', response.text)
+
+    def test_d01_menu_links_refer_to_implemented_features(self):
+        navigation = self.client.get("/static/navigation.js")
+        self.assertEqual(navigation.status_code, 200)
+        for fragment in (
+            '/news#trafficTrends', '/news#trafficExport',
+            '/news#historySection'
+        ):
+            self.assertIn(fragment, navigation.text)
+        news = self.client.get("/news")
+        for target in ('id="trafficTrends"', 'id="trafficExport"', 'id="historySection"'):
+            self.assertIn(target, news.text)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
