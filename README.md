@@ -36,6 +36,8 @@
 | 2026-10-19 | 다음 기능 설계 수정 v2 | 실제 메뉴 우선·정적 파일 라우팅·단계별 개발·KST 검색 조건 보완 | 문서 승인됨 |
 | 2026-10-19 | M01·M02 구현 | 공통 CSS/JS, 4개 페이지 연결, StaticFiles 정적 라우팅, 회귀 검사 코드 추가 | GitHub 구현 완료, 로컬 테스트 대기; F16 미착수 |
 | 2026-10-19 | M01·M02 테스트 결과 | 사용자 PowerShell에서 test_navigation.py 테스트 4개 모두 ok. StarletteDeprecationWarning 안내 | 브라우저 UI/실기능 회귀는 추가 확인 필요 |
+| 2026-10-19 | M01·M02 화면 확인 | PC 메뉴·하위 메뉴·기존 경로 기능 사용자 확인, 모바일 400px 화면의 메뉴 열림 스크린샷 검토 | 모바일 하위 메뉴·키보드·배포 점검 남음 |
+| 2026-10-19 | F16 검색 구현 | 읽기 전용 검색 SQL/API, /news 검색·조회 날짜·페이지 이동 및 테스트 추가 | 로컬 단위/브라우저 테스트 대기, DB 변경 없음 |
 | 추후 | 예정 | 관리자 전용 뉴스 저장 API, 중복 방지, 웹 UI 연결 | 사용자 승인 후 진행 |
 
 ## 1. 서비스 개요
@@ -476,7 +478,7 @@ py -m venv .venv
 - **2단계 F16:** 새 검색 SQL/API와 /news 검색 UI를 구현한 뒤 필터·KST 날짜 경계·페이지 이동·결과 상세 조회를 테스트합니다.
 - 두 단계를 나눠 커밋하고 각각 최상위 README의 기능 상태·검증 결과를 갱신합니다. Vercel Preview는 배포 시 별도 검증합니다.
 
-**v2 설계 승인됨:** M01·M02 코드를 kakao 브랜치에 적용했습니다. F16은 메뉴 검사 완료 전까지 미착수입니다.
+**v2 설계 승인됨:** M01·M02 PC·모바일 메뉴 표시 확인 및 자동 테스트 통과 후 F16 코드를 kakao 브랜치에 반영했습니다. F16 로컬 테스트와 전체 회귀 검증은 대기 중입니다.
 
 ### 9.9 M01·M02 PC/모바일 화면 확인 및 F16 구현 착수 기준 (2026-10-19)
 
@@ -513,6 +515,30 @@ git pull origin kakao
 Uvicorn 서버 실행 후 `/`, `/map`, `/news`, `/admin`에서 상단 메뉴 클릭, 모바일 폭에서 햄버거 메뉴, 키보드 Tab/Enter/Escape, '준비 중' 항목의 링크 없음, 기사 생성·저장 및 지도 동작을 확인합니다. 정적 파일 `/static/navigation.css`, `/static/navigation.js`가 HTTP 200인지 확인하며 Vercel 배포 검사는 별도로 기록합니다.
 
 **다음 게이트:** 자동 테스트 4개 통과. 실브라우저 PC·모바일 메뉴 동작, 키보드 Tab/Enter/Escape, 지도·기존 뉴스·관리자 기능 회귀 검증 후 M01·M02 완료 처리하고 F16을 시작합니다.
+
+### 9.10 F16 승인된 범위 코드 반영 및 로컬 테스트 대기 (2026-10-19)
+
+**구현 상태: 🟡 GitHub 코드 반영, 사용자 로컬 테스트/브라우저 검증 대기.** 수정 설계 v2 사용자 승인 범위 이내이며 신규 DB 마이그레이션은 수행하지 않았습니다.
+
+| 대상 | 반영 내용 |
+|---|---|
+| `traffic-api/app/news_database.py` | `search_saved_news_articles`: DB 읽기 전용, 제목·리드 키워드 일반 문자열 검색, 조회 시각 조건, COUNT/정렬/페이지 |
+| `traffic-api/app/main.py` | 새 `GET /api/news/search`: KST 날짜 경계, 값 검증(422), DB 장애 응답(503) |
+| `traffic-api/static/news.html` | 기사 검색, 조회일 범위, 10/20/50건 선택, 이전·다음, 기존 기사 상세 보기 |
+| `traffic-api/tests/test_news_search.py` | 기본값·KST 날짜 종료 포함·입력값 거부·DB 장애·기존 이력 API 호환 테스트 |
+| DB | 테이블·컬럼·인덱스·RLS·기존 기사·경로·ITS 레거시 데이터 변경 없음 |
+| 개발환경 | 신규 패키지·환경변수 없음 |
+
+**로컬 테스트 명령:** `traffic-api` 작업 디렉터리에서 변경 사항을 확인한 뒤 `git pull origin kakao` 수행.
+
+```powershell
+.\.venv\Scripts\python.exe -m py_compile app/main.py app/news_database.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_news_search.py" -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_navigation.py" -v
+```
+
+**추가 확인(실제 데이터):** 서버 기동 후 `http://127.0.0.1:8000/news`에서 전체 검색, 일부 키워드, KST 조회일자, 기간 역전, 페이지 이동, 기사 읽기를 확인. `/api/news/history`와 관리자 저장 기능 유지 및 DB 행 수 변화 없음 검증. 동시 검색 요청·배포 환경·운영 부하 검사는 추가로 확인할 수 있습니다.
+
 
 ## 8. 다음 구현 전 승인 체크리스트
 
