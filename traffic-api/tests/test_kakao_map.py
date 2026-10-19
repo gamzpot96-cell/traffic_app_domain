@@ -99,6 +99,15 @@ class KakaoMapTests(unittest.TestCase):
         self.assertIn("initializeKakaoMap();", source.split("</script>")[-2])
         self.assertIn("loadSavedArticleRouteFromUrl();", source.split("</script>")[-2])
 
+    def test_map_html_tags_close_correctly(self):
+        """카카오맵 인라인 JS가 끝나고 HTML 문서가 정상 종료되어야 합니다."""
+        source = self.client.get("/map").text
+        self.assertEqual(source.count("<script"), source.count("</script>"))
+        self.assertEqual(source.count("</body>"), 1)
+        self.assertEqual(source.count("</html>"), 1)
+        self.assertTrue(source.rstrip().endswith("</script>\n</body>\n</html>") or
+                        source.rstrip().replace("\r\n", "\n").endswith("</script>\n</body>\n</html>"))
+
     def test_legacy_map_still_accessible(self):
         response = self.client.get("/static/legacy-map.html?article_id=8&route_index=0")
         self.assertEqual(response.status_code, 200)
