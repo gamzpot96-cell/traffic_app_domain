@@ -16,7 +16,7 @@ from datetime import datetime, date, time, timedelta
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.responses import FileResponse, Response
-from app.traffic_export import get_export_route_options, get_export_rows, encode_csv
+from app.traffic_export import get_export_route_options, get_export_rows, get_route_history, encode_csv
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -266,6 +266,46 @@ def search_news(
     except Exception:
         logger.exception("저장된 뉴스 검색 실패")
         raise HTTPException(status_code=503, detail="뉴스 검색 중 오류가 발생했습니다.")
+
+
+# F17: 선택한 경로의 실제 저장 조회 시점을 조회합니다(보간·집계 없음).
+@app.get("/api/traffic/history")
+def get_traffic_history(
+    origin: str = Query(..., min_length=2, max_length=100),
+    destination: str = Query(..., min_length=2, max_length=100),
+    start_date: date | None = None,
+    end_date: date | None = None,
+    limit: int = Query(100, ge=1, le=500)
+):
+    origin = origin.strip()
+    destination = destination.strip()
+    if not origin or not destination:
+        raise HTTPException(status_code=422, detail="출발지와 목적지를 선택하세요.")
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="시작일은 종료일보다 늦을 수 없습니다.")
+    korea = ZoneInfo("Asia/Seoul")
+    start_time = datetime.combine(start_date, time.min, tzinfo=korea) if start_date else None
+    try:
+        end_time = (
+            datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=korea)
+            if end_date else None
+        )
+    except OverflowError:
+        raise HTTPException(status_code=422, detail="종료 날짜를 처리할 수 없습니다.")
+    try:
+        records = get_route_history(origin, destination, start_time, end_time, limit)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except Exception:
+        logger.exception("교통정보 조회 시점 기록 검색 실패")
+        raise HTTPException(status_code=503, detail="저장된 경로 기록을 불러오지 못했습니다.")
+    return {
+        "origin": origin,
+        "destination": destination,
+        "count": len(records),
+        "retrieval_scope": "saved_route_snapshots",
+        "records": records
+    }
 
 
 # F22: 저장된 경로 내보내기 옵션 목록 (읽기 전용)
