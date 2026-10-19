@@ -119,7 +119,7 @@ class SharedNavigationTests(unittest.TestCase):
             'id="savedArticlePanel"', 'id="savedArticleTitle"',
             'id="mapArticleStatus"', 'id="mapRouteForm"',
             'id="origin"', 'id="destination"', 'id="mapRouteSubmit"',
-            'id="result"', 'routeSource', 'loadSavedArticleRouteFromUrl()',
+            'id="result"', 'drawCurrentRoute(data)', 'loadSavedArticleRouteFromUrl()',
             '@media (max-width: 850px)', '@media (max-width: 600px)'
         ):
             with self.subTest(required=required):
