@@ -1,14 +1,14 @@
 /* M01/M02 공통 메뉴: 기존 페이지 CSS와 충돌하지 않도록 site-nav 범위만 사용 */
-.site-nav{position:relative;z-index:1000;background:#182437;color:#fff;font-family:Arial,"Malgun Gothic",sans-serif}
+.site-nav{position:relative;z-index:1000;background:#13243b;color:#fff;font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;border-bottom:1px solid #31465e}
 .site-nav *{box-sizing:border-box}
-.site-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:11px 18px}
-.site-nav-brand{color:white!important;font-weight:700;text-decoration:none;font-size:16px;white-space:nowrap}
+.site-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:22px;padding:14px 18px}
+.site-nav-brand{color:white!important;font-weight:700;text-decoration:none;font-size:18px;letter-spacing:-.4px;white-space:nowrap}
 .site-nav-brand:focus-visible,.site-nav button:focus-visible,.site-nav a:focus-visible{outline:3px solid #facc15;outline-offset:3px}
-.site-nav-toggle{display:none!important;background:#34465e!important;color:white!important;border:1px solid #64748b!important;border-radius:7px!important;padding:9px 12px!important;margin:0!important;width:auto!important;font-size:14px!important;cursor:pointer}
+.site-nav-toggle{display:none!important;background:#25405d!important;color:white!important;border:1px solid #64748b!important;border-radius:7px!important;padding:9px 12px!important;margin:0!important;width:auto!important;font-size:14px!important;cursor:pointer}
 .site-nav-groups{display:flex;align-items:center;gap:5px;margin-left:auto}
 .site-nav-group{position:relative}
 .site-nav-trigger{display:flex!important;align-items:center;gap:7px;background:transparent!important;color:white!important;border:0!important;border-radius:7px!important;padding:10px 11px!important;margin:0!important;width:auto!important;white-space:nowrap;font-size:14px!important;cursor:pointer}
-.site-nav-trigger:hover,.site-nav-trigger[aria-expanded="true"],.site-nav-trigger.site-nav-current{background:#34465e!important}
+.site-nav-trigger:hover,.site-nav-trigger[aria-expanded="true"],.site-nav-trigger.site-nav-current{background:#25405d!important}
 .site-nav-panel{position:absolute;top:100%;left:0;min-width:235px;max-width:310px;background:#fff;color:#172033;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 8px 25px #18243724;padding:8px;list-style:none;margin:4px 0 0}
 .site-nav-panel[hidden],.site-nav-groups[hidden]{display:none!important}
 .site-nav-item a,.site-nav-coming{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:6px;font-size:14px;line-height:1.4}
@@ -26,3 +26,13 @@
   .site-nav-panel{position:static;min-width:0;max-width:none;width:100%;margin:0 0 7px;box-shadow:none}
 }
 @media(min-width:851px){.site-nav-groups{display:flex!important}}
+
+/* D01-A: approved shared visual tokens; strictly scoped to the navigation component. */
+.site-nav { --d01-navy:#13243b; --d01-blue:#2463eb; --d01-teal:#087e8b; --d01-border:#dee6f0; --d01-text:#17253a; --d01-muted:#52647a; }
+.site-nav-trigger { min-height:43px; font-weight:600; transition:background-color .15s ease; }
+.site-nav-panel { border-color:var(--d01-border);box-shadow:0 12px 30px #13243b24; }
+.site-nav-item a { min-height:42px; }
+.site-nav-item a:hover,.site-nav-item a[aria-current="page"] { background:#edf4ff;color:#1d4ed8!important; }
+.site-nav-brand:hover { color:#dbeafe!important; }
+.site-nav-trigger:focus-visible,.site-nav-toggle:focus-visible,.site-nav-item a:focus-visible { outline:3px solid #facc15;outline-offset:2px; }
+@media (prefers-reduced-motion:reduce) { .site-nav-trigger { transition:none; } }
