@@ -8,12 +8,12 @@
 .site-nav-groups{display:flex;align-items:center;gap:5px;margin-left:auto}
 .site-nav-group{position:relative}
 .site-nav-trigger{display:flex!important;align-items:center;gap:7px;background:transparent!important;color:white!important;border:0!important;border-radius:7px!important;padding:10px 11px!important;margin:0!important;width:auto!important;white-space:nowrap;font-size:14px!important;cursor:pointer}
-.site-nav-trigger:hover,.site-nav-trigger[aria-expanded="true"],.site-nav-trigger.site-nav-current{background:#25405d!important}
+.site-nav-trigger:hover{background:#25405d!important}
 .site-nav-panel{position:absolute;top:100%;left:0;min-width:235px;max-width:310px;background:#fff;color:#172033;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 8px 25px #18243724;padding:8px;list-style:none;margin:4px 0 0}
 .site-nav-panel[hidden],.site-nav-groups[hidden]{display:none!important}
 .site-nav-item a,.site-nav-coming{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:6px;font-size:14px;line-height:1.4}
 .site-nav-item a{color:#1e293b!important;text-decoration:none}
-.site-nav-item a:hover,.site-nav-item a[aria-current="page"]{background:#eff6ff;color:#1d4ed8!important;font-weight:600}
+.site-nav-item a:hover{background:#eff6ff;color:#1d4ed8!important;font-weight:600}
 .site-nav-coming{color:#64748b}
 .site-nav-label{font-size:11px;color:#64748b;white-space:nowrap}
 @media(max-width:850px){
@@ -32,7 +32,7 @@
 .site-nav-trigger { min-height:43px; font-weight:600; transition:background-color .15s ease; }
 .site-nav-panel { border-color:var(--d01-border);box-shadow:0 12px 30px #13243b24; }
 .site-nav-item a { min-height:42px; }
-.site-nav-item a:hover,.site-nav-item a[aria-current="page"] { background:#edf4ff;color:#1d4ed8!important; }
+.site-nav-item a:hover { background:#edf4ff;color:#1d4ed8!important; }
 .site-nav-brand:hover { color:#dbeafe!important; }
 .site-nav-trigger:focus-visible,.site-nav-toggle:focus-visible,.site-nav-item a:focus-visible { outline:3px solid #facc15;outline-offset:2px; }
 @media (prefers-reduced-motion:reduce) { .site-nav-trigger { transition:none; } }
