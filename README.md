@@ -1693,3 +1693,13 @@ git pull origin kakao
 - **판정:** API 단위/HTML 구조 자동 회귀 통과. 실제 브라우저 카카오 지도 SDK 로딩, 한국어 지명·선명도, 마커/실제 경로 폴리라인 렌더링, 기사 #8 과거 수치/실시간 수치의 분리 및 기존 지도 복구 클릭은 여전히 실화면 확인 필요.
 - **다음 단계:** FastAPI 재시작, `http://127.0.0.1:8000/map?article_id=8&route_index=0`에 접속하여 지도 배경과 기사 요약의 초기 상태 캡처. 정상 확인 후 `현재 경로 새로 조회` 버튼을 눌러 실제 구간 색상·마커·예상 소요시간 표시 확인. SDK 실패 시 `기존 OpenLayers 지도로 열기` 제공 여부 확인.
 - `kakao` 브랜치 **README 문서만 갱신**. DB/스키마/앱 코드 변경 없음.
+
+### 13.10 카카오맵 빈 화면 원인과 JavaScript 구문 오류 복구 (2026-10-19)
+
+- 사용자 첨부 map.html과 GitHub kakao 브랜치에서 동일한 JS 구문 손상 확인: 기존 227행의 F23 함수 선언 및 const query 누락, 309행의 잘못 삽입된 중복 submit 이벤트 등록.
+- 이 구문 오류로 inline JavaScript 전체가 실행되지 않아 카카오맵 초기화·기사 기록 로딩이 모두 중단되고 화면에 지도 로딩 문구만 남음. VS Code의 붉은 4개 오류 표시도 같은 문제의 증상.
+- static/map.html의 async function loadSavedArticleRouteFromUrl() 선언과 const query = new URLSearchParams(...) 복원, 훼손된 중복 이벤트 등록 제거. 교통 상태별 경로·마커·F23 기사 링크·카카오 REST API·기존 지도 복구 링크 유지.
+- tests/test_kakao_map.py에 함수 선언 및 submit 이벤트 1개, 손상 문자열 부재 검사 1개 신규 추가. 기존 52개 + 신규 1개 = 총 53개 예상.
+- 사용자 첨부 map.html에 동일 수정 적용한 inline JS를 Node.js node --check로 검사한 결과 문법 오류 없음. GitHub 저장 파일에서도 두 손상 패턴 제거 여부 확인. 실제 브라우저 실행 및 전체 Python 테스트는 사용자 재검증 전.
+- 다음: git pull origin kakao → 전체 53개 unittest 실행 → 서버 재시작 → Ctrl+F5로 /map?article_id=8&route_index=0에서 한글 카카오맵과 과거 기사 요약 확인. 실패하면 F12 Console의 첫 빨간 오류만 공유하고 키/SDK URL은 숨길 것.
+- DB/스키마/REST 키 변경 없음. kakao 브랜치만 수정.
