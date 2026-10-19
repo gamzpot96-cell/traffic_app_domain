@@ -1683,3 +1683,13 @@ git pull origin kakao
 - **별도 문법 검사:** GitHub의 현재 `static/map.html` inline JavaScript를 V8 함수 파서로 검사해 **syntax PASS** 확인. 실제 브라우저 SDK 로딩과 52개 Python unittest는 아직 실행되지 않았으므로 성공이라고 단정하지 않음.
 - **로컬 검증 명령:** `cd C:\\workspace\\traffic_app_domain\\traffic-api` → `git pull origin kakao` → `.\\.venv\\Scripts\\python.exe -m unittest discover -s tests -p "test_*.py" -v` → FastAPI 재시작 → `/map?article_id=8&route_index=0`에서 카카오맵 한글 라벨/기사 과거값·현재 수동 조회 색 선·마커 확인. 문제가 있으면 브라우저 개발자 도구 Console 오류(키 문자열 제거)를 확인.
 - **검증 상태:** 저장소 `kakao` 코드와 문서 반영 완료, 전체 테스트·브라우저 렌더링 **사용자 실행 대기**. D01 관리자 페이지 디자인은 그 다음 단계.
+
+### 13.9 카카오맵 전환 Windows 전체 자동 테스트 52개 통과 (2026-10-19)
+
+- 사용자 로컬 Windows PowerShell에서 `.\\.venv\\Scripts\\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행한 결과: **Ran 52 tests in 0.265s / OK**, 실패·오류 0개.
+- 카카오맵 SDK 신규 6개 테스트 모두 통과: `KAKAO_MAP_JS_KEY` 없는 경우/잘못된 경우/정상 키, Kakao SDK·Polyline·Marker·LatLngBounds·기존 지도 복구 구조, F23 기사 요약과 현재 경로 수동 조회, `/static/legacy-map.html` 접근.
+- 기존 CARTO/OSM 복구 4개, 공통 내비게이션 및 D01 구조 10개, 뉴스 초안 서명 4개, F23 6개, F16 7개, F22 8개, F17 7개 역시 모두 `ok`.
+- `CARTO 지도 키 형식...`은 잘못된 키를 입력한 테스트의 예상 경고; `RuntimeError: test DB error`, `private DB detail`, `secret DB`는 예외가 이용자에게 노출되지 않는지 확인하는 모의 DB 실패의 예상 기록. `StarletteDeprecationWarning`은 비치명적.
+- **판정:** API 단위/HTML 구조 자동 회귀 통과. 실제 브라우저 카카오 지도 SDK 로딩, 한국어 지명·선명도, 마커/실제 경로 폴리라인 렌더링, 기사 #8 과거 수치/실시간 수치의 분리 및 기존 지도 복구 클릭은 여전히 실화면 확인 필요.
+- **다음 단계:** FastAPI 재시작, `http://127.0.0.1:8000/map?article_id=8&route_index=0`에 접속하여 지도 배경과 기사 요약의 초기 상태 캡처. 정상 확인 후 `현재 경로 새로 조회` 버튼을 눌러 실제 구간 색상·마커·예상 소요시간 표시 확인. SDK 실패 시 `기존 OpenLayers 지도로 열기` 제공 여부 확인.
+- `kakao` 브랜치 **README 문서만 갱신**. DB/스키마/앱 코드 변경 없음.
