@@ -1510,3 +1510,12 @@ git pull origin kakao
 - **구현 제약:** OpenLayers 초기화·경로선·마커 및 F23의 `article_id`/`route_index` 처리 JavaScript, 데이터 호출·DB, 지도 서비스 공급자 변경 금지. `savedArticlePanel`, `mapArticleStatus`, `mapRouteForm`, `origin`, `destination`, `mapRouteSubmit`, `result`, `map` 기존 ID 보존.
 - 변경 파일은 `static/map.html`의 CSS/레이아웃 클래스와 `tests/test_navigation.py` 구조 테스트 및 README로 한정. 이전 41개 테스트에 새 검사 1개 포함해 **42개 예상**. 사용자 실행 확인 전 통과로 기록하지 않음.
 
+
+### 12.40 D01 지도 레이아웃 1차 코드 반영 (2026-10-19)
+
+- `static/map.html` 지도 페이지에 D01 남색 제목 헤더(`.map-hero`), 1180px 중앙 정렬 컨테이너(`.map-content`), 기사 #8의 저장 요약을 표시하는 흰색 정보 카드, 경로 입력·조회·범례를 그룹화한 `.map-controls`, OpenLayers 지도 `.map-canvas-frame`의 반응형 카드 테두리를 추가.
+- 850/600px 반응형 공간 조절; OpenLayers 타일·지오메트리·표시색/마커·현재 경로 검색·기사 파라미터/저장값 안내 및 `map` ID와 기존 JavaScript는 변경하지 않음.
+- `tests/test_navigation.py`에 `test_d01_map_layout_keeps_map_and_saved_article_route` 신규 검사 1개 추가. 직전 41/41 통과 + 1개 = **42개 전체 테스트 예상**, 아직 사용자 Windows 로컬 실행 확인 전.
+- DB 스키마/실제 저장 뉴스/교통정보, FastAPI, Kakao API, 관리자 인증/페이지는 변경하지 않음. 사용자 브라우저 `/map?article_id=8&route_index=0`를 다시 열어 카드/지도 높이/타일과 경로 재조회 버튼을 확인하는 검증이 남음.
+- **상태: 지도 디자인 1차 코드 반영 완료, 자동 테스트·PC/모바일 화면·실제 경로 재조회 검증 대기.** 다음 디자인 대상은 관리자 페이지 `/admin`.
+
