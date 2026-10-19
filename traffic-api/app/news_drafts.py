@@ -3,6 +3,7 @@
 서명 토큰은 암호화된 데이터가 아니므로 비밀정보를 넣지 않습니다.
 """
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -18,7 +19,7 @@ MAX_TOKEN_LENGTH = 24000
 
 def _signing_key():
     value = os.getenv("NEWS_DRAFT_SIGNING_KEY", "")
-    if len(value.encode("utf-8")) < 32:
+    if len(value.encode("utf-8")) < 32 or value.startswith("your_"):
         raise RuntimeError("NEWS_DRAFT_SIGNING_KEY를 32바이트 이상으로 설정하세요.")
     return value.encode("utf-8")
 
@@ -83,5 +84,5 @@ def verify_draft_token(token, admin_user_id):
         if not isinstance(news.get("routes"), list) or len(news["routes"]) != 3:
             raise ValueError("기사에 연결된 경로 정보가 올바르지 않습니다.")
         return generation_id, news
-    except (ValueError, TypeError, KeyError, UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (ValueError, TypeError, KeyError, UnicodeDecodeError, binascii.Error) as error:
         raise ValueError("기사 증표가 만료됐거나 유효하지 않습니다.") from error
