@@ -90,7 +90,11 @@ class NewsSearchApiTests(unittest.TestCase):
         response = self.client.get("/news")
         self.assertEqual(response.status_code, 200)
         self.assertIn('currentNewsPage = data.total_pages === 0 ? 0 : data.page;', response.text)
-        self.assertIn('historyList.replaceChildren();\n        currentNewsPage = 0;', response.text)
+        # Windows CRLF / Unix LF 및 들여쓰기 차이에 무관하게 코드 순서를 검사합니다.
+        self.assertRegex(
+            response.text,
+            r'historyList\.replaceChildren\(\);\s*currentNewsPage\s*=\s*0;'
+        )
 
     def test_old_history_api_still_exists(self):
         with patch("app.main.get_saved_news_articles", return_value=[]):
