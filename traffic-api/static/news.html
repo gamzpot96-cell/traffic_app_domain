@@ -203,15 +203,15 @@
 }
 
     </style>
+    <link rel="stylesheet" href="/static/navigation.css">
+    <script src="/static/navigation.js" defer></script>
 </head>
 
 <body>
+    <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
     <main class="container">
 
-        <nav class="navigation">
-            <a href="/">홈</a>
-            <a href="/map">교통 지도</a>
-        </nav>
+
 
         <p class="site-title">SEOUL TRAFFIC NEWS</p>
 
@@ -230,7 +230,7 @@
         </p>
 
 <!-- 과거 뉴스 조회 -->
-<section class="history-section">
+<section class="history-section" id="historySection">
 
     <h2>저장된 교통 뉴스</h2>
 
