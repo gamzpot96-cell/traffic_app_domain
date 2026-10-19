@@ -1764,3 +1764,74 @@ git pull origin kakao
 - **다음 개발 순서:** D01 관리자 `/admin` 화면 디자인 개선. 기존 통합 D01 설계는 README 12장; 구체 관리자 화면 설계를 루트 README에 별도 기술·승인받은 뒤, 인증·초안 생성/미리보기/확인 후 저장/로그아웃 등 기존 JS/API 기능 보존하며 구현. DB를 테스트 목적으로 변경하거나 임의 저장하지 않음.
 - 사용자는 현재 대화 최대 길이 경고 때문에 새 채팅으로 이동하기를 원하며, 이전 대화 링크만으로 맥락이 충분히 전달되지 않았음을 보고. 이를 해결하기 위해 **kakao 브랜치 루트 `PROJECT_HANDOFF.md`** 생성: 작업 규칙, 파일·명령, 기존 기능, 최신 검증, 남은 D01 관리자 작업, 새 채팅 첫 메시지 템플릿을 보존. **새 채팅에서 이 파일과 루트 README를 먼저 읽도록 지시**, 가능하면 동일 ChatGPT 프로젝트 내에서 새 대화를 시작할 것.
 - 단, 과거 모든 메시지·첨부·미공개 로그까지 완전 자동 이관되는 기능은 아니며, 인계 문서가 작업 맥락의 지속 가능한 대체 기록임.
+
+
+---
+
+## 14. D01 관리자 화면 전용 개선 설계 — 승인 대기 (2026-10-19)
+
+> **상태: 설계 문서만 기록 / 사용자 별도 승인 전 코드 구현 금지.** 작업 대상 브랜치는 `kakao`만. 본 절은 실제 `traffic-api/static/admin.html`, `app/main.py`, `app/admin_auth.py`, 공통 디자인 CSS와 12~13장, `PROJECT_HANDOFF.md`를 읽은 뒤 작성했다. 로그인·초안 생성·기사 저장을 실제 실행하거나 DB에 쓰지 않았다. 기존 55개 테스트 통과 및 지도 Chrome 합격은 13장에 기록된 **이전 검증**으로, 본 문서 작업에서 재실행한 것이 아니다.
+
+### 14.1 현행 구현과 개선 목표
+
+- 현행 `/admin`은 로그인 시 `.login-container` 최대 420px, 로그인 후 `body.admin-active .login-container` 최대 900px. 로그인 폼·인증 후 패널·초안 작업이 하나의 컨테이너에 있으며 로그인 전에는 `adminPanel`이 CSS `display:none`으로 가려져 있다.
+- 공통 `design-system.css`, `navigation.css`, `navigation.js`가 이미 로드된다. 상단 메뉴 hover 순간만 강조하고 키보드 `:focus-visible` 표시를 유지해야 한다.
+- 현재 JS는 `POST /api/admin/login` → `GET /api/admin/me`의 관리자 인증 성공 후에만 `loginForm`을 숨기고 `adminPanel`을 표시한다. 관리자 토큰은 브라우저 JS 메모리 변수 `adminAccessToken`에만 둔다.
+- 생성 버튼은 `POST /api/admin/news/generate`로 세 경로를 조회하고 서버 서명 `draft_token`과 초안을 받는다. `draftPreview`의 기사 제목/본문/경로별 표를 표시한 뒤에만 저장 버튼을 활성화한다. 저장 버튼을 실제 클릭하면 `POST /api/admin/news/save`가 호출된다. 로그아웃 시 토큰·초안 표시·저장 버튼 상태를 초기화한다.
+- **목표:** 로그인 전에는 신뢰성 있는 관리자 인증 안내, 로그인 후에는 ‘① 초안 생성 → ② 내용 검토 → ③ 명시적 저장’ 작업 단계를 한눈에 보이게 배치. 디자인 개선이지 권한/저장 절차의 재설계가 아니다.
+
+### 14.2 화면 변경 상세(구현 제안)
+
+**A. 로그인 전 /admin — 네이비 히어로 + 로그인 카드**
+
+1. 공통 네이비 상단 메뉴 아래에 가로 최대 1120px의 관리자 소개 영역을 둔다. 왼쪽은 네이비 `#13243b` 배경의 ‘서울 교통 뉴스 · 관리자 작업실’ 제목, 인증이 필요한 기능과 ‘초안 검토 전 자동 저장되지 않음’ 안내; 오른쪽은 흰색 로그인 카드다. 화면 너비 850px 이하에서는 상하 1열로 쌓는다.
+2. 카드에는 ‘관리자 로그인’ 제목, 이메일·비밀번호 레이블/입력칸, 파란색 로그인 버튼, `loginMessage` 상태/오류 메시지를 둔다. 비밀번호 값 표시나 토큰·관리자 UID 화면 노출은 금지한다.
+3. 인증 전 `adminPanel`은 숨김을 유지한다. **CSS 스타일만으로 인증을 대신하지 않는다.** 레이아웃용 외부 래퍼를 추가하더라도 기존 `loginForm`의 표시 상태 변경이 레이아웃과 충돌하지 않게 로그인/인증완료 전환을 함께 검증한다.
+
+**B. 인증 후 /admin — 관리자 작업실**
+
+1. 기존 `body.admin-active` 상태에서 중앙 최대 1120px 작업실을 사용한다. 상단은 ‘관리자 작업실’ 제목/인증 확인 안내와 회색 보조 ‘로그아웃’ 버튼을 배치한다. 로그아웃은 항상 접근할 수 있어야 한다.
+2. 작업 안내를 번호가 있는 3단계 카드 또는 단계 표시줄로 나타낸다: `1. 새 교통 뉴스 생성`, `2. 미리보기와 경로별 자료 확인`, `3. 확인한 뉴스 저장`. 단계는 사용 흐름 설명이며 별도 API나 자동 진행 기능은 추가하지 않는다.
+3. 초안 생성 버튼(`generateDraftButton`)과 상태 영역(`draftStatus`)은 작업실 상단에 배치한다. 불러오는 중·조회 실패·초안 만료/새 생성 안내를 텍스트로 전달하고 기존 JS의 버튼 disabled 처리와 상태 변경을 유지한다.
+4. 기사 미리보기(`draftPreview`)는 흰색 카드로 구분하고 제목(`draftTitle`), KST 조회시각(`draftRetrievedAt`), 리드(`draftLead`), 본문(`draftBody`), 분석 범위/한계(`draftNotice`), 경로별 데이터 표(`draftRoutes`) 순서로 보여 준다. 미리보기 전에는 `hidden` 유지, 가상 데이터를 실제 기사처럼 채우지 않는다.
+5. 저장 구역은 미리보기 아래에 두어 ‘기사와 경로별 값을 검토한 뒤 저장’이라는 경고성 안내, `saveDraftButton` 및 `savedArticleLink`를 포함한다. **새 초안 생성만으로 저장하지 않고 저장 API는 기존 저장 버튼 클릭에만 묶는다.** 저장 성공/중복/실패 메시지와 저장 후 비활성화 상태를 보존한다.
+6. 표는 좁은 화면에서 `.table-scroll` 가로 스크롤을 유지한다. 단위(km, 분, %)와 결측값 문구를 그대로 보존한다.
+
+**C. 색상·반응형·접근성**
+
+- 기존 CSS 변수 우선 사용: 네이비 `#13243b`, 블루 `#2463eb`, 청록 `#087e8b`, 배경 `#f3f6fa`, 카드 흰색, 회색 설명 텍스트. 교통 원활/정체 색과 관리자 단계 색은 의미를 혼동하지 않는다.
+- 데스크톱(예: 1280px)은 소개+로그인 2열 / 관리자 작업실의 읽기 폭과 작업 구역을 분리. 850px 이하에서는 로그인 소개·카드를 1열; 600px 이하에서는 카드 내부 여백을 줄이고 작업 버튼을 세로로 쌓는다. 320px/390px/768px/1280px 확인.
+- 입력 레이블, 상태 메시지의 `role=status`, 오류를 읽을 수 있는 명도 대비, 키보드 Tab 순서 및 `:focus-visible` 유지. 애니메이션은 필수 아님. 상단 공통 메뉴·모바일 토글·hover/포커스 기존 규칙 변경 금지.
+- 화면 배치는 아직 사용자의 Chrome 스크린샷으로 검증되지 않았다. **이 절은 텍스트 설계이지 실제 렌더링 결과가 아니다.**
+
+### 14.3 기존 기능·보안 계약 (절대 보존)
+
+- 기존 DOM ID 유지: `loginForm`, `adminEmail`, `adminPassword`, `loginButton`, `loginMessage`, `adminPanel`, `logoutButton`, `generateDraftButton`, `saveDraftButton`, `draftStatus`, `draftPreview`, `draftTitle`, `draftRetrievedAt`, `draftLead`, `draftBody`, `draftNotice`, `draftRoutes`, `savedArticleLink`, `sharedNavigation`.
+- 보존할 JS 상태 및 이벤트: `adminAccessToken`, `pendingDraftToken`; 로그인 submit, 로그아웃 click, 생성 click, 저장 click; 권한 확인 전 패널 비표시, 실패 시 비밀번호 삭제 및 저장 비활성화, 로그아웃 시 초기화, 저장 성공 후 중복 클릭 방지.
+- 보존할 서버 계약: `POST /api/admin/login`, `GET /api/admin/me`, `POST /api/admin/news/generate`, `POST /api/admin/news/save`, `require_admin`, Supabase Auth 사용자 검증/관리자 UID 비교, 서버 서명 초안 유효기간 및 동일 초안 저장 보호.
+- **불변 범위:** `main` 브랜치, Python API 서버 동작, REST·JS 키/환경변수·관리자 비밀번호, Supabase RLS/테이블/스키마/기존 데이터, `traffic_information` 약 30,538행, `traffic_news_articles`, `traffic_route_snapshots`, 기존 지도 및 뉴스 기능. 로그인·기사 저장을 자동 실행하는 테스트 추가 금지.
+- 실제 소스에서 확인한 `admin.html`에는 `loginForm.style.display`와 `adminPanel.style.display` 전환이 있다. HTML 래퍼를 나누는 경우 **로그인 성공 직후 빈 카드/남은 히어로 영역이 보이지 않도록** CSS/JS 표시 계약을 작은 변경 단위로 검증한다.
+
+### 14.4 구현 예정 파일 및 작업 단위 (승인 후에만)
+
+1. **기본 수정 후보:** `traffic-api/static/admin.html`의 로그인 전/인증 후 HTML 섹션 구조와 해당 문서에 한정한 CSS. 기존 JS의 인증·생성·저장 처리 본문은 원칙적으로 건드리지 않는다. 레이아웃 전환에 꼭 필요한 최소 UI 표시 코드만 별도 점검 후 반영한다.
+2. **테스트 추가 후보:** `traffic-api/tests/test_admin_design.py` — 보존 ID, 관리자 패널 숨김, API 호출·기존 이벤트 시그니처, 종료 HTML 태그 및 JS 본문 누락·중복 이벤트 방지, 공통 디자인/반응형 CSS 계약. 기존 `test_news_drafts.py` 등 회귀 테스트 유지.
+3. **변경 금지:** `traffic-api/app/main.py`, `app/admin_auth.py`, DB 관련 파일, 기존 공유 메뉴 JS/CSS, `.env`, Supabase 데이터. 새 라이브러리·새 API·새 DB 테이블 없음.
+4. **결과 기록:** 구현·테스트·사용자 실화면 승인 결과는 반드시 **루트 `README.md`의 다음 절**에 단계별로 남기고 `kakao` 커밋을 안내한다.
+
+### 14.5 승인 후 검증 순서 (한 번에 하나씩)
+
+1. Git 브랜치 및 변경 파일 확인: `git branch --show-current`, `git status --short`; `kakao` 및 의도한 관리자 UI/테스트 파일만 수정 확인.
+2. Windows PowerShell: `cd C:\workspace\traffic_app_domain\traffic-api` → `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v`. 기존 **55개 회귀 + 신규 관리자 테스트** 모두 통과해야 하며 구체 개수/시간은 실행 결과로만 기록.
+3. 같은 위치에서 `.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload` 실행; 사용자가 Chrome `http://127.0.0.1:8000/admin`에서 Ctrl+F5 후 **로그인 전 디자인/폼/관리자 작업실 비표시** 스크린샷 제공.
+4. 실제 비밀번호는 채팅에 공유하지 않고 로컬 Chrome에서만 입력: 관리자 로그인 성공 후 `/api/admin/me` 검증, 작업실 표시·로그아웃 위치 스크린샷 확인. 잘못된 인증 시 작업실 노출이 없어야 함.
+5. 사용자 동의하에 **초안 생성까지만** 수행하고 미리보기 제목/본문/KST/경로표·상태/저장 버튼 표시 및 모바일·키보드 사용성 검증. **'확인한 뉴스 저장' 클릭은 실행하지 않음**. 미리보기 호출이 외부 Kakao API 비용/쿼터를 소비할 수 있으므로 사용자 선택 후 실시.
+6. 로그아웃 시 작업실 비표시·토큰/초안 초기화·로그인 폼 재표시 확인. Chrome Console 오류 여부 확인 시 키/토큰 등 민감값 제거.
+7. 저장 API의 권한 보호·서명·중복 방지는 **기존 모의 테스트로만** 회귀 검증. 실제 DB 데이터나 카운트를 바꾸는 저장 테스트 금지. 읽기 전용 카운트 확인이 가능할 때만 보존 확인.
+8. 각 검증 결과/미검증 항목/스크린샷 판정·커밋 SHA를 루트 README에 추가 기록하고 다음 단계 진행 여부를 사용자에게 묻는다.
+
+### 14.6 승인 요청
+
+- **이번 변경:** 루트 README에 D01 관리자 화면 변경 설계와 검증 계획을 기록하는 것까지.
+- **승인 전 절대 하지 않을 작업:** 관리자 HTML/CSS/JS 수정, Python/API/테스트 코드 변경, 실제 관리자 로그인 시도, 기사 초안 생성/저장 호출, DB 수정, `.env` 수정, `main` 브랜치 변경.
+- **다음 결정:** 사용자에게 본 설계의 로그인 전 2열 구성, 인증 후 3단계 작업실, 모바일 배치와 검증 범위 승인을 받은 뒤 별도 구현 착수.
