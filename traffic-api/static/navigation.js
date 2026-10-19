@@ -1,0 +1,204 @@
+/* M01/M02 반응형 공통 메뉴. 관리자 인증정보를 다루지 않습니다. */
+(function () {
+    "use strict";
+
+    const menuRoot = document.getElementById("sharedNavigation");
+    if (!menuRoot) {
+        return;
+    }
+
+    const menuGroups = [
+        {
+            name: "교통 현황",
+            items: [
+                {name: "자동차 경로 검색", href: "/"},
+                {name: "교통 경로 지도", href: "/map"},
+                {name: "관심 경로", planned: true}
+            ]
+        },
+        {
+            name: "분석·통계",
+            items: [
+                {name: "경로별 비교 현황", href: "/news#trafficDashboard"},
+                {name: "시간대별 교통 추세", planned: true},
+                {name: "일별·주별 비교", planned: true},
+                {name: "CSV 다운로드", planned: true}
+            ]
+        },
+        {
+            name: "교통 뉴스",
+            items: [
+                {name: "최신 교통 뉴스", href: "/news"},
+                {name: "저장된 기사 아카이브", href: "/news#historySection"},
+                {name: "기사 검색·기간 필터", planned: true},
+                {name: "기사 공유·읽기 모드", planned: true}
+            ]
+        },
+        {
+            name: "서비스 안내",
+            items: [
+                {name: "교통 데이터 범위·한계", href: "/news#trafficDashboard"},
+                {name: "사용법·FAQ", planned: true},
+                {name: "공지·장애 안내", planned: true}
+            ]
+        },
+        {
+            name: "관리자",
+            items: [
+                {name: "관리자 로그인·뉴스 작업실", href: "/admin"},
+                {name: "기사 승인·게시 관리", planned: true},
+                {name: "수집 상태·오류 로그", planned: true},
+                {name: "운영 설정", planned: true}
+            ]
+        }
+    ];
+
+    const currentPath = window.location.pathname;
+    const mobileWidth = window.matchMedia("(max-width: 850px)");
+
+    const inner = document.createElement("div");
+    inner.className = "site-nav-inner";
+
+    const brand = document.createElement("a");
+    brand.className = "site-nav-brand";
+    brand.href = "/";
+    brand.textContent = "서울 도로교통정보";
+    inner.appendChild(brand);
+
+    const mobileButton = document.createElement("button");
+    mobileButton.type = "button";
+    mobileButton.className = "site-nav-toggle";
+    mobileButton.textContent = "메뉴 열기";
+    mobileButton.setAttribute("aria-controls", "sharedNavigationGroups");
+    mobileButton.setAttribute("aria-expanded", "false");
+    inner.appendChild(mobileButton);
+
+    const groupContainer = document.createElement("div");
+    groupContainer.className = "site-nav-groups";
+    groupContainer.id = "sharedNavigationGroups";
+    inner.appendChild(groupContainer);
+
+    const triggers = [];
+    const panels = [];
+
+    function closePanels() {
+        triggers.forEach(function (trigger) {
+            trigger.setAttribute("aria-expanded", "false");
+        });
+        panels.forEach(function (panel) {
+            panel.hidden = true;
+        });
+    }
+
+    function showMobileMenu(open) {
+        mobileButton.setAttribute("aria-expanded", String(open));
+        mobileButton.textContent = open ? "메뉴 닫기" : "메뉴 열기";
+        if (mobileWidth.matches) {
+            groupContainer.hidden = !open;
+        } else {
+            groupContainer.hidden = false;
+        }
+        if (!open) {
+            closePanels();
+        }
+    }
+
+    menuGroups.forEach(function (group, index) {
+        const groupWrapper = document.createElement("div");
+        groupWrapper.className = "site-nav-group";
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "site-nav-trigger";
+        trigger.textContent = group.name + " ▾";
+        trigger.setAttribute("aria-controls", "siteNavPanel" + index);
+        trigger.setAttribute("aria-expanded", "false");
+        triggers.push(trigger);
+
+        const panel = document.createElement("ul");
+        panel.className = "site-nav-panel";
+        panel.id = "siteNavPanel" + index;
+        panel.hidden = true;
+        panels.push(panel);
+
+        group.items.forEach(function (item) {
+            const li = document.createElement("li");
+            li.className = "site-nav-item";
+            if (item.planned) {
+                const span = document.createElement("span");
+                span.className = "site-nav-coming";
+                span.textContent = item.name;
+                const stateLabel = document.createElement("span");
+                stateLabel.className = "site-nav-label";
+                stateLabel.textContent = "준비 중";
+                span.appendChild(stateLabel);
+                li.appendChild(span);
+            } else {
+                const link = document.createElement("a");
+                link.href = item.href;
+                link.textContent = item.name;
+                const linkPath = new URL(item.href, window.location.origin).pathname;
+                if (linkPath === currentPath) {
+                    link.setAttribute("aria-current", "page");
+                    trigger.classList.add("site-nav-current");
+                }
+                li.appendChild(link);
+            }
+            panel.appendChild(li);
+        });
+
+        trigger.addEventListener("click", function () {
+            const wasOpen = trigger.getAttribute("aria-expanded") === "true";
+            closePanels();
+            if (!wasOpen) {
+                trigger.setAttribute("aria-expanded", "true");
+                panel.hidden = false;
+            }
+        });
+
+        groupWrapper.appendChild(trigger);
+        groupWrapper.appendChild(panel);
+        groupContainer.appendChild(groupWrapper);
+    });
+
+    mobileButton.addEventListener("click", function () {
+        showMobileMenu(mobileButton.getAttribute("aria-expanded") !== "true");
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!menuRoot.contains(event.target)) {
+            closePanels();
+        }
+    });
+
+    menuRoot.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closePanels();
+            if (mobileWidth.matches && mobileButton.getAttribute("aria-expanded") === "true") {
+                showMobileMenu(false);
+                mobileButton.focus();
+            } else {
+                const focusedTrigger = triggers.find(function (button) {
+                    return button.contains(document.activeElement);
+                });
+                if (focusedTrigger) {
+                    focusedTrigger.focus();
+                }
+            }
+        }
+    });
+
+    const onScreenChange = function () {
+        showMobileMenu(false);
+    };
+    if (typeof mobileWidth.addEventListener === "function") {
+        mobileWidth.addEventListener("change", onScreenChange);
+    } else {
+        mobileWidth.addListener(onScreenChange);
+    }
+
+    menuRoot.classList.add("site-nav");
+    menuRoot.setAttribute("aria-label", "주요 메뉴");
+    menuRoot.appendChild(inner);
+    showMobileMenu(false);
+})();
