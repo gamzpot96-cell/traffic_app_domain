@@ -1738,3 +1738,12 @@ git pull origin kakao
 - 사용자 재적용 요청에 따라 `tests/test_kakao_map.py`에 **`test_map_html_tags_close_correctly`** 추가. `<script>` 시작/끝 수 일치 및 정확한 `</script>`, `</body>`, `</html>` 문서 끝을 CRLF/LF 모두에서 검사하여 동일 장애 재발을 방지. 기존 53개 + 신규 1개 = **54개 자동 테스트 예상**. 사용자 로컬 실행 전에는 통과 단정하지 않음.
 - `kakao` 브랜치만 수정. 앱 데이터/스키마, REST API 키, Supabase, 기존 교통 경로선/마커/F23 기능 변경 없음.
 - 다음 검증: `git pull origin kakao` → 전체 54개 unittest → FastAPI 재시작 후 `Ctrl+F5` → 카카오맵 한글 도로명과 기사 #8 저장 정보 표시 여부 캡처. 문제 재현 시 Chrome F12 Console 첫 에러만 키/SDK 전체 URL 가리고 공유.
+
+### 13.13 카카오맵 HTML 복구 이후 전체 Windows 테스트 55개 통과 (2026-10-19)
+
+- 사용자 PowerShell에서 `python -m unittest discover -s tests -p "test_*.py" -v` 전체 실행 확인: **Ran 55 tests in 0.272s / OK**, 실패/오류 0개.
+- 추가된 `test_map_html_closes_inline_script_and_document`, `test_map_html_tags_close_correctly` 등 HTML 종료 태그 검증과 `test_map_script_function_boundaries_are_intact`가 모두 `ok`. 기존 카카오맵 SDK 설정, 레거시 OpenLayers 복구, F23 뉴스→지도 연결, F16 뉴스 검색, F17 교통 기록 차트, F22 CSV 다운로드, D01 공통 UI 관련 테스트도 모두 통과.
+- 중간 로그의 `test DB error`, `private DB detail`, `secret DB`는 모의 DB 오류 처리 검사의 예상 출력이며 `StarletteDeprecationWarning`은 비치명적. `CARTO 지도 키 형식...` 역시 유효하지 않은 키에 대한 예상 검사 메시지.
+- **검증 범위:** Windows 자동 회귀 55개 전부 통과. Chrome에서 카카오맵 SDK가 실제로 로드되어 한글 지도 타일이 렌더링되는지, 기사 #8 저장 요약 및 버튼 수동 재조회 후 교통 색상 선·마커가 보이는지는 여전히 브라우저 실확인 필요.
+- **다음 순서:** 실행 중인 FastAPI를 재시작하고 `http://127.0.0.1:8000/map?article_id=8&route_index=0`에서 Ctrl+F5 → 지도 및 기사 저장 정보가 나타나는지 확인. 지도 로딩 실패 시 Console 첫 오류(키 비공개) 확인. 이후 현재 경로 새로 조회 버튼 테스트.
+- README 기록만 갱신. `kakao` 브랜치 유지, DB/스키마/키/앱 코드 수정 없음.
