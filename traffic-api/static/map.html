@@ -224,7 +224,9 @@
 
     initializeKakaoMap();
 
- new URLSearchParams(window.location.search);
+    // F23: 뉴스 기사에서 넘어온 저장 경로를 현재 지도 조회와 구분해 표시합니다.
+    async function loadSavedArticleRouteFromUrl() {
+        const query = new URLSearchParams(window.location.search);
         const articleIdText = query.get("article_id");
         const routeIndexText = query.get("route_index");
 
@@ -305,8 +307,6 @@
     }
 
     loadSavedArticleRouteFromUrl();
-
-    document.getElementById("mapRouteForm").addEventListener("submit", async function (e    loadSavedArticleRouteFromUrl();
 
     document.getElementById("mapRouteForm").addEventListener("submit", async function (event) {
         event.preventDefault();
