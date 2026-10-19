@@ -1703,3 +1703,11 @@ git pull origin kakao
 - 사용자 첨부 map.html에 동일 수정 적용한 inline JS를 Node.js node --check로 검사한 결과 문법 오류 없음. GitHub 저장 파일에서도 두 손상 패턴 제거 여부 확인. 실제 브라우저 실행 및 전체 Python 테스트는 사용자 재검증 전.
 - 다음: git pull origin kakao → 전체 53개 unittest 실행 → 서버 재시작 → Ctrl+F5로 /map?article_id=8&route_index=0에서 한글 카카오맵과 과거 기사 요약 확인. 실패하면 F12 Console의 첫 빨간 오류만 공유하고 키/SDK URL은 숨길 것.
 - DB/스키마/REST 키 변경 없음. kakao 브랜치만 수정.
+
+### 13.11 Windows CRLF 줄바꿈으로 인한 회귀 테스트 오탐 수정 (2026-10-19)
+
+- 사용자 Windows 전체 unittest 실행 로그: **Ran 53 tests in 0.309s / FAILED (failures=1)**. 실패는 새 `test_map_script_function_boundaries_are_intact` 하나이며 나머지 **52개 ok**.
+- 원인: `map.html`의 정상적인 함수 선언 다음 줄바꿈이 Windows CRLF(`\r\n`)인데, 회귀 테스트의 `assertIn`은 Unix LF(`\n`) 문자열만 기대하여 불일치. 첨부 로그에는 실제 `async function loadSavedArticleRouteFromUrl() {`와 `const query = ...` 및 단일 폼 이벤트 등록이 존재. 이 로그만으로 SDK 실동작을 검증한 것은 아니지만 테스트 오류는 줄바꿈 차이로 확인됨.
+- **수정:** `traffic-api/tests/test_kakao_map.py`의 해당 검사에서 응답 원문을 `source.replace("\r\n", "\n")`로 정규화해 CRLF/LF 양쪽을 수용. 그 밖의 손상 탐지, 단일 이벤트 등록 검사 그대로 유지.
+- **변경 범위:** `kakao` 브랜치 테스트 파일 및 최상위 README만 수정, `map.html`, Kakao REST API, Supabase DB 및 스키마 변경 없음.
+- **확인 대기:** Windows `git pull origin kakao` 후 전체 53개 테스트 재실행. 기대값 `Ran 53 tests ... OK`; 실제 통과 여부는 사용자 로그로 확정. 이후 Chrome 카카오맵 한글 기본 지도·기사 #8 요약·수동 교통 경로선 확인.

@@ -74,7 +74,8 @@ class KakaoMapTests(unittest.TestCase):
 
     def test_map_script_function_boundaries_are_intact(self):
         """F23 기사 로더나 이벤트 핸들러 일부가 잘리는 회귀를 방지합니다."""
-        source = self.client.get("/map").text
+        # Windows CRLF(\r\n)과 Unix LF(\n)를 동일하게 비교합니다.
+        source = self.client.get("/map").text.replace("\r\n", "\n")
         self.assertIn(
             "async function loadSavedArticleRouteFromUrl() {\n"
             "        const query = new URLSearchParams(window.location.search);",
