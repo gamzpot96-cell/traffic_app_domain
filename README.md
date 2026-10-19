@@ -1373,6 +1373,13 @@ git pull origin kakao
 - **다음 확인:** 새로고침 후 CSV 영역의 '저장 경로' 옵션에서 정확히 `서울역 → 잠실역 2호선`을 선택한 화면과, 다운로드 직후 상태의 `저장된 경로 N건` 문구 확인. 필요 시 개발자 도구 Network에서 요청 쿼리 확인.
 - 코드·DB는 건드리지 않고 우선 실사용 조건을 재현. F22 필터 통과 판정 및 F17 다음 단계는 이 검증 이후 진행.
 
+### 12.26 D01 메뉴 hover 강조 실화면 확인·39개 전체 회귀 테스트 통과 (2026-10-19)
+
+- 사용자가 Chrome에서 공통 상단 메뉴·교통 뉴스 드롭다운을 직접 확인하여 **상위/하위 메뉴의 상시 강조 문제가 해결됐다**고 보고함. 스크린샷에서 하위 `최신 교통 뉴스`가 hover 상태로 파랗게 표시되고 다른 항목은 기본 스타일임.
+- 사용자 PowerShell 전체 `python -m unittest discover -s tests -p "test_*.py" -v` 결과 **Ran 39 tests in 0.245s / OK** (실패 0건). 메뉴 hover 관련 신규 테스트 포함해 공통 네비게이션 7, 관리자 서명 4, F23 6, F16 7, F22 8, F17 7개 전부 `ok`.
+- 오류 처리 테스트의 `RuntimeError: test DB error / private DB detail / secret DB`는 의도된 mock 예외로 각 `ok`, StarletteDeprecationWarning은 비치명적.
+- **D01 공통 헤더/hover 수정 단계 통과.** 기존 DB/서버 API 코드 변경 없음. 다음 승인된 단계는 D01 홈페이지 `/` 레이아웃 개선이며, 홈 수정 후 새 테스트와 기존 39개 회귀를 다시 진행. 모바일 메뉴 및 키보드 개별 실사용 검증은 별도 잔여 항목으로 유지.
+
 ### 12.25 D01 메뉴 hover 전용 강조 수정 코드 반영 (2026-10-19)
 
 - **원인 수정 반영:** `navigation.css`의 상단 메뉴 배경색 적용 범위를 `.site-nav-trigger:hover`로 제한. `aria-expanded=true` 또는 `site-nav-current`만으로 배경을 켜지 않음.
