@@ -77,6 +77,21 @@ class SharedNavigationTests(unittest.TestCase):
         # 키보드 포커스 강조를 지우지 않아야 합니다.
         self.assertIn(".site-nav-item a:focus-visible", css)
 
+    def test_d01_home_layout_keeps_existing_query_and_briefing(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        for required in (
+            'class="home-hero"', 'class="home-main"', 'class="home-search"',
+            'grid-template-columns: minmax(0,1fr) minmax(0,1fr)',
+            '@media (max-width: 850px)', '@media (max-width: 600px)',
+            'id="routeForm"', 'id="origin"', 'id="destination"',
+            'id="summary"', 'id="roadRows"', 'id="overviewButton"',
+            'id="overviewTableBody"', 'id="briefingContent"',
+            'id="overviewBriefingText"', 'function loadOverviewBriefing()'
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, response.text)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
