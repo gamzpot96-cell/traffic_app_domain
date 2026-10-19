@@ -203,6 +203,16 @@
 }
 
     
+/* F23: 저장 뉴스의 개별 경로 지도 링크 */
+.saved-route-section { margin-top: 24px; padding: 18px; background: #f8fafc; border: 1px solid #dbe4ee; border-radius: 10px; }
+.saved-route-section[hidden] { display: none; }
+.saved-route-section h2 { font-size: 20px; margin-top: 0; }
+.saved-route-item { display: flex; gap: 14px; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 14px 0; border-top: 1px solid #dbe4ee; }
+.saved-route-item p { margin: 6px 0; color: #475569; font-size: 14px; }
+.saved-route-link { display: inline-block; padding: 10px 14px; border-radius: 6px; background: #2563eb; color: white; font-weight: 600; text-decoration: none; }
+.saved-route-link:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
+.saved-route-link:hover { background: #1d4ed8; }
+
 /* F16 뉴스 아카이브 검색 */
 .news-search-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 15px 0; }
 .news-search-field { display: flex; flex-direction: column; gap: 7px; flex: 1 1 165px; min-width: 0; }
@@ -327,6 +337,12 @@
     </p>
 </section>
 
+
+        <section id="savedArticleRoutes" class="saved-route-section" aria-label="저장된 기사 분석 경로" hidden>
+            <h2>기사에서 분석한 경로</h2>
+            <p class="chart-notice">저장된 분석 결과입니다. 지도 이동 후 별도로 조회하는 경로는 현재 길찾기 결과이며, 기사 당시 경로와 다를 수 있습니다.</p>
+            <div id="savedArticleRouteList"></div>
+        </section>
 
         <article>
             <h1 id="newsTitle">
@@ -696,6 +712,55 @@ document.getElementById("newsPageSize").addEventListener("change", function () {
 });
 
 
+// F23: 저장된 경로 요약을 링크로 표시합니다. 지도에서 현재 경로 조회는 별도 단계입니다.
+function displaySavedArticleRouteLinks(article) {
+    const section = document.getElementById("savedArticleRoutes");
+    const list = document.getElementById("savedArticleRouteList");
+    list.replaceChildren();
+    section.hidden = true;
+
+    if (!article || !Array.isArray(article.routes) || article.routes.length === 0) {
+        return;
+    }
+
+    article.routes.forEach(function (route, index) {
+        if (typeof route.start !== "string" || typeof route.end !== "string") return;
+        if (!route.start.trim() || !route.end.trim()) return;
+
+        const row = document.createElement("div");
+        row.className = "saved-route-item";
+
+        const description = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = route.start + " → " + route.end;
+        description.appendChild(name);
+
+        const detail = document.createElement("p");
+        const distance = Number.isFinite(route.distance_m) && route.distance_m > 0
+            ? (route.distance_m / 1000).toFixed(1) + "km" : "정보 없음";
+        const minutes = Number.isFinite(route.duration_seconds) && route.duration_seconds >= 0
+            ? (route.duration_seconds / 60).toFixed(1) + "분" : "정보 없음";
+        const congestion = Number.isFinite(route.congestion_ratio)
+            ? route.congestion_ratio.toFixed(1) + "%" : "정보 없음";
+        detail.textContent = "저장 거리 " + distance + " · 예상 소요시간 " + minutes +
+            " · 정체·지체 거리 비율 " + congestion;
+        description.appendChild(detail);
+
+        const link = document.createElement("a");
+        link.className = "saved-route-link";
+        link.href = "/map?article_id=" + encodeURIComponent(String(article.id)) +
+            "&route_index=" + encodeURIComponent(String(index));
+        link.textContent = "지도에서 확인";
+        link.setAttribute("aria-label", route.start + "에서 " + route.end + "까지 지도에서 확인");
+
+        row.appendChild(description);
+        row.appendChild(link);
+        list.appendChild(row);
+    });
+
+    section.hidden = list.children.length === 0;
+}
+
 // 선택한 과거 뉴스 상세 조회
 async function loadSavedNews(articleId) {
 
@@ -703,6 +768,8 @@ async function loadSavedNews(articleId) {
 
     newsStatus.textContent =
         "저장된 기사 #" + articleId + "을 불러오는 중입니다.";
+    // 새 기사 전환 중 이전 기사의 경로 링크가 남지 않도록 초기화합니다.
+    displaySavedArticleRouteLinks(null);
 
     try {
 
@@ -751,6 +818,7 @@ async function loadSavedNews(articleId) {
 
         // 저장된 경로 데이터로 기존 그래프 다시 그리기
         displayTrafficDashboard(article.routes);
+        displaySavedArticleRouteLinks(article);
 
         newsStatus.textContent =
             "저장된 기사 #" + article.id +
