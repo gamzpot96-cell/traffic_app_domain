@@ -15,7 +15,8 @@ from pathlib import Path
 from datetime import datetime, date, time, timedelta
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from app.traffic_export import get_export_route_options, get_export_rows, encode_csv
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -265,6 +266,65 @@ def search_news(
     except Exception:
         logger.exception("저장된 뉴스 검색 실패")
         raise HTTPException(status_code=503, detail="뉴스 검색 중 오류가 발생했습니다.")
+
+
+# F22: 저장된 경로 내보내기 옵션 목록 (읽기 전용)
+@app.get("/api/traffic/routes")
+def get_traffic_export_routes():
+    try:
+        return {"routes": get_export_route_options()}
+    except Exception:
+        logger.exception("저장된 경로 목록 조회 실패")
+        raise HTTPException(status_code=503, detail="저장된 경로 목록을 불러오지 못했습니다.")
+
+
+# F22: 저장 경로 분석 CSV. 인증정보나 실시간 경로 API를 호출하지 않습니다.
+@app.get("/api/traffic/export.csv")
+def export_traffic_csv(
+    origin: str | None = Query(None, max_length=100),
+    destination: str | None = Query(None, max_length=100),
+    start_date: date | None = None,
+    end_date: date | None = None
+):
+    if (origin is None) != (destination is None):
+        raise HTTPException(status_code=422, detail="출발지와 목적지를 함께 선택하세요.")
+    if origin is not None:
+        origin = origin.strip()
+        destination = destination.strip()
+        if not 2 <= len(origin) <= 100 or not 2 <= len(destination) <= 100:
+            raise HTTPException(status_code=422, detail="장소명은 2~100자로 입력하세요.")
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=422, detail="시작일은 종료일보다 늦을 수 없습니다.")
+
+    korea = ZoneInfo("Asia/Seoul")
+    start_time = datetime.combine(start_date, time.min, tzinfo=korea) if start_date else None
+    try:
+        end_time = (datetime.combine(end_date + timedelta(days=1), time.min, tzinfo=korea)
+                    if end_date else None)
+    except OverflowError:
+        raise HTTPException(status_code=422, detail="종료 날짜를 처리할 수 없습니다.")
+
+    try:
+        rows = get_export_rows(
+            origin=origin, destination=destination,
+            start_time=start_time, end_time=end_time
+        )
+        content = encode_csv(rows)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except Exception:
+        logger.exception("교통정보 CSV 다운로드 실패")
+        raise HTTPException(status_code=503, detail="CSV 파일을 생성하지 못했습니다.")
+
+    file_name = "traffic_routes_" + datetime.now(korea).strftime("%Y%m%d") + ".csv"
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="' + file_name + '"',
+            "X-Export-Row-Count": str(len(rows))
+        }
+    )
 
 
 # 저장된 뉴스 상세 조회 API
