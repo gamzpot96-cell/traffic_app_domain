@@ -89,6 +89,16 @@ class KakaoMapTests(unittest.TestCase):
         self.assertNotIn("async function (e    loadSavedArticleRouteFromUrl();", source)
         self.assertNotIn("\n new URLSearchParams(window.location.search);", source)
 
+    def test_map_html_closes_inline_script_and_document(self):
+        """지도 JS 종료 태그 누락 시 지도·기사 화면 전체가 멈추는 회귀를 잡습니다."""
+        source = self.client.get("/map").text
+        self.assertEqual(source.count("<script"), source.count("</script>"))
+        self.assertEqual(source.count("<script>"), 1)
+        self.assertIn("</body>", source)
+        self.assertTrue(source.rstrip().endswith("</html>"))
+        self.assertIn("initializeKakaoMap();", source.split("</script>")[-2])
+        self.assertIn("loadSavedArticleRouteFromUrl();", source.split("</script>")[-2])
+
     def test_legacy_map_still_accessible(self):
         response = self.client.get("/static/legacy-map.html?article_id=8&route_index=0")
         self.assertEqual(response.status_code, 200)
