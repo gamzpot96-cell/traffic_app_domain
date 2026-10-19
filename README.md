@@ -1889,3 +1889,11 @@ git pull origin kakao
 - **테스트 추가:** `traffic-api/tests/test_navigation.py`에 `test_d01_form_fields_do_not_receive_orange_outline`을 추가하여 공통 포커스 선택자와 공유 메뉴 키보드 포커스 규칙 보존을 검증. 전체 테스트는 기존 59개에서 **60개 예상**이나, 사용자 Windows 환경에서 아직 실행하지 않았으므로 통과를 단정하지 않음.
 - **GitHub 커밋:** CSS `1069602`, 테스트 `fad7864`. GitHub `kakao`에서 두 파일을 다시 읽어 수정된 선택자와 신규 테스트 함수가 있음을 확인함. 서버 코드/관리자 인증/뉴스 저장/DB/`.env`/`main` 브랜치 변경 없음.
 - **다음 사용자 검증:** `git pull origin kakao` → `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` (실제 결과 확인) → Chrome `/map`에서 출발지 입력창 클릭 후 주황색 외곽선 유무 확인 → 필요시 Tab/관리자 입력 화면 확인. 실제 웹 UI와 키보드 접근성 판정은 사용자 캡처 후 README에 기록.
+
+### 14.13 D01 입력창 포커스 변경 Windows 전체 60개 자동 테스트 통과 (2026-10-19)
+
+- 사용자가 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 로그를 제출함.
+- **실제 실행 결과: `Ran 60 tests in 0.258s`, `OK`**. CSS 포커스 관련 신규 `test_d01_form_fields_do_not_receive_orange_outline`도 `ok`이며, 실패·오류 0개. 기존 관리자, 지도, 뉴스, 검색, CSV 내보내기, 히스토리 회귀 테스트 통과.
+- 로그의 `RuntimeError: test DB error`, `private DB detail`, `secret DB`는 의도적인 예외 처리 테스트에서 출력되며 최종 결과는 모두 `ok`. `StarletteDeprecationWarning`은 비치명적 의존성 경고.
+- **검증 한계:** 이 테스트는 CSS 선택자 및 서버·정적 응답 회귀를 확인할 뿐, Chrome의 실제 입력창 포커스 테두리 상태나 Tab 키보드 접근성을 검증하지 않음. 실제 Chrome `/map` 출발지·목적지 입력창 클릭 및 `/admin` 입력창, Tab 이동 시 초점 식별 가능성 확인 대기.
+- 이 단계에서 기사 생성·저장, DB 변경, 관리자 설정 수정 없음.
