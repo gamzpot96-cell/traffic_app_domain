@@ -15,6 +15,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 from app.kakao_api import (
@@ -51,6 +52,10 @@ app = FastAPI(
     description="카카오 자동차 경로 교통정보 및 자동 브리핑 서비스",
     version="0.3.0"
 )
+
+# 공통 메뉴 CSS/JavaScript 등 정적 자산을 로컬에서도 제공합니다.
+# 기존 페이지와 /api 경로는 변경하지 않습니다.
+app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
 
 # 메인 페이지
