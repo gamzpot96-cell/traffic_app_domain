@@ -20,6 +20,20 @@
         #map { height: calc(100vh - 190px); min-height: 320px; }
         #result { margin: 0 12px 12px; }
         .note { color: #64748b; padding: 0 12px; font-size: 13px; }
+        /* F23: 과거 저장 분석 기록을 현재 지도 조회와 분리합니다. */
+        .saved-article-panel { margin: 14px 12px; padding: 18px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; }
+        .saved-article-panel[hidden] { display: none; }
+        .saved-article-panel h2 { font-size: 19px; margin: 0 0 12px; }
+        .saved-article-panel p { margin: 6px 0; line-height: 1.6; }
+        .saved-article-panel a { color: #1d4ed8; font-weight: 600; }
+        .map-article-status { margin: 10px 12px; color: #475569; line-height: 1.6; }
+        .saved-record-notice { font-size: 13px; color: #475569; }
+        @media (max-width: 600px) {
+            .saved-article-panel { margin: 10px; padding: 14px; }
+            form { align-items: stretch; }
+            form label { display: flex; flex-direction: column; flex: 1 1 100%; gap: 6px; }
+            form input { box-sizing: border-box; max-width: 100%; }
+        }
     </style>
     <link rel="stylesheet" href="/static/navigation.css">
     <script src="/static/navigation.js" defer></script>
@@ -27,10 +41,19 @@
 <body>
     <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
 <header><strong>서울 교통 경로 지도</strong><a href="/">목록으로 돌아가기</a></header>
+<section id="savedArticlePanel" class="saved-article-panel" hidden aria-label="과거 기사 저장 분석 정보">
+    <h2 id="savedArticleTitle">과거 기사에서 선택한 경로</h2>
+    <p id="savedArticleTime"></p>
+    <p id="savedArticleRoute"></p>
+    <p id="savedArticleMetrics"></p>
+    <p class="saved-record-notice">이 정보는 기사 조회 당시 저장된 요약입니다. 당시 실제 경로 선형은 저장되지 않았습니다. 아래에서 새로 조회하는 경로는 현재 길찾기 결과이며 달라질 수 있습니다.</p>
+    <a id="backToSavedArticle" href="/news">뉴스 기사로 돌아가기</a>
+</section>
+<p id="mapArticleStatus" class="map-article-status" role="status" aria-live="polite" hidden></p>
 <form id="mapRouteForm">
     <label>출발지 <input id="origin" value="서울역" required minlength="2"></label>
     <label>목적지 <input id="destination" value="잠실역" required minlength="2"></label>
-    <button type="submit">경로 표시</button>
+    <button type="submit" id="mapRouteSubmit">경로 표시</button>
 </form>
 <p id="result" role="status">출발지와 목적지를 입력하세요.</p>
 <p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
@@ -80,6 +103,90 @@
         }));
         routeSource.addFeature(feature);
     }
+
+    // F23: 뉴스 기사에서 넘어온 저장 경로를 현재 지도 조회와 구분해 표시합니다.
+    async function loadSavedArticleRouteFromUrl() {
+        const query = new URLSearchParams(window.location.search);
+        const articleIdText = query.get("article_id");
+        const routeIndexText = query.get("route_index");
+
+        // 직접 지도에 들어온 경우에는 기존 지도를 그대로 사용합니다.
+        if (articleIdText === null && routeIndexText === null) return;
+
+        const status = document.getElementById("mapArticleStatus");
+        const panel = document.getElementById("savedArticlePanel");
+        status.hidden = false;
+        panel.hidden = true;
+
+        if (!articleIdText || !routeIndexText ||
+            !/^[1-9][0-9]*$/.test(articleIdText) ||
+            !/^(0|[1-9][0-9]*)$/.test(routeIndexText) ||
+            !Number.isSafeInteger(Number(articleIdText)) ||
+            !Number.isSafeInteger(Number(routeIndexText))) {
+            status.textContent = "기사 주소의 ID 또는 경로 번호가 올바르지 않습니다. 아래에서 직접 경로를 검색할 수 있습니다.";
+            return;
+        }
+
+        const articleId = Number(articleIdText);
+        const routeIndex = Number(routeIndexText);
+        status.textContent = "기사에 저장된 경로 정보를 불러오는 중입니다.";
+
+        try {
+            const response = await fetch("/api/news/history/" + encodeURIComponent(String(articleId)));
+            const article = await response.json();
+            if (!response.ok) {
+                throw new Error(response.status === 404
+                    ? "해당 기사를 찾을 수 없습니다."
+                    : "기사 정보를 불러오지 못했습니다.");
+            }
+            if (!Array.isArray(article.routes) || routeIndex >= article.routes.length) {
+                throw new Error("기사에 해당 번호의 경로가 없습니다.");
+            }
+
+            const selectedRoute = article.routes[routeIndex];
+            if (typeof selectedRoute.start !== "string" ||
+                typeof selectedRoute.end !== "string" ||
+                selectedRoute.start.trim().length < 2 ||
+                selectedRoute.end.trim().length < 2 ||
+                selectedRoute.start.length > 100 ||
+                selectedRoute.end.length > 100) {
+                throw new Error("기사에 저장된 출발지 또는 목적지가 올바르지 않습니다.");
+            }
+
+            const retrievedAt = new Date(article.retrieved_at);
+            const retrievedText = Number.isNaN(retrievedAt.getTime())
+                ? "정보 없음"
+                : retrievedAt.toLocaleString("ko-KR", {timeZone: "Asia/Seoul"}) + " (KST)";
+            const distanceText = Number.isFinite(selectedRoute.distance_m) && selectedRoute.distance_m > 0
+                ? (selectedRoute.distance_m / 1000).toFixed(1) + "km" : "정보 없음";
+            const durationText = Number.isFinite(selectedRoute.duration_seconds) && selectedRoute.duration_seconds >= 0
+                ? (selectedRoute.duration_seconds / 60).toFixed(1) + "분" : "정보 없음";
+            const ratioText = Number.isFinite(selectedRoute.congestion_ratio)
+                ? selectedRoute.congestion_ratio.toFixed(1) + "%" : "정보 없음";
+
+            document.getElementById("savedArticleTitle").textContent = "기사 #" + articleId + "의 저장된 경로";
+            document.getElementById("savedArticleTime").textContent = "기사 교통정보 조회 완료: " + retrievedText;
+            document.getElementById("savedArticleRoute").textContent =
+                selectedRoute.start + " → " + selectedRoute.end;
+            document.getElementById("savedArticleMetrics").textContent =
+                "저장 거리 " + distanceText + " · 예상 소요시간 " + durationText +
+                " · 정체·지체 거리 비율 " + ratioText;
+            document.getElementById("origin").value = selectedRoute.start;
+            document.getElementById("destination").value = selectedRoute.end;
+            document.getElementById("mapRouteSubmit").textContent = "현재 경로 새로 조회";
+            document.getElementById("backToSavedArticle").href = "/news";
+            document.getElementById("result").textContent =
+                "과거 저장 경로를 확인했습니다. 현재 경로를 보려면 조회 버튼을 누르세요.";
+            panel.hidden = false;
+            status.hidden = true;
+            // 사용자가 버튼을 누르기 전에는 /api/route를 호출하지 않습니다.
+        } catch (error) {
+            status.textContent = "기사 연결 안내: " + error.message +
+                " 아래에서 직접 경로를 검색할 수 있습니다.";
+        }
+    }
+
+    loadSavedArticleRouteFromUrl();
 
     document.getElementById("mapRouteForm").addEventListener("submit", async function (event) {
         event.preventDefault();
