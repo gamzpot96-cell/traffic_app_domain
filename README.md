@@ -1460,3 +1460,12 @@ git pull origin kakao
 - 데이터/개발환경 영향: Supabase DB와 데이터·FastAPI API·Kakao 연결·관리자 로그인·추가 패키지 변경 없음. 뉴스 CSS/구조 및 정적 회귀 테스트만 변경.
 - 검증 계획: HTML/ID·앵커 유지 테스트 추가, 전체 자동 회귀(41개 예상), `/news` PC/모바일 실화면 및 F16 검색·F17 차트·F22 CSV·F23 기사 상세 수동 확인. 코드 반영 후 실제 브라우저 검사 전까지 완료로 표시하지 않는다.
 
+
+### 12.34 D01 뉴스 레이아웃 1차 코드 반영 (2026-10-19)
+
+- `static/news.html`: 컨테이너 최대 폭 1180px, 남색 `.news-intro` 영역, F17 그래프·F16 뉴스 검색·F22 CSV·경로별 대시보드·저장 기사 경로·뉴스 본문 개별 카드 스타일 적용. 데스크톱/모바일 850/600px 반응형 규칙 추가.
+- 기존 뉴스 생성 버튼·기사 결과 상태, 그래프/CSV/기사 목록의 **모든 ID와 기존 JavaScript 함수·API 호출 유지**. 네비게이션 `#trafficTrends`, `#trafficExport`, `#historySection`, `#trafficDashboard` 해시 이동도 계속 지원.
+- `tests/test_navigation.py`에 뉴스 새 레이아웃과 F16/F17/F22/F23 중요 HTML 요소 보존을 검사하는 테스트 1개 추가. 직전 **40/40 통과** 이후 테스트 1개 추가로 **전체 41개 예상**, 아직 사용자 로컬 실행 전.
+- **상태:** GitHub `kakao` 코드 반영 완료, 브라우저 시각·F16 검색·F17 그래프·F22 CSV·F23 기사 링크 및 전체 자동 회귀 검증 대기. 기존 DB·서버 API·Kakao·관리자 코드 변경 없음.
+- 다음 단계: 사용자가 `git pull origin kakao` 및 전체 unittest 수행 후 `/news` 화면의 카드 배치, 850/390px 크기, 검색/그래프/CSV 동작 재검증. 다음 디자인 대상은 `/map`과 `/admin`.
+
