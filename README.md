@@ -1720,3 +1720,12 @@ git pull origin kakao
 - **판정:** 전체 53개 자동 테스트 통과. 실제 Chrome에서 Kakao Maps SDK 로딩·한글 지도·기사 #8 저장 요약 표시 및 현재 경로 수동 조회 후 Polyline/마커 렌더링은 아직 별도 화면 검증 필요.
 - **다음 확인:** Uvicorn 재시작 → `http://127.0.0.1:8000/map?article_id=8&route_index=0` 접속 → `Ctrl+F5` → 기사 과거 정보와 카카오맵 배경이 함께 나오는 초기 화면 캡처. 정상인 경우 버튼 클릭 후 현재 경로선·상태 색상 캡처. 실패 시 F12 Console 오류 메시지를 API 키 노출 없이 공유.
 - README 기록만 갱신. 앱 코드·DB·키·스키마 변경 없음, `kakao` 브랜치만 수정.
+
+### 13.13 카카오맵 HTML 종료 태그 누락 수정 (2026-10-19)
+
+- 사용자 Chrome 초기 화면에서 계속 `카카오맵을 불러오는 중입니다.`만 출력되고 배경 지도/기사 #8의 저장 경로 카드가 나타나지 않음. 직전 53개 unittest는 모두 통과했으나 브라우저 실행은 실패.
+- `kakao` 브랜치의 실제 `traffic-api/static/map.html` 파일을 직접 검사한 결과 **inline `<script>`가 닫히지 않았고 파일 끝의 `</script>`, `</body>`, `</html>`이 통째로 누락**되어 있었음. 앞선 파일 수정 당시 잘못된 문자열 위치 기반 조합으로 문서 꼬리 부분이 잘린 것이 원인. HTML 파서가 JavaScript를 정상 실행하지 못해 SDK 초기화와 F23 기사 조회가 중단된 현상과 일치. 이전 문법 검사는 빈 문자열을 추출하여 통과한 것이었으므로 유효한 전체 본문 문법 검사로 인정할 수 없음.
+- **수정:** `map.html` 끝에 `</script>`, `</body>`, `</html>` 복원. JS inline 본문 11,722자를 추출해 V8 JavaScript 구문 분석 `new Function(script)` 검증 **PASS**. 현재 `<script` 여는 태그 2개(외부 navigation JS + 인라인 JS), 닫는 `</script>` 2개, 본문/HTML 닫는 태그 정상 확인.
+- **재발 방지:** `tests/test_kakao_map.py`에 `test_map_html_closes_inline_script_and_document` 추가, script 열기/닫기 개수, 문서 끝 `</html>`, 인라인 JS 안에 SDK 초기화와 기사 로더 호출 포함 검사. 기존 53개에 1개 추가돼 전체 **54개 예상**. 실제 로컬 전체 테스트와 Chrome 재검증은 아직 완료 전.
+- **다음:** `git pull origin kakao` → `.\\.venv\\Scripts\\python.exe -m unittest discover -s tests -p "test_*.py" -v` (54개 `OK` 확인) → 서버 재시작 및 `Ctrl+F5`로 `/map?article_id=8&route_index=0` 확인. 카카오맵 로딩 또는 기사 카드가 여전히 실패하면 Chrome F12 Console의 첫 오류 문구를 키/SDK URL 없이 확인.
+- 기존 REST API 경로, 기사 저장, 지도 Polyline/마커, OpenLayers 복구 파일, Supabase DB/스키마·API 키는 변경하지 않음. 오직 `kakao` 브랜치의 HTML, 테스트, 문서 수정.
