@@ -1,7 +1,6 @@
 """외부 API 요청 없이 카카오 경로 엔드포인트를 확인합니다."""
 
 from unittest.mock import AsyncMock, patch
-
 from fastapi.testclient import TestClient
 
 from app.main import app

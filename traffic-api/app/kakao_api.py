@@ -10,7 +10,6 @@ load_dotenv()
 LOCAL_SEARCH_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 DIRECTIONS_URL = "https://apis-navi.kakaomobility.com/v1/directions"
 
-
 class KakaoApiError(Exception):
     def __init__(self, message: str, status_code: int = 502):
         self.message = message

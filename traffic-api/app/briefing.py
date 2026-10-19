@@ -1,4 +1,3 @@
-
 def create_traffic_briefing(route_data):
     """자동차 경로 데이터를 바탕으로 교통 브리핑을 생성합니다."""
 
