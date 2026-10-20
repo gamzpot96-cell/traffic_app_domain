@@ -203,6 +203,42 @@ class SharedNavigationTests(unittest.TestCase):
                     self.assertNotIn(forbidden, css)
         self.assertIn("outline:none;", self.client.get("/static/d02-journalism.css").text)
 
+    def test_d02_news_hero_actions_share_a_row(self):
+        from html.parser import HTMLParser
+
+        class HeroActionsParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.in_actions = 0
+                self.tags = []
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == "div" and "d02-news-actions" in attrs.get("class", "").split():
+                    self.in_actions = 1
+                elif self.in_actions and tag == "div":
+                    self.in_actions += 1
+                elif self.in_actions and tag in ("a", "button"):
+                    self.tags.append((tag, attrs.get("id", ""), attrs.get("href", "")))
+
+            def handle_endtag(self, tag):
+                if tag == "div" and self.in_actions:
+                    self.in_actions -= 1
+
+        response = self.client.get("/news")
+        self.assertEqual(response.status_code, 200)
+        parser = HeroActionsParser()
+        parser.feed(response.text)
+        self.assertEqual(parser.tags, [
+            ("a", "", "#historySection"),
+            ("a", "", "#trafficDashboard"),
+            ("button", "loadNewsButton", ""),
+        ])
+        css = self.client.get("/static/d02-journalism.css").text
+        self.assertIn(".news-intro .d02-news-actions{display:flex;", css)
+        self.assertIn(".news-intro .d02-news-actions #loadNewsButton{display:inline-flex;", css)
+        self.assertIn(".news-intro .d02-news-actions{flex-direction:column;}", css)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
