@@ -266,3 +266,14 @@ py -m venv .venv
 - [ ] README 상태·변경 이력 갱신
 
 **다음 코드 작업은 사용자가 이 README의 기능 범위와 메뉴 구성을 검토한 후 시작합니다.**
+
+
+## ITS 기존 기능 보존 (카카오 통합)
+
+- 메인 서비스(`/`, `/map`, `/news`, `/admin`)는 Kakao 자동차 경로/뉴스 기반입니다.
+- 이전 ITS 방식은 별도 `/its` 페이지에서 이용할 수 있습니다. 지도 영역 교통정보 조회 및 지역명 검색 기능을 유지합니다.
+- ITS 전용 API: `GET /traffic?min_x=...&max_x=...&min_y=...&max_y=...`, `GET /traffic/search?location=...`.
+- 환경변수: ITS 교통 조회는 `ITS_API_KEY`, 지역명 검색은 `KAKAO_REST_API_KEY`를 사용합니다.
+- ITS 조회 결과는 기존 `traffic_information` 테이블에 백그라운드 저장됩니다. API 실패 시 기존 데이터 조회를 시도하며 DB가 없거나 조회에 실패하면 빈 목록을 반환할 수 있습니다.
+- 데이터 안내: 카카오 자동차 **경로 교통정보**와 ITS **영역별 도로 소통정보**는 원천·조회 범위가 다르므로 동일한 통계로 비교하지 않습니다.
+- 검증: `python -m unittest discover -s tests -p "test_*.py" -v` 실행 후 /its 페이지와 /traffic 경로를 확인하세요. 실제 ITS/Kakao 외부 응답 및 DB 저장은 키와 연결 정보가 있어야 확인할 수 있습니다.
