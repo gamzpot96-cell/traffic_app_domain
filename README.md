@@ -3038,3 +3038,12 @@ git pull origin kakao
 - 추후 항목인 이용 안내·FAQ, 기사 공유, 기사 발행·보류(F20), 정기 수집 상태(F19), 장애 기록·경고(F21), 운영 설정·공지는 **준비 중** 표시 유지. 현재 존재하지 않는 페이지/가짜 URL은 추가하지 않음. F19/F20/F21 활성화 후 해당 페이지의 영역 ID로 점진적 전환.
 - **테스트:** `tests/test_navigation.py`에 `test_m03_route_based_menu_links` 추가. 그룹 개수·기존 중복 그룹 제거·실제 HTML 앵커·미구현 메뉴의 planned 표시 검사. 기존 90개 예상(D03 포함)에서 **91개 예상, Windows 실행 결과 미확인**. 이전 89개 OK는 변경 전 결과.
 - **영향:** `static/navigation.js`, `static/index.html`, 회귀 테스트와 README만 변경. 기존 공통 메뉴 반응형/드롭다운/ESC 동작, 검색·카카오맵·뉴스·관리자 API는 유지. DB·인증·환경변수·CSS 포커스 테두리·`main` 변경 없음. 실제 데스크톱/390px 사용성 검증 대기.
+
+
+### 23.5 D03 시안 재현 2차 코드 적용 (2026-10-20)
+
+- **시안 불일치 수정 2차 적용:** 기존 추상 패턴 중심 히어로를 실제 서울 야간 도로 사진 배경으로 교체하고, 홈 대형 히어로 + 겹쳐 올라오는 검색 카드 + 2열 정보 카드, 지도 좌측 경로 입력/관심 경로와 우측 넓은 카카오 지도, 뉴스 사진 히어로 + 기사 2열 카드, 관리자 사진 히어로 및 작업/통계 카드의 구조를 `static/d03-urban-traffic.css`에 강화했다. 850px 이하에는 세로형 구성으로 되돌리는 CSS를 추가.
+- **사진 저작권:** Wikimedia Commons `View of Night Traffic from Above in Seoul-1.jpg`, 촬영자 **Immanuelle**, **CC BY 4.0**. 출처: https://commons.wikimedia.org/wiki/File:View_of_Night_Traffic_from_Above_in_Seoul-1.jpg / 라이선스: https://creativecommons.org/licenses/by/4.0/ . 배경에 어두운 오버레이 및 화면비 자르기 적용. 네 HTML 페이지 하단에 촬영자·출처·라이선스·변경 사실과 **실시간 교통정보가 아닌 장식용 과거 사진**임을 명시했다. 외부 Wikimedia 이미지가 로드되지 않더라도 CSS 그라데이션을 제공.
+- `map.html`은 `main.map-content`와 `.map-canvas-frame`이 형제 요소라 단순 음수 margin으로 2단이 완성되지 않음. 최종 CSS에서는 `body:has(>.map-content)` 기반 실제 두 열 Grid로 보정하고 모바일 `display:block`으로 복귀하도록 처리. 카카오맵 JS와 경로 API를 변경하지 않았다.
+- **검증 코드:** `tests/test_navigation.py`에 실사진 URL·2열 배치·850px 모바일 복귀·4페이지 CC BY 4.0 출처 표시 확인 테스트 1개 추가. 기존 91개 예상에서 **총 92개 예상이며 Windows 실행 전**. 이 수치는 자동 실행 성공 주장이 아니다. 실제 Chrome 데스크톱/390px 카드 배치와 지도 타일·즐겨찾기·관리자 UI 확인은 별도 대기.
+- **데이터·기능·환경:** 실제 교통 수치/기사 본문 가공 없음, F19 정기 수집·F20 발행 상태·F21 영구 진단 활성화 없음. 기존 Supabase 데이터·관리자 인증·환경변수·Vercel 설정 및 `main` 무변경. 신규 포커스 테두리 없음.
