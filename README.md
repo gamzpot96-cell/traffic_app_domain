@@ -2834,3 +2834,13 @@ git pull origin kakao
 - **테스트:** `tests/test_favorites.py`에 메뉴 링크·대상 ID·초기 안내·불러오기 문구·자동 호출 금지에 관한 정적 회귀 테스트 1개 추가. GitHub 파일 재조회에서 지정한 변경 문자열의 존재와 기존 `planned` 표현 제거를 확인함. **Windows 전체 unittest 및 실제 Chrome 화면 테스트는 아직 재실행되지 않았으며 결과 대기.** 기존 84개 통과는 수정 전 기록이고, 현재 테스트 파일에는 새 테스트 1개가 추가됨.
 - **개발환경/DB:** Python·Vercel 배포 설정·환경변수·Supabase 테이블/데이터·기사·관리자 인증 **변경 없음**. CSS·포커스 테두리·`main` **변경 없음**. `kakao`의 문서/JS/HTML/테스트 파일만 커밋됨.
 - **확인 절차:** 사용자 Windows `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 후 합격 건수/실패를 기록하고, Vercel `kakao` 배포가 READY인지 확인. 지도 드롭다운 '관심 경로' 링크를 눌러 즐겨찾기 영역으로 이동되는지, 불러오기 뒤 경로를 자동 재조회하지 않고 '경로 표시' 안내가 보이는지 데스크톱·390px에서 점검.
+
+
+### 20.19 Windows 자동 테스트 85개 통과 (2026-10-20)
+
+- 사용자 제공 Windows PowerShell 실행 로그: 전체 테스트 85개, 1.197초, 최종 OK (실패 0개).
+- 새 테스트 test_manual_route_guidance_after_load 포함 모두 통과.
+- 라이브러리 경고와 예외 대응 모의 시험 로그는 테스트 실패가 아님.
+- traceback의 Python314 경로로 인해 Python 3.10.10 기준과 실제 가상환경 버전 일치 여부를 별도 점검 예정.
+- GitHub kakao의 UI 수정 검증 자동 테스트 완료, 사용자 Chrome에서 메뉴 및 안내 문구 수동 확인은 대기.
+- 프로그램, DB, 관리자 인증, main 브랜치 변경 없음.
