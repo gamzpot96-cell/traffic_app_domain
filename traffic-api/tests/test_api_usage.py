@@ -96,6 +96,21 @@ class ApiUsageTests(unittest.TestCase):
         self.assertNotIn(":focus-visible", page.text)
 
 
+    def test_dashboard_summary_detail_and_responsive_contract(self):
+        with TestClient(main.app) as client:
+            page = client.get("/admin")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn('class="api-usage-head"', page.text)
+        self.assertIn('class="api-usage-grid" aria-label="API 호출 요약"', page.text)
+        self.assertIn('class="api-usage-details" aria-label="API 사용 상세 정보"', page.text)
+        for name in ("apiUsageTotal", "apiUsageSuccess", "apiUsageFailure",
+                     "apiUsageCache", "apiUsageTypes", "apiUsageFailureTypes",
+                     "apiUsageTimes", "apiUsageNotice"):
+            self.assertEqual(page.text.count('id="' + name + '"'), 1)
+        self.assertIn('#apiUsageDetails[hidden] { display: none !important; }', page.text)
+        self.assertIn('@media (max-width: 390px)', page.text)
+        self.assertNotIn(':focus-visible', page.text)
+
     def test_admin_usage_section_spans_both_columns(self):
         with TestClient(main.app) as client:
             response = client.get("/static/d02-journalism.css")
