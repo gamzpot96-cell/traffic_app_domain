@@ -125,13 +125,13 @@
                 </div>
             </div>
             <div class="steps" aria-label="기사 작업 순서">
-                <div class="step-card"><span class="step-number">1</span><h2>새 교통 뉴스 생성</h2><p>서울의 3개 선택 경로를 조회해 초안을 만듭니다.</p></div>
+                <div class="step-card"><span class="step-number">1</span><h2>새 교통 뉴스 생성</h2><p>서울의 3개 경로를 분석한 Fact Sheet를 OpenAI API에 전달해 초안을 작성합니다.</p></div>
                 <div class="step-card"><span class="step-number">2</span><h2>내용과 수치 검토</h2><p>조회 시각, 기사 내용, 경로별 자료를 확인합니다.</p></div>
                 <div class="step-card"><span class="step-number">3</span><h2>확인한 뉴스 저장</h2><p>직접 저장 버튼을 누른 경우에만 저장을 요청합니다.</p></div>
             </div>
             <section class="workspace-section" aria-labelledby="generateHeading">
                 <h2 id="generateHeading">1. 뉴스 초안 생성</h2>
-                <p>먼저 교통정보를 조회하고 새 기사를 생성하세요.</p>
+                <p>교통정보 분석 후 OpenAI API가 기사를 작성합니다. 생성 전 API 이용 요금이 발생할 수 있습니다.</p>
                 <button type="button" id="generateDraftButton">새 교통 뉴스 생성</button>
                 <p id="draftStatus" class="message" role="status">아직 생성된 기사가 없습니다.</p>
             </section>
@@ -588,7 +588,7 @@
                 generateButton.disabled = true;
                 document.getElementById("draftPreview").hidden = true;
                 document.getElementById("savedArticleLink").replaceChildren();
-                status.textContent = "교통정보 3개 경로를 조회하는 중입니다.";
+                status.textContent = "교통정보 3개 경로 분석 및 AI 기사 초안 작성 중입니다.";
 
                 try {
                     const response = await fetch("/api/admin/news/generate", {
