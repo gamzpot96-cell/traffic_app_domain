@@ -2718,3 +2718,14 @@ git pull origin kakao
 - 따라서 교통정보 프로젝트의 Vercel **Root Directory, Python 런타임, 환경변수 적용 여부, 실제 배포 성공**은 아직 확인되지 않았다. 연결할 새/기존 올바른 프로젝트가 결정되기 전까지 환경변수·프로젝트 설정을 변경하거나 배포하지 않는다.
 - 차기 단계 제안: 사용자 확인 후 **교통정보 저장소 전용 Vercel 프로젝트 연결 설계**를 마련한다. 연결 저장소 `traffic_app_domain`, 배포 브랜치 `kakao`, Root Directory `traffic-api` 후보를 검토하되 실제 설정 변경은 별도 승인 후 시행.
 - **검증 범위:** Vercel 메타데이터 조회만 수행. 앱 코드·Supabase DB/인증·운영 환경변수·기존 Vercel 프로젝트·`main` 불변. Windows 전체 84개는 앞선 사용자 검증 기록이며 이 단계에서 재실행하지 않았다.
+
+
+### 20.5 교통정보 전용 Vercel 프로젝트 분리 설계 및 사용자 결정 (2026-10-20)
+
+- **사용자 결정:** 기존 `journalismstudy`에 덮어쓰지 않고 **Vercel 프로젝트 `traffic_app_domain`를 새로 만든다.** `portfolio-webpage` 등 기존 프로젝트는 그대로 유지.
+- 대상 소스 저장소: GitHub `gamzpot96-cell/traffic_app_domain`; **현재 개발·배포 대상은 `kakao` 브랜치**. `main`은 프로젝트 종료 후 최종 병합 전까지 변경하거나 개발 단계에서 배포 소스로 사용하지 않는다.
+- 프로젝트 설정 제안: 이름 `traffic_app_domain`, FastAPI 프레임워크, 저장소 루트 기준 **Root Directory `traffic-api`**, 서버 함수 지역 `icn1`(기존 `traffic-api/vercel.json` 기준). 루트와 함수 경로/빌드 조합은 실제 첫 배포 단계에서 검증할 것.
+- **단계 구분:** 우선 새 Vercel 프로젝트만 생성하여 분리 확인. 잘못된 `main` 자동 배포를 막기 위해 Git 연결과 Production Branch 적용·최초 배포는 이후 Git 연동 방식과 보호 설정을 확인한 뒤 진행. 신규 프로젝트 생성 자체를 배포 성공으로 취급하지 않는다.
+- 환경변수/비밀: 새 프로젝트에서 개별 설정해야 하며 기존 `journalismstudy`의 값 복사·출력 금지. Supabase 기존 DB·관리자 인증/기존 기사·스냅샷 및 카카오 REST/지도 키를 변경하지 않는다.
+- 확인 계획: 기존 Vercel 2개 프로젝트가 그대로 있는지 확인, 새 프로젝트 이름/ID/Root Directory/프레임워크/지역 확인, Git 브랜치와 배포 상태 확인. 배포 이전에는 실 URL/기능 작동을 주장하지 않는다.
+- **기능정의·DB·개발환경 영향:** F18/F19-A/F19-B 기능 수정 없음, DB 스키마 및 데이터 변경 없음. 새로운 Vercel 프로젝트 분리만 개발환경 변경으로 본 절에 기록한다. 포커스 외곽선 모든 색상 추가 금지.
