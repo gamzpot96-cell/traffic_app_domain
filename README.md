@@ -3154,3 +3154,16 @@ git pull origin kakao
 - 저장된 F21 운영 이벤트는 `source=kakao`, `event_type=directions_request`, `safe_error_code=http_error`, `http_status=429`, `outcome=failure`, `occurrence_count=1`. 오류 원문, API 키, 사용자 질의는 이벤트 컬럼 조회에 없음. HTTP 429는 요청 제한/쿼터 가능성을 의미하며 정확한 정책 원인은 Kakao 관리자 콘솔 또는 응답 헤더로 추가 확인이 필요. 따라서 실제 F19 Cron 자동 활성화 불가(별도 비용·쿼터 검증 및 사용자 승인 필요).
 - F19 처리기 `tests/test_collection_runs.py`에 대표 3개 경로 중 1개 실패시 2 성공·1 실패·`partial` 결과 및 비공개 예외 문구 비노출을 검증하는 `test_partial_failures_are_counted_without_leaking` 추가. 기존 실측 **110개 OK**에 테스트 1개 추가되어 **111개 예상(새 실행 결과 미확인)**.
 - 결론: F21 실제 영구 오류 저장 1회 확인, F20 실제 발행 과정 및 F19 실수집은 미검증. 데이터 변경 없이 안전한 회귀 테스트만 추가했고, 승인 전 자동 수집·외부 알림·DB 정리는 하지 않았음. `main` 불변.
+
+
+## 26. M03 상단 메뉴 ‘준비 중’ 실제 구현 대조 및 항목 정리 (2026-10-20)
+
+- 사용자 제출 Windows 전체 테스트 로그 **111개 실행/111개 OK** 확인. 이번 UI 개선 전 검증 결과이며 신규 UI 이후 전체 재실행은 미확인.
+- 최신 traffic-api/static/navigation.js에서 실제 남아 있던 planned:true 항목은 세 가지: 홈 이용 안내·FAQ, 뉴스 기사 공유·읽기 모드, 관리자 운영 설정·공지. 다른 F19/F20/F21 메뉴는 이미 실제 관리자 보호 화면으로 연결되어 있었으므로 다시 변경하지 않음.
+- 홈 static/index.html에 #helpSection을 추가하고 현재 구현 사실 기반 FAQ 네 개(경로 검색, 관심 경로의 브라우저별 보존, 조회 시각과 뉴스의 시점 구분, 카카오 API 실패 안내)를 제공. 메뉴 /#helpSection 연결.
+- 뉴스 static/news.html의 실제 기사 본문 앞에 #readingTools를 추가. 현재 기사 본문의 집중 읽기 모드 토글과 **현재 뉴스 페이지 /news 링크** 클립보드 복사를 제공. 개별 기사 고유 URL 공유는 아직 제공하지 않으므로 메뉴 명칭을 '뉴스 링크·읽기 모드'로 정확히 변경, 개별 기사 공유가 가능한 것처럼 안내하지 않음. 메뉴 /news#readingTools 연결.
+- 관리자 static/admin.html의 기존 인증 후 작업실에 #operatingGuideSection 추가. 정기 수집 OFF, 신규 기사 review→승인 발행, 외부 오류 알림 OFF, API 메모리 계측을 읽기 전용 문구로 안내. 비밀키/환경변수 설정이나 공지 DB 편집 기능은 제공하지 않음. 메뉴 '운영 정책·공지 안내'로 표기를 제한하여 /admin#operatingGuideSection로 연결.
+- 모든 상단 메뉴의 planned:true 항목 제거. 이는 모든 기능이 완성되었다는 뜻이 아니며 F19 실제 Cron과 운영 설정 변경 및 개별 뉴스 링크 공유/공지 CRUD는 여전히 범위 밖. 구현된 설명/컨트롤에 링크를 연결하되 새 비용·DB 조작/업데이트/외부 알림은 가하지 않음.
+- static/d03-urban-traffic.css에서 FAQ details, 뉴스 읽기 모드, 운영 안내 카드의 390px 반응형 스타일 추가. 어떠한 포커스 아웃라인·테두리도 신규 추가하지 않음.
+- tests/test_navigation.py에 메뉴 앵커 실체 3개, 미구현 메뉴 표기 제거, 실제 컨트롤/운영 경고를 확인하는 테스트 1개 추가. 이전 실측 111개에 1개 추가되어 총 112개 예상(사용자 Windows 재실행 필요).
+- 브랜치 kakao만 수정, 기존 데이터·카카오 API·인증, Supabase 테이블과 Vercel Cron 설정 및 main 브랜치 변경 없음. README 최종 전체 감사는 모든 운영 검증 완료 후 별도로 수행.
