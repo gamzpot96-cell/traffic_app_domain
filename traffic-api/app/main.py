@@ -467,6 +467,49 @@ def get_news_history_detail(article_id: int):
 
     return article
 
+# F20: 관리자 전용 기사 발행 상태 목록 및 변경
+@app.get("/api/admin/news/publications")
+async def admin_news_publications(admin_user=Depends(require_admin)):
+    from app.news_database import get_admin_publication_articles
+    try:
+        articles = await run_in_threadpool(get_admin_publication_articles)
+        return {"articles": articles, "count": len(articles)}
+    except Exception:
+        logger.exception("관리자 기사 발행 상태 조회 실패")
+        raise HTTPException(status_code=503, detail="기사 상태 목록을 불러오지 못했습니다.")
+
+
+class AdminPublicationChangeRequest(BaseModel):
+    status: str
+
+
+@app.patch("/api/admin/news/publications/{article_id}")
+async def admin_change_news_publication(
+    article_id: int,
+    request: AdminPublicationChangeRequest,
+    admin_user=Depends(require_admin)
+):
+    from app.news_database import change_article_publication_status
+    from app.operation_policies import PUBLICATION_STATES
+
+    if article_id < 1 or request.status not in PUBLICATION_STATES:
+        raise HTTPException(status_code=422, detail="기사 ID 또는 발행 상태가 올바르지 않습니다.")
+
+    try:
+        result = await run_in_threadpool(
+            change_article_publication_status, article_id, request.status, admin_user["id"]
+        )
+    except ValueError:
+        raise HTTPException(status_code=409, detail="허용되지 않는 기사 상태 변경입니다.")
+    except Exception:
+        logger.exception("관리자 기사 발행 상태 변경 실패")
+        raise HTTPException(status_code=503, detail="기사 상태 변경에 실패했습니다.")
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="해당 기사를 찾을 수 없습니다.")
+    return result
+
+
 # 관리자 로그인 상태 확인 API
 @app.get("/api/admin/me")
 async def get_admin_profile(
