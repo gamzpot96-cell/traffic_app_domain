@@ -8,7 +8,7 @@
 .favorite-item-actions { display:flex; gap:8px; flex-shrink:0; }
 .favorite-routes .favorite-action { font:inherit; min-height:36px; padding:7px 12px; border-radius:7px; border:1px solid #94aaca; background:#eef4fd; color:#143a73; cursor:pointer; }
 .favorite-routes #saveFavoriteRoute { font:inherit; min-height:40px; padding:9px 16px; border:0; border-radius:8px; background:#2463eb; color:white; font-weight:700; cursor:pointer; }
-.favorite-routes :is(button):focus-visible { outline:2px solid #1558c5; outline-offset:2px; }
+
 .favorite-status { font-size:13px; color:#3e5878; min-height:1.5em; margin:8px 0 0; }
 .favorite-empty { color:#596b81; padding:10px 0; }
 @media(max-width:600px) { .favorite-routes{padding:14px;} .favorite-item{flex-direction:column;align-items:stretch;} .favorite-item-actions{width:100%;} .favorite-item-actions button{flex:1;} .favorite-routes #saveFavoriteRoute{width:100%;} }
