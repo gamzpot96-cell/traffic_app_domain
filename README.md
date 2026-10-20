@@ -2322,3 +2322,10 @@ git pull origin kakao
 - `tests/test_navigation.py` 정적 회귀에 CSS의 로그인 후 block/grid 규칙 및 관리자 inline `block` 강제 금지 검사 추가(`d7d0300`); **총 테스트 함수 수 69개 유지**.
 - **검증 상태 구분:** Windows 69개 `OK`는 **이번 수정 이전 로그**이며, 수정 후 69개 재실행과 Chrome 로그인 후 데스크톱 Grid(2·3번 좌우 배치 + 카드 간 간격) 재검증은 **대기**. CSS 선택자 검사만으로 실제 레이아웃 완료를 확정하지 않음.
 - D02 노란색/주황색 포커스 박스 테두리 금지 유지. Supabase 계정·관리자 API·기사 #11/DB·카카오 API/지도/뉴스·`main` 변경 없음. `kakao`만 수정.
+
+### 16.16 D02 관리자 표시 방식 변경 후 기존 테스트 기대값 보정 (2026-10-20)
+
+- 사용자가 16.15 CSS/JS 반영 후 Windows 전체 69개 `unittest` 로그를 제출함: **`Ran 69 tests in 0.491s`, `FAILED (failures=1)`**. 유일한 실패는 `tests/test_admin_design.py::test_password_and_saved_article_protections`가 더 이상 의도되지 않은 `adminPanel.style.display = "block"` 문자열을 요구한 것. 기타 지도/뉴스/캐시/관리자 관련 테스트는 `ok`.
+- 원인: D02 실제 Grid 간격을 살리기 위해 로그인 성공 처리에서 강제 inline `display:block`을 제거하고 `adminPanel.style.removeProperty("display")`로 변경했으나 **D01 정적 회귀 테스트의 옛 기대값을 함께 수정하지 못함**. 인증 API 실패나 실험 데이터 훼손을 의미하지 않음.
+- **수정:** `traffic-api/tests/test_admin_design.py`의 해당 기존 테스트 문자열을 `adminPanel.style.removeProperty("display")`로 변경(커밋 `76e0683`). `adminPanel.style.display = "none"` 로그아웃 검사, 관리자 UID 검증/비밀번호 초기화·초안 저장 보호 검사는 유지함. 새 테스트 함수 추가 없이 **69개 유지**.
+- 이번 커밋 이후 Windows 69개 전체 테스트 재실행과 Chrome 로그인 후 2·3 카드 사이 실레이아웃 재촬영은 아직 확인하지 못했음. `kakao`만 수정, `main`/DB/백엔드/비밀키 변경 없음. 노란색 포커스 테두리 금지 유지.
