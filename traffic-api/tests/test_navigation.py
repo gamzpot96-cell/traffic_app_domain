@@ -1,5 +1,6 @@
 """M01/M02 공통 메뉴: 서버 정적 파일·페이지 연결 회귀 테스트."""
 import unittest
+import re
 
 from fastapi.testclient import TestClient
 from app.main import app
