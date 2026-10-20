@@ -188,6 +188,20 @@ class SharedNavigationTests(unittest.TestCase):
                 with self.subTest(route=route, marker=marker):
                     self.assertIn(marker, page.text)
 
+    def test_d03_two_line_hero_and_wider_map_sidebar(self):
+        css = self.client.get("/static/d03-urban-traffic.css").text
+        home = self.client.get("/").text
+        admin = self.client.get("/admin").text
+        self.assertIn("교통정보와 뉴스를 함께 읽는<br>서울 도로교통 브리핑", home)
+        self.assertIn("교통 데이터를 기사로 만드는<br>뉴스 브리핑 작업실", admin)
+        self.assertIn("/* D03 phase 4: readable desktop headings", css)
+        self.assertIn("font-size:clamp(29px,2.65vw,40px)!important", css)
+        self.assertIn("font-size:clamp(26px,2.15vw,33px)!important", css)
+        self.assertIn("grid-template-columns:minmax(410px,460px) minmax(0,1fr)", css)
+        self.assertIn("grid-template-columns:repeat(2,minmax(0,1fr))", css)
+        self.assertIn("@media(max-width:850px)", css)
+        self.assertNotIn(":focus", css)
+
     def test_d03_admin_login_contrast_and_map_favorite_spacing(self):
         css = self.client.get("/static/d03-urban-traffic.css").text
         self.assertIn(".login-container .admin-login-layout > .admin-hero", css)
