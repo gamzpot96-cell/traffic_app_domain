@@ -53,6 +53,12 @@
         .save-note { color: var(--d01-muted); }
         #savedArticleLink { overflow-wrap: anywhere; }
         #savedArticleLink a { color: #1556c0; font-weight: 700; }
+        .api-usage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+        .api-usage-stat { padding: 16px; background: #f2f6fb; border: 1px solid var(--d01-border); border-radius: 10px; min-width: 0; }
+        .api-usage-stat span { display: block; color: var(--d01-muted); font-size: 13px; margin-bottom: 8px; }
+        .api-usage-stat strong { display: block; overflow-wrap: anywhere; font-size: 22px; }
+        @media (max-width: 850px) { .api-usage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 390px) { .api-usage-grid { grid-template-columns: minmax(0, 1fr); } }
         @media (max-width: 850px) {
             .admin-login-layout { grid-template-columns: 1fr; }
             .admin-hero { min-height: 230px; padding: 32px; }
@@ -142,6 +148,24 @@
                 <p class="save-note">기사와 경로별 수치를 검토한 경우에만 저장하세요. 초안 생성만으로는 Supabase에 저장되지 않습니다.</p>
                 <button type="button" id="saveDraftButton" disabled>확인한 뉴스 저장</button>
                 <p id="savedArticleLink" role="status"></p>
+            </section>
+            <section class="workspace-section" aria-labelledby="apiUsageHeading">
+                <h2 id="apiUsageHeading">4. API 사용 현황</h2>
+                <p class="small-note">이 서버 프로세스에서 집계한 수치입니다. 서버 재시작 시 초기화되며 카카오 공식 월간 이용량과 다릅니다.</p>
+                <button type="button" id="refreshApiUsageButton">사용 현황 새로고침</button>
+                <p id="apiUsageStatus" class="message" role="status">버튼을 눌러 현재 집계 값을 확인하세요.</p>
+                <div id="apiUsageDetails" hidden>
+                    <div class="api-usage-grid">
+                        <div class="api-usage-stat"><span>외부 요청</span><strong id="apiUsageTotal">0건</strong></div>
+                        <div class="api-usage-stat"><span>성공</span><strong id="apiUsageSuccess">0건</strong></div>
+                        <div class="api-usage-stat"><span>실패</span><strong id="apiUsageFailure">0건</strong></div>
+                        <div class="api-usage-stat"><span>캐시 HIT / MISS</span><strong id="apiUsageCache">0 / 0</strong></div>
+                    </div>
+                    <p id="apiUsageTypes" class="small-note"></p>
+                    <p id="apiUsageFailureTypes" class="small-note"></p>
+                    <p id="apiUsageTimes" class="small-note"></p>
+                    <p id="apiUsageNotice" class="small-note"></p>
+                </div>
             </section>
         </section>
     </main>
@@ -247,6 +271,8 @@
 
             adminAccessToken = null;
             pendingDraftToken = null;
+            document.getElementById("apiUsageDetails").hidden = true;
+            document.getElementById("apiUsageStatus").textContent = "버튼을 눌러 현재 집계 값을 확인하세요.";
             document.getElementById("draftPreview").hidden = true;
             document.getElementById("saveDraftButton").disabled = true;
             document.getElementById("draftStatus").textContent = "아직 생성된 기사가 없습니다.";
@@ -258,6 +284,60 @@
 
             loginMessage.textContent = "로그아웃했습니다.";
 
+        });
+
+        // F19-B: administrator-only on-demand usage diagnostics.
+        function formatUsageTime(value) {
+            return value ? new Date(value).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"}) + " (KST)" : "없음";
+        }
+
+        document.getElementById("refreshApiUsageButton").addEventListener("click", async function () {
+            if (!adminAccessToken) {
+                return;
+            }
+            const button = this;
+            const status = document.getElementById("apiUsageStatus");
+            button.disabled = true;
+            status.textContent = "사용 현황을 조회하고 있습니다.";
+            try {
+                const response = await fetch("/api/admin/api-usage", {
+                    headers: {"Authorization": "Bearer " + adminAccessToken}
+                });
+                if (!response.ok) {
+                    throw new Error("관리자 사용 현황을 조회할 수 없습니다. 다시 로그인하거나 잠시 후 시도하세요.");
+                }
+                const data = await response.json();
+                const external = data.external_requests;
+                const cache = data.route_cache;
+                document.getElementById("apiUsageTotal").textContent = external.total + "건";
+                document.getElementById("apiUsageSuccess").textContent = external.success + "건";
+                document.getElementById("apiUsageFailure").textContent = external.failure + "건";
+                document.getElementById("apiUsageCache").textContent = cache.hit + " / " + cache.miss;
+                const local = external.by_type.local;
+                const directions = external.by_type.directions;
+                document.getElementById("apiUsageTypes").textContent =
+                    "장소 검색 " + local.total + "건 / 자동차 길찾기 " + directions.total
+                    + "건 / 캐시 HIT 비율 " + cache.hit_rate_percent + "% / 경로 조회 실패 " + cache.failure + "건";
+                const failureLabels = {
+                    timeout: "시간 초과", http_error: "HTTP 오류", network_error: "연결 오류",
+                    invalid_json: "JSON 오류", invalid_response: "응답 형식 오류"
+                };
+                document.getElementById("apiUsageFailureTypes").textContent =
+                    "외부 요청 실패 유형: " + Object.entries(failureLabels).map(function (entry) {
+                        const key = entry[0];
+                        return entry[1] + " " + (local[key] + directions[key]) + "건";
+                    }).join(" · ");
+                document.getElementById("apiUsageTimes").textContent =
+                    "집계 시작: " + formatUsageTime(data.measurement_started_at)
+                    + " / 최근 외부 요청 실패: " + formatUsageTime(data.last_api_failure_at);
+                document.getElementById("apiUsageNotice").textContent = data.scope_notice;
+                document.getElementById("apiUsageDetails").hidden = false;
+                status.textContent = "사용 현황을 갱신했습니다.";
+            } catch (error) {
+                status.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
         });
 
         // 서버에서 생성한 기사를 미리보기 화면에 표시
