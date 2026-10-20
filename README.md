@@ -2346,3 +2346,11 @@ git pull origin kakao
 - 신규 정적 회귀 `tests/test_navigation.py::test_d02_news_hero_actions_share_a_row` 추가(커밋 `ae2368c`): HTMLParser로 동일 버튼 래퍼 안 2개 앵커 + 1개 버튼의 순서 및 뉴스 전용 CSS 행/모바일 규칙 검사. 앞선 Windows 전체 69개 합격 이후 **70개 예상**, 사용자 Windows에서 이번 수정 이후 전체 실행은 아직 확인되지 않음.
 - **노란색/주황색 포커스 테두리 금지 규칙 유지**. 변경은 `kakao` 한정; `main`/Supabase DB/기사 #11/비밀키 변경 없음.
 - 확인 대기: `git pull origin kakao` → Windows 70개 unittest 결과 → Chrome `/news` 데스크톱 3개 버튼 실제 같은 행 배치 및 모바일 390px에서 겹침/가로 넘침 없음 화면 확인.
+
+### 16.19 D02 뉴스룸 버튼 3개 Chrome 배치 검증 및 Windows 70개 테스트 통과 (2026-10-20)
+
+- 사용자가 D02 최신 `/news` 데스크톱 Chrome 전체 화면 스크린샷을 제출함. 뉴스룸 상단 **'저장 기사 검색' · '경로 분석 확인' · '최신 경로정보 조회 및 뉴스 생성'** 3개 버튼이 하나의 수평 행에 표시되고, 균일한 높이·간격 및 버튼 아래 `newsStatus` 문구가 분리되어 렌더링됨. 캡처에서 두 줄로 갈라지는 이전 UI 문제 및 큰 겹침이 보이지 않음.
+- Windows PowerShell `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 결과: **`Ran 70 tests in 0.515s`, `OK`**. D02 신규 `test_d02_news_hero_actions_share_a_row` 및 노란색 테두리 금지·관리자 로그인 상태·경로 지도/캐시/뉴스 저장 회귀 포함 모두 `ok`, 실제 실패·오류 0개.
+- Windows 테스트에 나타나는 StarletteDeprecationWarning 및 의도된 mock DB 실패/카카오 502는 테스트 실패가 아니며, 검사 대상 테스트에서 `ok`.
+- **판정:** 뉴스룸 데스크톱 상단 버튼 정렬의 실제 Chrome 시각 검증 및 D02 변경 이후 70개 전체 테스트 합격. 본 화면은 기사 검색 전 기본 상태이므로 저장 기사 본문·뉴스 생성 요청을 이번 캡처에서 재검증했다고 주장하지 않음.
+- 기존 백엔드·Supabase DB·저장 기사·관리자 보안·카카오 지도 및 D02 노란색 포커스 외곽선 금지 유지. `kakao` 브랜치 README에 결과 기록만 추가하며 코드 변경 없음.
