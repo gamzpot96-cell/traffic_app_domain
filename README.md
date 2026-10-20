@@ -2737,3 +2737,12 @@ git pull origin kakao
 - 요청한 최초 설정: 이름 `traffic_app_domain`, 프레임워크 `fastapi`, Root Directory `traffic-api`, 함수 지역 `icn1`. **API가 거부했으므로 생성 성공·설정 적용·Git 연결을 주장하지 않음.**
 - 기존 `journalismstudy`, `portfolio-webpage` 설정 변경 없음. GitHub `main`, Supabase DB·인증, 기사, REST 키 및 코드 변경 없음.
 - 차기 진행은 해당 Vercel 범위에 대한 사용자 계정 권한/연결 인증 확인 뒤 프로젝트 존재 여부 재조회. 403 오류를 무시하고 다른 Vercel 팀/계정에 프로젝트를 임의 생성하지 않는다.
+
+
+### 20.7 Vercel 최초 배포 시작 — 사용자 승인 및 GitHub 트리거 (2026-10-20)
+
+- 사용자 승인: **`kakao` 브랜치 README 문서 커밋으로 최초 Vercel 배포 자동 시작을 시도하고 결과를 확인**. `main`, 기존 Supabase 데이터·인증·앱 소스는 수정하지 않는다.
+- 사용자 제공 Vercel 화면에서 확인한 설정: 별도 프로젝트 `traffic_app_domain`, GitHub `gamzpot96-cell/traffic_app_domain` 연결, **Production Branch `kakao`**, Framework Preset FastAPI, Root Directory `traffic-api`, Production 환경변수 14개 등록(실제 값은 문서에 포함하지 않음). 배포 직전 Overview에는 **No Production Deployment**로 표시됨.
+- 이 README 수정은 **배포 트리거 시도 기록**이다. README는 Root Directory `traffic-api` 밖에 있으므로 Vercel 설정에 따라 **문서 전용 커밋의 빌드가 건너뛰어질 수 있음**. 실제 배포가 생성됐는지는 별도 조회·사용자 화면으로 판정한다.
+- 보안: 이전 사용자 스크린샷에 일부 외부 API 키의 실제 값이 노출됨. 비밀 값을 README/로그에 복제하지 않고, 공개 운영 전 해당 키의 교체 필요. 키 교체는 별도 절차로 진행.
+- 검증 대기: 배포 생성 여부, 빌드 상태, 배포 URL, 공개·관리자 API 및 DB 연동, 카카오맵 도메인 허용, 데스크톱/390px 화면. **이 절 자체는 배포 성공 기록이 아니다.**
