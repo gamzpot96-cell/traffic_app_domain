@@ -128,6 +128,9 @@
             originInput.value = item.origin;
             destinationInput.value = item.destination;
             status.textContent = "경로를 불러왔습니다. 경로 조회 버튼을 눌러 현재 교통정보를 확인하세요.";
+            if (form.id === "mapRouteForm") {
+                document.getElementById("result").textContent = "경로를 불러왔습니다. 경로 표시 버튼을 눌러 현재 교통정보를 조회하세요.";
+            }
         } else if (button.dataset.action === "delete") {
             if (persist(favorites.filter(function (_, i) { return i !== index; }))) {
                 render();
