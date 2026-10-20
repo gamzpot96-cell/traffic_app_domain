@@ -2313,3 +2313,12 @@ git pull origin kakao
 - 원인: 데스크톱 `@media(min-width:1080px)`에서는 CSS Grid `gap:18px`가 있지만 그보다 좁은 로그인 화면에서 연속 `.workspace-section`의 세로 간격이 모호함. D02 공통 CSS에 **`.admin-panel > .workspace-section + .workspace-section{margin-top:24px;}`** 추가해 좁은 화면에서 2·3단계에 24px 세로 간격을 확보. 1080px 이상은 기존 Grid 전용 규칙 `margin-top:0`이 더 구체적으로 유지되어 각 패널은 그리드 간격대로 정렬됨.
 - CSS 커밋 `0250352`; `tests/test_navigation.py` D02 CSS 회귀 검사에 24px 간격 규칙 추가(커밋 `00ddcfb`), 신규 테스트 함수는 추가하지 않아 전체 **69개** 유지.
 - 보존: 노란색/주황색 외곽선 금지, 로그인 전 워크스페이스 숨김, 관리자 생성→검토→명시 저장 계약, DB/기사/인증/지도/뉴스 JS/백엔드/`main` 변경 없음. 수정 이후 69개 Windows 전체 테스트 재실행 및 로그인 후 실제 카드 간격 재촬영 **확인 대기**.
+
+### 16.15 D02 관리자 간격 재현 원인 수정 및 Windows 69개 테스트 결과 (2026-10-20)
+
+- 사용자 Windows `unittest` 로그: **`Ran 69 tests in 0.454s`, `OK`**. 당시 기존 D02 간격 CSS 검사까지 통과했으나 실제 Chrome `/admin` 로그인 후 작업실 캡처에서는 1/2/3번째 `.workspace-section` 박스 사이 간격이 붙은 채로 보였음. 사용자 캡처 관찰에 근거하여 UI 문제 **미해결로 판정하고 다시 원인 추적**.
+- 원인 확정: `static/admin.html` 로그인 성공 처리에 `adminPanel.style.display = "block";` **inline style**이 있었음. 데스크톱 D02 CSS의 `body.admin-active .admin-panel{display:grid;...}`가 inline `display:block`에 가려져 Grid `gap:18px`이 적용되지 않았으며, `@media(min-width:1080px)`의 각 패널 `margin-top:0`만 활성화되어 카드가 바짝 붙었음. 이전 16.14의 `margin-top:24px` 보완만으로는 실화면 문제가 해소되지 않았음.
+- **보완 수정:** `admin.html` 로그인 성공 시 `adminPanel.style.removeProperty("display");`로 inline 표시 강제를 제거(`d69a822`). `d02-journalism.css`에 `body.admin-active .admin-panel{display:block;}`를 정의하여 로그인 후 작은 화면은 쌓이는 레이아웃을 사용하고, 1080px 이상은 기존 `body.admin-active .admin-panel{display:grid;... gap:18px}`을 사용하게 함(`575f469`). 로그아웃의 inline `display:none`과 인증 상태 제어는 보존.
+- `tests/test_navigation.py` 정적 회귀에 CSS의 로그인 후 block/grid 규칙 및 관리자 inline `block` 강제 금지 검사 추가(`d7d0300`); **총 테스트 함수 수 69개 유지**.
+- **검증 상태 구분:** Windows 69개 `OK`는 **이번 수정 이전 로그**이며, 수정 후 69개 재실행과 Chrome 로그인 후 데스크톱 Grid(2·3번 좌우 배치 + 카드 간 간격) 재검증은 **대기**. CSS 선택자 검사만으로 실제 레이아웃 완료를 확정하지 않음.
+- D02 노란색/주황색 포커스 박스 테두리 금지 유지. Supabase 계정·관리자 API·기사 #11/DB·카카오 API/지도/뉴스·`main` 변경 없음. `kakao`만 수정.
