@@ -3080,3 +3080,10 @@ git pull origin kakao
 - **수정:** `static/d03-urban-traffic.css`에 1101px 이상 지도 Grid 좌측 열 `minmax(410px,460px)`, 851~1100px `minmax(340px,37%)`와 좌우 여백 보정, 관심 경로 내부 padding·설명 font·버튼 2열 grid·상태 메시지 line-height 조정. 850px 이하에는 기존 세로 흐름을 유지.
 - **제목:** 홈 `h1` 데스크톱 최대 40px, 관리자 로그인 왼쪽 소개 `h1` 최대 33px로 축소하고 각각의 기존 `<br>` 두 줄 구분 유지. 모바일에서는 자연스러운 줄바꿈 허용. 관리자 로그인 이후 작업실과 뉴스는 수정하지 않음.
 - **검증:** `tests/test_navigation.py`에 `test_d03_two_line_hero_and_wider_map_sidebar` 회귀 테스트 1개 추가. 직전 예상 93개에서 **94개 예상**; 사용자 Windows 전체 테스트 및 데스크톱 실제 줄바꿈 검증은 아직 수행되지 않음. 포커스 테두리 미도입, 카카오 API/즐겨찾기 JS, DB, 인증 및 `main` 브랜치 무변경.
+
+
+### 23.10 지도 HTML 종료 태그 회귀 수정 (2026-10-20)
+
+- 사용자 Windows `python -m unittest discover -s tests -p "test_*.py" -v` 실측: **94개 실행, 1개 실패**(`test_kakao_map.KakaoMapTests.test_map_html_tags_close_correctly`). 실패 원인은 map.html 마지막 인라인 `</script>` 뒤에 D03 사진 출처 `<footer>`가 있어 테스트가 요구하는 파일 말미 `</script>\n</body>\n</html>`와 불일치한 것. 다른 93개 테스트는 `ok`. 테스트용 모의 DB 예외 로그 및 StarletteDeprecationWarning은 별도 실패 아님.
+- 해결: `static/map.html` 내 사진 출처 `<footer class="d03-photo-credit">`를 마지막 인라인 JS `<script>` **앞**으로 이동(출처·라이선스 표시는 유지), 문서 종료를 `</script>\n</body>\n</html>`로 복원. 기존 지도 JS/API/마커, F18 저장 경로, Admin/DB 변경 없음.
+- GitHub 재조회로 footer 1개·스크립트 앞 배치·기대 종료 문자열 일치를 확인함. **수정 후 Windows 94개 테스트 재실행 결과는 아직 제출되지 않음**. `main` 미변경.
