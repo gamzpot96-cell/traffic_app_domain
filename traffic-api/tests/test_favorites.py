@@ -48,6 +48,22 @@ class RouteFavoritesTests(unittest.TestCase):
         self.assertNotIn(".submit(", self.js)
         self.assertNotIn("requestSubmit(", self.js)
 
+    def test_manual_route_guidance_after_load(self):
+        navigation = (STATIC / "navigation.js").read_text(encoding="utf-8")
+        map_html = (STATIC / "map.html").read_text(encoding="utf-8")
+        self.assertIn('{name: "관심 경로", href: "/map#favoriteRoutes"}', navigation)
+        self.assertNotIn('{name: "관심 경로", planned: true}', navigation)
+        self.assertIn('id="favoriteRoutes"', map_html)
+        self.assertIn(
+            '<p id="result" role="status">경로 표시 버튼을 눌러 현재 교통정보를 조회하세요.</p>',
+            map_html,
+        )
+        self.assertIn('if (form.id === "mapRouteForm")', self.js)
+        self.assertIn('document.getElementById("result").textContent =', self.js)
+        self.assertIn('경로를 불러왔습니다. 경로 표시 버튼을 눌러 현재 교통정보를 조회하세요.', self.js)
+        self.assertNotIn("requestSubmit(", self.js)
+        self.assertNotIn("fetch(", self.js)
+
     def test_browser_storage_failure_is_handled(self):
         self.assertIn("try {", self.js)
         self.assertIn("catch (error)", self.js)
