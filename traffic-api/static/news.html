@@ -514,7 +514,7 @@ body { background: #f3f6fa; color: #17253a; }
 
             <div id="readingTools" class="reading-tools" aria-label="기사 공유 및 읽기 모드">
                 <button type="button" id="toggleReadingMode" aria-pressed="false">집중 읽기 모드</button>
-                <button type="button" id="copyNewsLink">뉴스 페이지 링크 복사</button>
+                <button type="button" id="copyNewsLink">기사·뉴스 링크 복사</button>
                 <p id="readingToolsStatus" class="small-note" role="status" aria-live="polite">저장된 기사를 읽거나 현재 뉴스 페이지 주소를 공유할 수 있습니다.</p>
             </div>
             <div id="newsBody" class="article-body"></div>
@@ -525,6 +525,7 @@ body { background: #f3f6fa; color: #17253a; }
     </main>
 
     <script>
+        let shareableSavedArticleId = null;
         // Reading-only controls: no article data or network request is modified.
         document.getElementById("toggleReadingMode").addEventListener("click", function () {
             const active = document.body.classList.toggle("news-reading-mode");
@@ -534,11 +535,14 @@ body { background: #f3f6fa; color: #17253a; }
                 active ? "기사 본문 읽기 화면입니다." : "기본 뉴스 화면입니다.";
         });
         document.getElementById("copyNewsLink").addEventListener("click", async function () {
-            const address = window.location.origin + "/news";
+            const address = window.location.origin + "/news" +
+                (shareableSavedArticleId ? "?article_id=" + encodeURIComponent(String(shareableSavedArticleId)) : "");
             const status = document.getElementById("readingToolsStatus");
             try {
                 await navigator.clipboard.writeText(address);
-                status.textContent = "뉴스 페이지 주소를 복사했습니다. 개별 기사 주소가 아닙니다.";
+                status.textContent = shareableSavedArticleId
+                    ? "저장된 기사 #" + shareableSavedArticleId + "의 링크를 복사했습니다."
+                    : "뉴스 페이지 주소를 복사했습니다. 저장된 기사 선택 후에는 해당 기사 링크를 복사할 수 있습니다.";
             } catch (error) {
                 status.textContent = "주소 복사가 제한되었습니다. 주소창의 /news 주소를 복사해 주세요.";
             }
@@ -1212,6 +1216,7 @@ async function loadSavedNews(articleId) {
             );
         }
 
+        shareableSavedArticleId = article.id;
         // 기존 뉴스 기사 영역에 저장된 기사 표시
         document.getElementById("newsTitle").textContent =
             article.title;
@@ -1261,6 +1266,12 @@ async function loadSavedNews(articleId) {
             "오류: " + error.message;
 
     }
+}
+
+// Only a stored public article can be opened by permalink; no live Kakao query.
+const requestedArticleId = new URLSearchParams(window.location.search).get("article_id");
+if (requestedArticleId && /^[1-9][0-9]{0,14}$/.test(requestedArticleId)) {
+    loadSavedNews(requestedArticleId);
 }
 
     </script>
