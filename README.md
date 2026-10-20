@@ -2746,3 +2746,11 @@ git pull origin kakao
 - 이 README 수정은 **배포 트리거 시도 기록**이다. README는 Root Directory `traffic-api` 밖에 있으므로 Vercel 설정에 따라 **문서 전용 커밋의 빌드가 건너뛰어질 수 있음**. 실제 배포가 생성됐는지는 별도 조회·사용자 화면으로 판정한다.
 - 보안: 이전 사용자 스크린샷에 일부 외부 API 키의 실제 값이 노출됨. 비밀 값을 README/로그에 복제하지 않고, 공개 운영 전 해당 키의 교체 필요. 키 교체는 별도 절차로 진행.
 - 검증 대기: 배포 생성 여부, 빌드 상태, 배포 URL, 공개·관리자 API 및 DB 연동, 카카오맵 도메인 허용, 데스크톱/390px 화면. **이 절 자체는 배포 성공 기록이 아니다.**
+
+
+### 20.8 Vercel 최초 Production 빌드 결과 (2026-10-20)
+
+- `kakao` 브랜치 루트 README 커밋 `09faa95cc7bac8d3281d836a8f2328a358f4ad7b` 이후 Vercel 프로젝트 `traffic_app_domain`에 **실제 Production 배포** `dpl_BDeg6HN9qyFqYuU6EmuEbPsmh2ee`가 생성됨. Vercel 배포 기록의 Git ref는 `kakao`, Git SHA는 위 커밋과 일치한다.
+- 최초 조회 `BUILDING`, 재조회 **`READY`**. 배포 URL: `https://trafficappdomain-j4rw9xs7p-gamzpot966.vercel.app`. 이는 **Vercel 배포 상태가 READY라는 뜻**이며 홈페이지 HTTP 응답·FastAPI 라우팅·카카오 지도 SDK·Supabase 연결·관리자 인증의 실제 정상 동작을 보증하지 않는다.
+- **후속 확인 필수:** `/`, `/news`, `/map`, `/admin` 직접 로딩과 공개/인증 API, Root Directory 기준 정적 파일 제공, Kakao SDK 허용 도메인 및 Production 환경변수의 유효성. 배포 상태 점검 중 실제 기사 저장/DB 수정 호출 금지. 운영 공개 전에 이전 스크린샷에 노출된 외부 키 교체 검토.
+- 변경 범위: 이 절의 README 기록만 추가. 애플리케이션 코드, Supabase 데이터·스키마, `main` 브랜치 및 기존 `journalismstudy` 프로젝트 변경 없음.
