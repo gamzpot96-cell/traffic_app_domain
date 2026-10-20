@@ -55,7 +55,8 @@ class RouteFavoritesTests(unittest.TestCase):
 
     def test_mobile_layout_and_no_yellow_focus(self):
         self.assertIn("@media(max-width:600px)", self.css)
-        self.assertIn("#1558c5", self.css)
+        self.assertNotIn(":focus-visible", self.css)
+        self.assertNotIn("outline:", self.css)
         for color in ("#f59e0b", "#facc15", "#f3b749", "#e2ab3c"):
             self.assertNotIn(color, self.css.lower())
 
