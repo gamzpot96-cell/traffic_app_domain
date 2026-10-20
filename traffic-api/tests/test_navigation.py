@@ -242,12 +242,13 @@ class SharedNavigationTests(unittest.TestCase):
             ("/news", 'id="trafficExport"'),
             ("/admin", 'id="apiUsageSection"'),
             ("/admin", 'id="publicationSection"'),
+            ("/admin", 'id="operationsSection"'),
         ):
             with self.subTest(path=path, anchor=anchor):
                 self.assertIn(anchor, self.client.get(path).text)
         self.assertIn('{name: "기사 발행·보류", href: "/admin#publicationSection"}', navigation)
         self.assertIn('{name: "정기 수집 상태", planned: true}', navigation)
-        self.assertIn('{name: "장애 기록·경고", planned: true}', navigation)
+        self.assertIn('{name: "장애 기록·경고", href: "/admin#operationsSection"}', navigation)
 
     def test_d03_urban_traffic_theme_on_all_pages(self):
         css_response = self.client.get("/static/d03-urban-traffic.css")
