@@ -13,7 +13,7 @@
             items: [
                 {name: "자동차 경로 검색", href: "/"},
                 {name: "교통 경로 지도", href: "/map"},
-                {name: "관심 경로", planned: true}
+                {name: "관심 경로", href: "/map#favoriteRoutes"}
             ]
         },
         {
