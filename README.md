@@ -2708,3 +2708,13 @@ git pull origin kakao
 - **개발환경:** Windows 11 로컬 환경 그대로 유지. Vercel 실제 프로젝트/런타임/환경변수 적용 상태는 미확인. 확인 후 19.4의 확인 범위를 갱신.
 - **배포·테스트 상태:** GitHub 설정 파일만 확인. **실제 Vercel 빌드·운영 동작 검사 및 새 Windows 테스트 미실행.**
 - **승인 대기:** 이 점검 절차의 진행 승인을 받은 뒤 우선 Vercel 연결/설정 상태를 읽기 전용으로 확인한다. 설정/기능 변경이 필요하면 별도 승인 전까지 변경하지 않는다.
+
+
+### 20.4 Vercel 연결 계정 읽기 전용 조회 결과 (2026-10-20)
+
+- 사용자가 20장 점검 계획을 승인해 Vercel 연결 계정의 프로젝트 목록과 `journalismstudy` 프로젝트 설정·배포 메타데이터를 **읽기 전용**으로 조회.
+- 연결 계정 프로젝트 목록에서 `journalismstudy`(FastAPI), `portfolio-webpage` 두 건을 확인. 이름 검색(`traffic`) 및 저장소 필터(`gamzpot96-cell/traffic_app_domain`) 결과는 모두 **0건**. 이 연결 계정 범위에서는 현재 교통정보 저장소에 연결된 Vercel 프로젝트를 확인하지 못함. 다른 계정/범위의 프로젝트까지 없다고 단정하지 않는다.
+- `journalismstudy`의 최근 배포 기록은 `gamzpot96-cell/journalismstudy` 저장소 **`main`** 브랜치를 가리킴. 현재 `gamzpot96-cell/traffic_app_domain`의 **`kakao`** 배포 기록으로 해석하지 않는다. 해당 기존 프로젝트의 설정은 수정하지 않음.
+- 따라서 교통정보 프로젝트의 Vercel **Root Directory, Python 런타임, 환경변수 적용 여부, 실제 배포 성공**은 아직 확인되지 않았다. 연결할 새/기존 올바른 프로젝트가 결정되기 전까지 환경변수·프로젝트 설정을 변경하거나 배포하지 않는다.
+- 차기 단계 제안: 사용자 확인 후 **교통정보 저장소 전용 Vercel 프로젝트 연결 설계**를 마련한다. 연결 저장소 `traffic_app_domain`, 배포 브랜치 `kakao`, Root Directory `traffic-api` 후보를 검토하되 실제 설정 변경은 별도 승인 후 시행.
+- **검증 범위:** Vercel 메타데이터 조회만 수행. 앱 코드·Supabase DB/인증·운영 환경변수·기존 Vercel 프로젝트·`main` 불변. Windows 전체 84개는 앞선 사용자 검증 기록이며 이 단계에서 재실행하지 않았다.
