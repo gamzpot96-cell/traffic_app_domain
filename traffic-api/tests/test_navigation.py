@@ -157,6 +157,33 @@ class SharedNavigationTests(unittest.TestCase):
                         self.assertIn('id="' + name + '"', response.text)
         self.assertIn("교통 데이터를 읽는 뉴스룸", self.client.get("/news").text)
 
+    def test_d02_map_news_admin_layout_refinement(self):
+        css_response = self.client.get("/static/d02-journalism.css")
+        self.assertEqual(css_response.status_code, 200)
+        css = css_response.text
+        for rule in (
+            ".map-content .map-controls #mapRouteForm{display:grid;",
+            ".news-layout>#historySection{order:1;}",
+            ".news-layout>#trafficDashboard{order:2;}",
+            ".news-layout>article{order:4;}",
+            ".admin-panel{display:grid;",
+            ".admin-panel #draftPreview[hidden]{display:none!important;}",
+            "@media(max-width:600px)",
+        ):
+            with self.subTest(rule=rule):
+                self.assertIn(rule, css)
+        required = {
+            "/map": ('id="mapRouteForm"', 'id="map"', 'id="savedArticlePanel"'),
+            "/news": ('id="historySection"', 'id="trafficDashboard"', 'id="trafficTrends"', 'id="newsTitle"'),
+            "/admin": ('id="adminPanel"', 'id="generateDraftButton"', 'id="draftPreview"', 'id="saveDraftButton"'),
+        }
+        for route, markers in required.items():
+            page = self.client.get(route)
+            self.assertEqual(page.status_code, 200)
+            for marker in markers:
+                with self.subTest(route=route, marker=marker):
+                    self.assertIn(marker, page.text)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
