@@ -1,0 +1,194 @@
+/* D03 Urban Traffic Newsroom — approved visual-only enhancement.
+   Preserve live data, existing functionality, all IDs and keyboard behavior.
+   Never add focus outlines, focus borders or focus shadows. */
+:root{
+  --d03-midnight:#0b1830;
+  --d03-navy:#12294b;
+  --d03-sky:#2864e8;
+  --d03-ice:#e8f1ff;
+  --d03-line:#dce6f2;
+  --d03-ink:#172b49;
+  --d03-muted:#5a6f88;
+  --d03-shadow:0 14px 36px rgba(19,42,76,.075);
+}
+html{scroll-behavior:smooth}
+body{
+  background:linear-gradient(165deg,#eef4fb 0%,#f7f9fc 55%,#edf3fa 100%);
+  color:var(--d03-ink);
+}
+#sharedNavigation{
+  background:#101f36;
+  border-bottom:1px solid rgba(177,207,246,.15);
+  box-shadow:0 4px 20px rgba(10,23,45,.10);
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header){
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 86% 13%,rgba(57,121,203,.34),transparent 46%),
+    linear-gradient(118deg,#0d1d37 4%,#173657 60%,#214b75 100%);
+  color:#fff;
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header)::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  pointer-events:none;
+  inset:0;
+  opacity:.72;
+  background:
+    repeating-linear-gradient(154deg,transparent 0 81px,rgba(151,206,253,.07) 82px 83px,transparent 84px 158px),
+    radial-gradient(ellipse at 63% 110%,rgba(51,150,240,.24),transparent 55%);
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header)::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  pointer-events:none;
+  width:62%;
+  height:160%;
+  bottom:-104%;
+  right:-9%;
+  transform:rotate(-22deg);
+  opacity:.36;
+  border-top:2px solid rgba(170,216,255,.35);
+  border-left:22px solid rgba(122,174,232,.08);
+  border-right:40px solid rgba(73,137,206,.08);
+  border-radius:50%;
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header) :is(h1,h2,strong){
+  text-shadow:0 2px 14px rgba(0,0,0,.13);
+}
+:is(.home-hero,.map-hero,.news-intro) :is(p,.d02-map-caption){
+  color:#d4e3f6;
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero) a:not(.site-nav-brand){
+  text-underline-offset:4px;
+}
+:is(.home-main>section,.map-controls,.map-content .saved-article-panel,
+    .news-layout>section,.news-layout>article,.admin-login-layout>section,
+    .admin-panel>.workspace-section){
+  background:#fff;
+  border:1px solid var(--d03-line);
+  border-radius:20px;
+  box-shadow:var(--d03-shadow);
+}
+:is(.home-main>section,.news-layout>section,.news-layout>article,
+    .admin-panel>.workspace-section){
+  transition:box-shadow .18s ease;
+}
+:is(.home-main>section,.news-layout>section,.news-layout>article,
+    .admin-panel>.workspace-section):hover{
+  box-shadow:0 17px 42px rgba(14,36,70,.095);
+}
+:is(.home-main,.map-content,.news-layout,.login-container) :is(h2,h3){
+  letter-spacing:-.035em;
+}
+:is(.home-main,.map-content,.news-layout,.login-container) :is(input,select,textarea){
+  background-color:#fff;
+  border-color:#cbd9eb;
+  border-radius:10px;
+}
+:is(.home-main,.map-content,.news-layout,.login-container) button:not(.site-nav-toggle):not(.site-nav-trigger){
+  border-radius:10px;
+}
+:is(.home-main,.map-content,.news-layout,.login-container) button:not(.site-nav-toggle):not(.site-nav-trigger):hover:not(:disabled){
+  filter:brightness(1.045);
+}
+:is(.home-main,.map-content,.news-layout,.login-container) :is(button,input,select,textarea){
+  transition:background-color .18s ease,filter .18s ease;
+}
+.home-hero{border-bottom:1px solid rgba(191,217,249,.24)}
+.home-hero .home-eyebrow,.workspace-eyebrow{
+  color:#a9d7fa;
+  letter-spacing:.14em;
+  font-weight:800;
+}
+.home-search{
+  position:relative;
+  border-top:4px solid #2864e8!important;
+}
+.home-search::before{
+  content:"ROUTE SEARCH";
+  display:block;
+  margin:0 0 12px;
+  color:#3270bb;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.14em;
+}
+.home-main>section h2{
+  padding-bottom:10px;
+  border-bottom:1px solid #e6edf7;
+}
+.home-main #favoriteRoutes,.map-controls #favoriteRoutes{
+  background:linear-gradient(135deg,#f7faff,#f0f6ff);
+  border:1px solid #dce8f8;
+  border-radius:16px;
+}
+.home-main #favoriteRoutes .favorite-item,.map-controls #favoriteRoutes .favorite-item{
+  background:#fff;
+  border:1px solid #e1e9f5;
+  border-radius:10px;
+}
+.map-hero{border-bottom:1px solid rgba(172,209,242,.2)}
+.map-content .map-controls{border-top:3px solid #3172e8}
+.map-canvas-frame{
+  overflow:hidden;
+  border:1px solid #d6e4f4;
+  border-radius:18px;
+  background:#e8f1fa;
+  box-shadow:0 16px 40px rgba(11,30,58,.11);
+}
+.map-canvas-frame #map{border-radius:inherit}
+.map-controls #result{
+  background:#eef5ff;
+  color:#20416b;
+  border-left:4px solid #2864e8;
+  border-radius:10px;
+}
+.news-intro{border-radius:18px}
+.news-layout .news-search-form{
+  background:linear-gradient(125deg,#f8fbff,#f0f5fe);
+  border:1px solid #e2ebf7;
+  border-radius:14px;
+  padding:14px;
+}
+.news-layout #historySection,.news-layout #trafficDashboard,
+.news-layout #trafficTrends,.news-layout #trafficExport{
+  scroll-margin-top:32px;
+}
+.news-layout :is(.news-pagination,.news-search-actions){gap:10px}
+.news-layout #newsTitle{
+  border-left:4px solid #2864e8;
+  padding-left:15px;
+}
+.admin-hero{border:1px solid rgba(191,219,249,.15)}
+.admin-login-layout .login-card{
+  border:1px solid #dce6f2;
+  box-shadow:var(--d03-shadow);
+}
+.admin-panel .workspace-header{
+  border-radius:16px;
+}
+.admin-panel>.workspace-section{
+  border-top:3px solid #e0eaff;
+}
+.admin-panel #apiUsageSection{
+  border-top-color:#3477e8;
+}
+@media(max-width:850px){
+  :is(.home-main>section,.map-controls,.news-layout>section,
+      .news-layout>article,.admin-panel>.workspace-section){border-radius:16px}
+  .news-layout .news-search-form{padding:12px}
+}
+@media(max-width:600px){
+  :is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header)::after{width:90%;right:-35%}
+  .map-canvas-frame{border-radius:13px}
+  .home-search::before{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(.home-main>section,.news-layout>section,.news-layout>article,
+      .admin-panel>.workspace-section){transition:none}
+}
