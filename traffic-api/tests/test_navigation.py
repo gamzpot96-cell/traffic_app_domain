@@ -56,7 +56,7 @@ class SharedNavigationTests(unittest.TestCase):
         self.assertIn(":where(input, textarea, select):focus {\n    outline: none;\n}", css)
         self.assertNotIn(":where(button, a):focus {\n    outline: none;\n}", css)
         self.assertNotIn(":where(button, input, select, textarea, a):focus-visible", css)
-        self.assertIn("outline: 3px solid #f59e0b;", css)
+        self.assertIn("outline: 2px solid #1558c5;", css)
         navigation_css = self.client.get("/static/navigation.css").text
         self.assertIn(".site-nav-item a:focus-visible", navigation_css)
 
@@ -184,6 +184,19 @@ class SharedNavigationTests(unittest.TestCase):
             for marker in markers:
                 with self.subTest(route=route, marker=marker):
                     self.assertIn(marker, page.text)
+
+    def test_d02_no_yellow_focus_outlines(self):
+        styles = (
+            "/static/design-system.css",
+            "/static/navigation.css",
+            "/static/d02-journalism.css",
+        )
+        for path in styles:
+            with self.subTest(path=path):
+                css = self.client.get(path).text.lower()
+                for forbidden in ("#f59e0b", "#facc15", "#f3b749", "#e2ab3c"):
+                    self.assertNotIn(forbidden, css)
+        self.assertIn("outline:none;", self.client.get("/static/d02-journalism.css").text)
 
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
