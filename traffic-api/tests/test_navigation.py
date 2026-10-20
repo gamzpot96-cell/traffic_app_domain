@@ -195,8 +195,14 @@ class SharedNavigationTests(unittest.TestCase):
             with self.subTest(filename=filename):
                 css = self.client.get("/static/" + filename).text
                 self.assertEqual(self.client.get("/static/" + filename).status_code, 200)
-                self.assertNotRegex(css, r"(?i):focus(?:-visible)?[^{}]*\{[^{}]*(?:outline\s*:\s*(?!none\b)|box-shadow\s*:)")
-                self.assertNotRegex(css, r"(?i)outline\s*:\s*(?!none\b)[^;{}]+;")
+                # Extract declaration values instead of allowing regex backtracking
+                # to mistake 'outline: none' for a visible border.
+                for match in re.finditer(r"(?i)\boutline\s*:\s*([^;{}]+);", css):
+                    self.assertEqual(match.group(1).strip().lower(), "none")
+                for match in re.finditer(r"(?i):focus(?:-visible)?\s*\{([^{}]*)\}", css):
+                    declarations = match.group(1)
+                    self.assertNotRegex(declarations, r"(?i)\bbox-shadow\s*:")
+                    self.assertNotRegex(declarations, r"(?i)\bborder(?:-color|-width|-style)?\s*:")
 
     def test_d02_no_yellow_focus_outlines(self):
         styles = (
