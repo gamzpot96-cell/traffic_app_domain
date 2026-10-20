@@ -4,6 +4,7 @@ import os
 
 import httpx
 from dotenv import load_dotenv
+from app.api_usage import record_api_result
 
 load_dotenv()
 
@@ -25,29 +26,42 @@ def get_kakao_headers():
 
 
 async def request_kakao_json(url: str, parameters: dict) -> dict:
+    # Count HTTP requests at the common transport layer, including news generation.
+    kind = "local" if url == LOCAL_SEARCH_URL else "directions"
+    try:
+        headers = get_kakao_headers()
+    except KakaoApiError:
+        # Missing local credentials: no external HTTP request was attempted.
+        raise
+
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.get(
-                url, params=parameters, headers=get_kakao_headers()
-            )
+            response = await client.get(url, params=parameters, headers=headers)
             response.raise_for_status()
             data = response.json()
     except httpx.TimeoutException as error:
+        record_api_result(kind, "timeout")
         raise KakaoApiError("카카오 API 요청 시간이 초과되었습니다.", 504) from error
     except httpx.HTTPStatusError as error:
+        record_api_result(kind, "http_error")
         status_code = error.response.status_code
         if status_code in (401, 403):
             raise KakaoApiError(
                 "카카오 API 인증키 또는 자동차 길찾기 이용 권한을 확인하세요.", 502
             ) from error
         raise KakaoApiError(f"카카오 API HTTP 오류: {status_code}") from error
-    except (httpx.RequestError, ValueError) as error:
+    except httpx.RequestError as error:
+        record_api_result(kind, "network_error")
+        raise KakaoApiError("카카오 API 응답을 처리할 수 없습니다.") from error
+    except ValueError as error:
+        record_api_result(kind, "invalid_json")
         raise KakaoApiError("카카오 API 응답을 처리할 수 없습니다.") from error
 
     if not isinstance(data, dict):
+        record_api_result(kind, "invalid_response")
         raise KakaoApiError("카카오 API 응답 형식이 올바르지 않습니다.")
+    record_api_result(kind, "success")
     return data
-
 
 async def find_place(place_name: str) -> dict:
     data = await request_kakao_json(
