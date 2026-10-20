@@ -64,6 +64,8 @@
     <link rel="stylesheet" href="/static/design-system.css">
     <link rel="stylesheet" href="/static/navigation.css">
     <link rel="stylesheet" href="/static/d02-journalism.css">
+    <link rel="stylesheet" href="/static/favorites.css">
+    <script src="/static/favorites.js" defer></script>
     <script src="/static/navigation.js" defer></script>
 </head>
 <body>
@@ -85,6 +87,13 @@
     <label>목적지 <input id="destination" value="잠실역" required minlength="2"></label>
     <button type="submit" id="mapRouteSubmit">경로 표시</button>
 </form>
+<div id="favoriteRoutes" class="favorite-routes" aria-label="관심 경로 즐겨찾기">
+    <h3>관심 경로</h3>
+    <p class="favorite-note">자주 이용하는 출발지와 목적지를 이 브라우저에만 저장합니다. 다른 컴퓨터와 동기화되지 않습니다.</p>
+    <button type="button" id="saveFavoriteRoute">현재 입력 경로 저장</button>
+    <ul id="favoriteRouteList" class="favorite-list"></ul>
+    <p id="favoriteRouteStatus" class="favorite-status" role="status" aria-live="polite"></p>
+</div>
 <p id="result" role="status">출발지와 목적지를 입력하세요.</p>
 <p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
 </section>
