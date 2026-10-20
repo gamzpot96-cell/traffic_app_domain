@@ -1,10 +1,12 @@
 """Kakao Local API + Kakao Mobility 자동차 길찾기 API 연동."""
 
 import os
+import asyncio
 
 import httpx
 from dotenv import load_dotenv
 from app.api_usage import record_api_result
+from app.operational_events import record_operational_failure
 
 load_dotenv()
 
@@ -34,6 +36,12 @@ async def request_kakao_json(url: str, parameters: dict) -> dict:
         # Missing local credentials: no external HTTP request was attempted.
         raise
 
+    # Durable diagnostic writes run in a worker thread and never store request details.
+    async def record_failure(code: str, status: int | None = None):
+        await asyncio.to_thread(
+            record_operational_failure, "kakao", kind + "_request", code, status
+        )
+
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.get(url, params=parameters, headers=headers)
@@ -41,9 +49,11 @@ async def request_kakao_json(url: str, parameters: dict) -> dict:
             data = response.json()
     except httpx.TimeoutException as error:
         record_api_result(kind, "timeout")
+        await record_failure("timeout")
         raise KakaoApiError("카카오 API 요청 시간이 초과되었습니다.", 504) from error
     except httpx.HTTPStatusError as error:
         record_api_result(kind, "http_error")
+        await record_failure("http_error", error.response.status_code)
         status_code = error.response.status_code
         if status_code in (401, 403):
             raise KakaoApiError(
@@ -52,13 +62,16 @@ async def request_kakao_json(url: str, parameters: dict) -> dict:
         raise KakaoApiError(f"카카오 API HTTP 오류: {status_code}") from error
     except httpx.RequestError as error:
         record_api_result(kind, "network_error")
+        await record_failure("network_error")
         raise KakaoApiError("카카오 API 응답을 처리할 수 없습니다.") from error
     except ValueError as error:
         record_api_result(kind, "invalid_json")
+        await record_failure("invalid_json")
         raise KakaoApiError("카카오 API 응답을 처리할 수 없습니다.") from error
 
     if not isinstance(data, dict):
         record_api_result(kind, "invalid_response")
+        await record_failure("invalid_response")
         raise KakaoApiError("카카오 API 응답 형식이 올바르지 않습니다.")
     record_api_result(kind, "success")
     return data
