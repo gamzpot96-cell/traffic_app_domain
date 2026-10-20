@@ -54,7 +54,7 @@ class AiNewsTests(unittest.TestCase):
                 '{"title":"세 경로 교통 분석","lead":"카카오 경로 비교",'
                 '"body":"서울역에서 잠실역까지 예상 소요시간을 비교했습니다."}'}}]
         }
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only", "OPENAI_MODEL": "gpt-4.1-mini"}), \\
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only", "OPENAI_MODEL": "gpt-4.1-mini"}), \
              patch("app.ai_news.httpx.AsyncClient") as client_class:
             client_class.return_value.__aenter__.return_value.post = AsyncMock(
                 return_value=mock_response
@@ -79,10 +79,10 @@ class AiNewsTests(unittest.TestCase):
 
     def test_admin_success_uses_ai_and_signed_draft(self):
         main.app.dependency_overrides[require_admin] = lambda: {"id": "test-admin"}
-        with patch("app.main.analyze_seoul_routes", new_callable=AsyncMock, return_value=ROUTES), \\
+        with patch("app.main.analyze_seoul_routes", new_callable=AsyncMock, return_value=ROUTES), \
              patch("app.main.create_ai_news_briefing", new_callable=AsyncMock,
                    return_value={"title": "AI 제목", "lead": "AI 리드",
-                                 "body": "AI 본문", "scope_notice": "선택 경로 한정"}) as generate, \\
+                                 "body": "AI 본문", "scope_notice": "선택 경로 한정"}) as generate, \
              patch("app.main.create_draft_token", return_value=("signed-token", "generation-id")):
             response = self.client.post("/api/admin/news/generate")
         self.assertEqual(response.status_code, 200)
@@ -92,7 +92,7 @@ class AiNewsTests(unittest.TestCase):
 
     def test_admin_openai_failure_is_not_replaced_with_template(self):
         main.app.dependency_overrides[require_admin] = lambda: {"id": "test-admin"}
-        with patch("app.main.analyze_seoul_routes", new_callable=AsyncMock, return_value=ROUTES), \\
+        with patch("app.main.analyze_seoul_routes", new_callable=AsyncMock, return_value=ROUTES), \
              patch("app.main.create_ai_news_briefing", new_callable=AsyncMock,
                    side_effect=NewsGenerationError("test only")):
             response = self.client.post("/api/admin/news/generate")
