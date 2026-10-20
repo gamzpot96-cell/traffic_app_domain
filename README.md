@@ -2981,3 +2981,12 @@ git pull origin kakao
 - 제안된 신규 다섯 테이블 이름(`traffic_collection_runs`, `traffic_observations`, `traffic_article_publication`, `traffic_article_publication_events`, `traffic_operational_events`)의 현재 public 스키마 조회 결과는 **0건**. SQL 초안은 **실행하지 않음**.
 - 기존 기사·경로의 PK/FK와 호환되는 추가 테이블 설계 방향은 가능하나, 기존 데이터 건수/권한·새 테이블 생성 후 쓰기 권한 및 현재 마이그레이션 SQL의 실제 실행 성공은 **아직 검증되지 않음**. 다음 단계는 사용자에게 SQL 실행 승인을 받기 전 권한/롤백 점검.
 - 본 확인은 기능 실행이나 DB 구조·데이터·인증·`main` 변경 없이 읽기 전용 조회 및 README 기록만 수행.
+
+
+### 22.11 신규 테이블 5개 마이그레이션 적용·보존 검증 (2026-10-20)
+
+- 사용자 명시 승인 후 `traffic-api/sql/f19_f20_f21_migration_PROPOSAL.sql`에 기록된 신규 테이블 5개 DDL(기존 BEGIN/COMMIT은 마이그레이션 실행기의 트랜잭션 관리에 맡기고 제거)을 Supabase `apply_migration`으로 실행. 마이그레이션명 `add_f19_f20_f21_operations_tables`; 결과 **success=true**.
+- 사전 실 DB 확인: 실행 역할 `postgres`, 스키마 CREATE/기존 기사 REFERENCES 권한 있음, 신규 대상 테이블 0개. 기존 레코드 건수: `traffic_information=30538`, `traffic_news_articles=8`, `traffic_route_snapshots=24`.
+- 적용 후 읽기 전용 확인: 신규 `traffic_collection_runs`, `traffic_observations`, `traffic_article_publication`, `traffic_article_publication_events`, `traffic_operational_events` **5개 모두 존재하고 각각 0행**. 기존 세 테이블 건수도 **30538/8/24로 일치**. 기사 원문·관리자 Auth 변경 SQL 없음.
+- 보안 검증: 신규 다섯 테이블의 RLS `true`, `anon` 및 `authenticated`에 직접 SELECT 권한 `false`. 신규 테이블 PK/FK/CHECK, 수집 예정 시각 및 수집 경로 중복 방지 UNIQUE 존재 확인.
+- **한계 및 후속:** 레코드 건수 일치는 원문 전체 해시 비교가 아니며, 신규 테이블의 실제 서버 DB 연결 계정 INSERT/UPDATE/SELECT와 기사 신규 비공개·발행 상태 API는 아직 검증하지 않았다. F19 Cron/카카오 자동 호출 및 F21 외부 알림 **비활성**. 기존 앱 기능/환경변수, `main` 변경 없음. 이 단계는 DB 스키마 추가 완료이며 F19/F20/F21 기능 전체 구현 완료를 뜻하지 않는다.
