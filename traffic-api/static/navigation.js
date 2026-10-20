@@ -14,7 +14,7 @@
             items: [
                 {name: "자동차 경로 검색", href: "/"},
                 {name: "대표 경로 브리핑", href: "/#overviewSection"},
-                {name: "이용 안내·FAQ", planned: true}
+                {name: "이용 안내·FAQ", href: "/#helpSection"}
             ]
         },
         {
@@ -31,7 +31,7 @@
                 {name: "교통 비교 현황·데이터 안내", href: "/news#trafficDashboard"},
                 {name: "시점별 교통 변화", href: "/news#trafficTrends"},
                 {name: "CSV 다운로드", href: "/news#trafficExport"},
-                {name: "기사 공유·읽기 모드", planned: true}
+                {name: "뉴스 링크·읽기 모드", href: "/news#readingTools"}
             ]
         },
         {
@@ -42,7 +42,7 @@
                 {name: "기사 발행·보류", href: "/admin#publicationSection"},
                 {name: "정기 수집 상태", href: "/admin#collectionRunsSection"},
                 {name: "장애 기록·경고", href: "/admin#operationsSection"},
-                {name: "운영 설정·공지", planned: true}
+                {name: "운영 정책·공지 안내", href: "/admin#operatingGuideSection"}
             ]
         }
     ];
