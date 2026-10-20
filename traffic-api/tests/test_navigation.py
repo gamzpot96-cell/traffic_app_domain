@@ -188,6 +188,29 @@ class SharedNavigationTests(unittest.TestCase):
                 with self.subTest(route=route, marker=marker):
                     self.assertIn(marker, page.text)
 
+    def test_d03_urban_traffic_theme_on_all_pages(self):
+        css_response = self.client.get("/static/d03-urban-traffic.css")
+        self.assertEqual(css_response.status_code, 200)
+        self.assertIn("text/css", css_response.headers.get("content-type", ""))
+        css = css_response.text
+        for marker in (
+            ".home-hero", ".map-hero", ".news-intro", ".admin-hero",
+            ".map-canvas-frame", "#apiUsageSection",
+            "@media(max-width:600px)",
+        ):
+            self.assertIn(marker, css)
+        self.assertNotRegex(css, r":focus(?:-visible)?\\b")
+        self.assertNotRegex(css, r"(?i)\\boutline\\s*:")
+        for route in ("/", "/map", "/news", "/admin"):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('/static/d03-urban-traffic.css', response.text)
+                self.assertLess(
+                    response.text.index('/static/d02-journalism.css'),
+                    response.text.index('/static/d03-urban-traffic.css'),
+                )
+
     def test_all_shared_styles_have_no_focus_outline_rules(self):
         for filename in (
             "design-system.css", "navigation.css",
