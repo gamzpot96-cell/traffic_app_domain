@@ -3029,3 +3029,12 @@ git pull origin kakao
 - **UI·접근성:** 4개 1차 드롭다운/모바일 아코디언 메뉴로 제한. 반복적인 '뉴스'와 '분석' 상위 탭 제거. 각 상위 탭을 클릭하면 해당 페이지 하위 링크만 표시하되 현재 메뉴의 버튼·Escape·모바일 메뉴 토글 기능 유지. 850px 이하 반응형 및 키보드 내비게이션 보존. 신규 포커스 outline/border/box-shadow 금지.
 - **기능·DB·개발환경 영향:** `static/navigation.js` 및 테스트, README만 변경. 실제 페이지/기능 이동, 기존 API/JS/인증/DB/배포 환경변수 변경 없음. F19/F20/F21 미구현 부분을 완성으로 표시하지 않음. `main` 미변경.
 - **검증:** 기존 네 페이지에서 공통 메뉴 렌더·링크 실제 anchor ID 확인, 메뉴에 '준비 중' 표기, 모바일/PC 회귀, 기존 Windows 자동 테스트(변경 전 89개+ D03 1개=90개 예상)에 신규 메뉴 단위 테스트 추가 후 실행 필요.
+
+
+### 23.4 M03 페이지 기준 4개 메뉴 적용 결과 (2026-10-20)
+
+- **반영:** 공통 상단 내비게이션을 **경로 조회(/), 경로 지도(/map), 교통 뉴스·분석(/news), 관리자·운영(/admin)** 네 그룹으로 축소. 기존 기능별 5개 그룹(교통 현황/분석·통계/교통 뉴스/서비스 안내/관리자)의 중복 메뉴를 페이지 기반으로 통합.
+- 하위 링크: 홈 경로 검색·대표 경로 브리핑 `/#overviewSection`; 지도 `/map`·관심 경로 `/map#favoriteRoutes`; 뉴스 검색·아카이브 `/news#historySection`, 교통 비교 `/news#trafficDashboard`, 교통 변화 `/news#trafficTrends`, CSV `/news#trafficExport`; 관리자 기사 작업실 `/admin`, API 사용 현황 `/admin#apiUsageSection`. 홈에 실제 `id=overviewSection` 추가.
+- 추후 항목인 이용 안내·FAQ, 기사 공유, 기사 발행·보류(F20), 정기 수집 상태(F19), 장애 기록·경고(F21), 운영 설정·공지는 **준비 중** 표시 유지. 현재 존재하지 않는 페이지/가짜 URL은 추가하지 않음. F19/F20/F21 활성화 후 해당 페이지의 영역 ID로 점진적 전환.
+- **테스트:** `tests/test_navigation.py`에 `test_m03_route_based_menu_links` 추가. 그룹 개수·기존 중복 그룹 제거·실제 HTML 앵커·미구현 메뉴의 planned 표시 검사. 기존 90개 예상(D03 포함)에서 **91개 예상, Windows 실행 결과 미확인**. 이전 89개 OK는 변경 전 결과.
+- **영향:** `static/navigation.js`, `static/index.html`, 회귀 테스트와 README만 변경. 기존 공통 메뉴 반응형/드롭다운/ESC 동작, 검색·카카오맵·뉴스·관리자 API는 유지. DB·인증·환경변수·CSS 포커스 테두리·`main` 변경 없음. 실제 데스크톱/390px 사용성 검증 대기.
