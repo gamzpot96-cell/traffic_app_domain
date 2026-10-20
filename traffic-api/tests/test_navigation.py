@@ -199,8 +199,8 @@ class SharedNavigationTests(unittest.TestCase):
             "@media(max-width:600px)",
         ):
             self.assertIn(marker, css)
-        self.assertNotRegex(css, r":focus(?:-visible)?\\b")
-        self.assertNotRegex(css, r"(?i)\\boutline\\s*:")
+        self.assertNotIn(":focus", css)
+        self.assertNotIn("outline:", css)
         for route in ("/", "/map", "/news", "/admin"):
             with self.subTest(route=route):
                 response = self.client.get(route)
