@@ -512,3 +512,13 @@ body:has(>.map-content) .map-content .map-controls>.note{
   #publicationSection .publication-item{grid-template-columns:minmax(0,1fr);}
   #publicationSection .publication-state{justify-self:start;}
 }
+
+
+/* F21 manual operational error list (no auto refresh or focus outlines). */
+#operationsSection{border-top:3px solid #d69333;}
+#operationsSection .operations-list{display:grid;gap:9px;margin-top:15px;}
+#operationsSection .operations-item{
+  background:#fff8ec;color:#624a2a;padding:12px 15px;
+  border-left:3px solid #d69333;border-radius:8px;
+  line-height:1.75;overflow-wrap:anywhere;font-size:13px;
+}
