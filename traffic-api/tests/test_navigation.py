@@ -225,6 +225,14 @@ class SharedNavigationTests(unittest.TestCase):
                 self.assertIn("CC BY-SA 4.0", page)
                 self.assertIn("실시간 교통 상황이 아닙니다", page)
 
+    def test_saved_article_share_uses_public_detail_permalink(self):
+        page = self.client.get("/news").text
+        self.assertIn("shareableSavedArticleId = article.id", page)
+        self.assertIn('requestedArticleId = new URLSearchParams(window.location.search).get("article_id")', page)
+        self.assertIn('loadSavedNews(requestedArticleId)', page)
+        self.assertIn('id="copyNewsLink"', page)
+        self.assertIn('encodeURIComponent(String(shareableSavedArticleId))', page)
+
     def test_completed_navigation_features_have_real_controls(self):
         home = self.client.get("/").text
         news = self.client.get("/news").text
@@ -268,7 +276,7 @@ class SharedNavigationTests(unittest.TestCase):
         self.assertIn('{name: "정기 수집 상태", href: "/admin#collectionRunsSection"}', navigation)
         self.assertIn('{name: "장애 기록·경고", href: "/admin#operationsSection"}', navigation)
         self.assertIn('{name: "이용 안내·FAQ", href: "/#helpSection"}', navigation)
-        self.assertIn('{name: "뉴스 링크·읽기 모드", href: "/news#readingTools"}', navigation)
+        self.assertIn('{name: "기사 공유·읽기 모드", href: "/news#readingTools"}', navigation)
         self.assertIn('{name: "운영 정책·공지 안내", href: "/admin#operatingGuideSection"}', navigation)
         self.assertNotIn("planned: true", navigation)
 
