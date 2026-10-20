@@ -105,7 +105,7 @@ class SharedNavigationTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         for text in (
             'class="container news-layout"', 'class="news-intro"',
-            'id="loadNewsButton"', 'id="newsStatus"',
+            'id="newsStatus"',
             'id="trafficTrends"', 'id="historySection"',
             'id="trafficExport"', 'id="trafficDashboard"',
             'id="savedArticleRoutes"', 'id="newsTitle"',
@@ -362,11 +362,9 @@ class SharedNavigationTests(unittest.TestCase):
         self.assertEqual(parser.tags, [
             ("a", "", "#historySection"),
             ("a", "", "#trafficDashboard"),
-            ("button", "loadNewsButton", ""),
         ])
         css = self.client.get("/static/d02-journalism.css").text
         self.assertIn(".news-intro .d02-news-actions{display:flex;", css)
-        self.assertIn(".news-intro .d02-news-actions #loadNewsButton{display:inline-flex;", css)
         self.assertIn(".news-intro .d02-news-actions{flex-direction:column;}", css)
 
     def test_existing_admin_guard(self):
