@@ -550,6 +550,7 @@ body { background: #f3f6fa; color: #17253a; }
     </script>
     <script>
         async function loadTrafficNews() {
+            shareableSavedArticleId = null;
 
             const newsButton = document.getElementById(
                 "loadNewsButton"
@@ -1192,6 +1193,7 @@ loadTrafficExportRoutes();
 
 // 선택한 과거 뉴스 상세 조회
 async function loadSavedNews(articleId) {
+    shareableSavedArticleId = null;
 
     const newsStatus = document.getElementById("newsStatus");
 
