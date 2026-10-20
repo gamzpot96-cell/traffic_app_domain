@@ -123,3 +123,70 @@ body { background:var(--d02-canvas); color:var(--d02-ink); font-family:"Malgun G
  .workspace-section{padding:22px 18px;}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{transition:none!important;}}
+
+
+/* D02 phase two: map, newsroom, and admin layout refinement */
+/* Map: newsroom-style route control strip above a generous interactive canvas */
+.map-hero-inner{align-items:center;}
+.map-content{max-width:1260px;}
+.map-canvas-frame{max-width:1260px;}
+.map-content .map-controls{padding:26px 30px;border-radius:16px;}
+.map-content .map-controls #mapRouteForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:18px;align-items:end;}
+.map-content .map-controls #mapRouteForm label{min-width:0;}
+.map-content .map-controls #mapRouteForm button{min-width:120px;}
+.map-content .map-controls #result{padding:12px 16px;background:#eff5ff;border-left:4px solid #2869dc;border-radius:8px;margin-top:18px;}
+.map-content .map-controls .note{font-size:13px;color:#53677f;}
+.map-canvas-frame #map{height:clamp(490px,68vh,800px);}
+.map-canvas-frame #mapBasemapStatus{font-size:13px;}
+/* News: archive-first order, preserve existing form IDs and JS functions */
+.news-layout{display:flex;flex-direction:column;gap:0;}
+.news-layout>.news-intro{order:0;}
+.news-layout>#historySection{order:1;}
+.news-layout>#trafficDashboard{order:2;}
+.news-layout>#savedArticleRoutes{order:3;}
+.news-layout>article{order:4;}
+.news-layout>#trafficTrends{order:5;}
+.news-layout>hr{order:2;opacity:.25;margin:8px 0;}
+.news-layout>#historySection .news-search-form{background:#f7faff;border:1px solid #e3ebf5;border-radius:12px;padding:18px;}
+.news-layout>#historySection .history-item{transition:background-color .16s ease,border-color .16s ease;}
+.news-layout #trafficDashboard .summary-cards{gap:16px;}
+.news-layout #trafficDashboard .summary-card{border-top:3px solid #1d67d9;}
+.news-layout #trafficDashboard .summary-card:nth-child(2){border-top-color:#d94d53;}
+.news-layout #trafficDashboard .summary-card:nth-child(3){border-top-color:#dca14c;}
+.news-layout #savedArticleRoutes{background:#fff;}
+.news-layout #savedArticleRoutes .saved-route-item{padding:17px 0;}
+.news-layout article #newsLead{padding-left:17px;border-left:4px solid #1f65d6;}
+.news-layout article #newsRetrievedAt{color:#50657b;}
+.news-layout #trafficTrends{margin-top:18px;}
+/* Admin: prominent preview and workflow, with explicit save in a separate panel */
+.admin-panel .steps{gap:18px;}
+.admin-panel .step-card{min-height:155px;padding:23px;}
+.admin-panel .step-number{width:35px;height:35px;}
+.admin-panel .workspace-section{position:relative;}
+.admin-panel #generateDraftButton{padding:14px 24px;}
+.admin-panel #draftPreview{background:#f9fbff;padding:24px;border:1px solid #e1e9f3;border-radius:12px;}
+.admin-panel #draftPreview[hidden]{display:none!important;}
+.admin-panel #draftPreview #draftLead{font-size:17px;line-height:1.8;}
+.admin-panel #draftPreview #draftBody{line-height:2.05;}
+.admin-panel #saveDraftButton:not(:disabled){padding:15px 22px;}
+.admin-panel #savedArticleLink{background:#f3f8ff;border-radius:8px;min-height:24px;padding:10px 14px;}
+@media(min-width:1080px){
+  .admin-panel{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,.85fr);gap:18px;align-items:start;}
+  .admin-panel>.workspace-header,.admin-panel>.steps{grid-column:1/-1;}
+  .admin-panel>.workspace-section:nth-of-type(1){grid-column:1/-1;margin-top:0;}
+  .admin-panel>.workspace-section:nth-of-type(2){grid-column:1;grid-row:auto;margin-top:0;}
+  .admin-panel>.workspace-section:nth-of-type(3){grid-column:2;grid-row:auto;margin-top:0;position:sticky;top:18px;}
+}
+@media(max-width:850px){
+  .map-content .map-controls #mapRouteForm{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .map-content .map-controls #mapRouteForm button{grid-column:1/-1;}
+}
+@media(max-width:600px){
+  .map-content .map-controls{padding:20px 16px;}
+  .map-content .map-controls #mapRouteForm{grid-template-columns:1fr;}
+  .map-content .map-controls #mapRouteForm button{grid-column:1;}
+  .map-canvas-frame #map{height:55vh;min-height:360px;}
+  .news-layout>#historySection .news-search-form{padding:13px;}
+  .admin-panel .step-card{min-height:0;}
+  .admin-panel #draftPreview{padding:15px;}
+}
