@@ -2729,3 +2729,11 @@ git pull origin kakao
 - 환경변수/비밀: 새 프로젝트에서 개별 설정해야 하며 기존 `journalismstudy`의 값 복사·출력 금지. Supabase 기존 DB·관리자 인증/기존 기사·스냅샷 및 카카오 REST/지도 키를 변경하지 않는다.
 - 확인 계획: 기존 Vercel 2개 프로젝트가 그대로 있는지 확인, 새 프로젝트 이름/ID/Root Directory/프레임워크/지역 확인, Git 브랜치와 배포 상태 확인. 배포 이전에는 실 URL/기능 작동을 주장하지 않는다.
 - **기능정의·DB·개발환경 영향:** F18/F19-A/F19-B 기능 수정 없음, DB 스키마 및 데이터 변경 없음. 새로운 Vercel 프로젝트 분리만 개발환경 변경으로 본 절에 기록한다. 포커스 외곽선 모든 색상 추가 금지.
+
+
+### 20.6 Vercel 신규 프로젝트 생성 권한 오류 (2026-10-20)
+
+- 20.5의 사용자 결정에 따라 `traffic_app_domain` 프로젝트를 별도 생성하려고 Vercel 프로젝트 생성 API를 호출했지만, **HTTP 403 Forbidden** 및 해당 `gamzpot966` 범위에 대한 인증/접근 권한 오류가 반환됨.
+- 요청한 최초 설정: 이름 `traffic_app_domain`, 프레임워크 `fastapi`, Root Directory `traffic-api`, 함수 지역 `icn1`. **API가 거부했으므로 생성 성공·설정 적용·Git 연결을 주장하지 않음.**
+- 기존 `journalismstudy`, `portfolio-webpage` 설정 변경 없음. GitHub `main`, Supabase DB·인증, 기사, REST 키 및 코드 변경 없음.
+- 차기 진행은 해당 Vercel 범위에 대한 사용자 계정 권한/연결 인증 확인 뒤 프로젝트 존재 여부 재조회. 403 오류를 무시하고 다른 Vercel 팀/계정에 프로젝트를 임의 생성하지 않는다.
