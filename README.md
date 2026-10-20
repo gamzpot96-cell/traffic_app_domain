@@ -2617,3 +2617,62 @@ git pull origin kakao
 - 사용자 실제 화면 집계: **외부 호출 9건 / 성공 9건 / 실패 0건 / 캐시 HIT/MISS 0/0 / Local 6건 / 길찾기 3건**으로 표시됨. 서버 프로세스의 그 시점까지의 익명 측정치이며 카카오 공식 청구/쿼터 정보가 아님.
 - 디자인은 기존 남색·파란색 계열 유지. **어떤 색상의 포커스 테두리도 신규 추가하지 않음**. 이번 캡처는 모바일만 직접 확인된 것이고, 정보 밀도 개선 뒤 데스크톱 최신 캡처 및 실제 기사 저장 재검증은 별도로 확인해야 함.
 - `kakao` 브랜치 README 검증 기록만 추가. 코드·인증·기존 기사 및 Supabase DB·`main` 변경 없음.
+
+
+## 19. 인수인계 기준 최신 기능정의서·DB·개발환경 및 F19-B 검증 정리 (2026-10-20)
+
+> **문서 상태:** 2026-10-20 시점 `kakao` 브랜치 코드 및 기존 사용자 실환경 검증 기록을 바탕으로 정리한 **현행 기능·데이터·환경 기준표**. 이전 장의 단계별 설계와 시행착오는 이력으로 보존한다. 이 절은 새 기능이나 DB 변경을 승인/실행하는 문서가 아니다.
+
+### 19.1 개발 기록 관리 원칙 (계속 적용)
+
+1. 모든 개발/문서 커밋 대상은 **`kakao` 브랜치**. `main`은 직접 수정하거나 병합하지 않는다.
+2. 새 기능·UI·DB/스키마 변경은 **루트 README에 목적·기능정의·화면/API·데이터 영향·회귀검사·배포 영향 설계부터 기록 → 사용자 승인 → 구현 → Windows 자동 테스트 → 사용자 Chrome 화면 검증 → README 결과 기록 → `kakao` 커밋** 순서로 진행한다. 이미 승인된 범위는 재승인하지 않는다.
+3. 루트 README에 **기능정의서, DB 현황/변경 정의, 개발환경 정의**를 유지하고 변동 시마다 갱신한다. 상태는 '설계/승인/구현/자동검증/화면검증/배포'를 구분하며 과거 검증을 새로운 실행 결과로 쓰지 않는다.
+4. 기존 Supabase 기록·기사·경로 스냅샷·관리자 인증/REST 키·`.env` 보존. 사용자 별도 승인 없이 데이터 삭제/초기화/스키마 변경/실제 기사 저장/외부 유료 설정 전환 금지. 비밀키·토큰·비밀번호 문서화 금지.
+5. **색상과 무관하게 신규 포커스 테두리/외곽선을 추가하지 않는다.** 기존 클릭/키보드 기능과 인증 접근 제어는 유지한다.
+6. GitHub 정적 코드 확인, Windows 테스트 로그, Chrome 사용자 스크린샷, 실제 배포 결과는 각각 별도의 근거로 기록한다.
+
+### 19.2 기능정의서 — 현재 구현·검증 범위
+
+| 식별 | 기능 | 현재 근거 기반 정의·제약 | 현재 상태 |
+| --- | --- | --- | --- |
+| 기본 경로 조회 | Kakao Local 장소 검색과 Kakao Mobility 자동차 길찾기, 도로 구간 상태·소요시간·거리 브리핑 | 선택한 자동차 경로 조회; 서울 전역 도로망 자동 관측 아님 | 기존 구현/브라우저 검증 기록 |
+| 지도 및 기사 연동 F23 | Kakao Maps JavaScript SDK, 출발/도착 마커, 상태별 경로선; 저장 기사에서 지도 이동 | 과거 기사의 저장 당시 요약과 버튼을 눌러 조회하는 **현재** 경로를 분리. 과거 경로선 원본은 저장하지 않음 | 기존 구현/브라우저 검증 기록 |
+| F16/F17/F22 | 저장 기사 검색·페이지, 실제 저장된 경로 스냅샷 변화 표시, CSV 내려받기 | 실제 Supabase 저장 자료 기반. 제공되지 않은 원인·실시간 수치를 만들지 않음 | 기존 구현/테스트 기록 |
+| F18 | 홈·지도 관심 경로 즐겨찾기 | 브라우저 `localStorage`에 출발/도착만 최대 10개 저장·불러오기·개별 삭제. **자동 경로 조회 없음**, 서버/DB 동기화 없음 | 사용자 Chrome 및 Windows 검증 기록 |
+| F19-A | 동일 경로 조회의 30초 캐시 | 적용 범위·키 구성·만료의 상세 원칙은 이전 F19-A 설계/구현 절 참조. 서버 메모리 성격과 최신 조회의 차이 구분 | 구현 완료(기존 기록) |
+| F19-B | 카카오 API 호출·성공·실패 및 캐시 HIT/MISS 관리자 현황 | `app/api_usage.py` 프로세스 메모리에 **익명 집계**. Local/길찾기 유형, 실패 분류, 측정 시작/최근 실패 시각, 캐시 비율 표시. 자동 새로고침 없이 관리자 버튼으로 조회하며 **공식 카카오 쿼터/과금량이 아님** | Windows 84개 통과·PC/390px 사용자 화면 확인 |
+| 관리자 뉴스 | Supabase Auth 권한 확인 후 뉴스 초안 생성→미리보기/검토→명시적 저장 | Bearer 인증과 관리자 UID 검사 유지. 저장 버튼/기존 기사 데이터 보존; 검증 목적으로 저장하지 않음 | 기존 구현/관련 회귀검사 |
+
+**F19-B 검증 종결 기록:** 사용자 Windows PowerShell에서 `Ran 84 tests in 0.617s`, `OK`(실패·오류 0)인 기존 전체 테스트 로그를 제공하였다. Chrome 데스크톱 스크린샷에서는 API 통계 섹션의 **두 열 전체 너비** 및 4개 수치 카드·상세 내용·수동 갱신을 확인하였다. Chrome **390px** 사용자 스크린샷에서는 통계 카드 단일 열과 텍스트 줄바꿈, 주요 컨트롤의 겹침 없음을 확인하였다. 화면 예시 **외부 9 / 성공 9 / 실패 0 / Local 6 / 길찾기 3 / 캐시 HIT·MISS 0·0**은 당시 서버 프로세스 누적치일 뿐 공식 카카오 전체 이용량이 아니다. 이 문서 정리 단계에서 Windows 테스트를 재실행하거나 새 스크린샷을 직접 확인한 것은 아니다. 실제 기사 저장 및 Vercel 운영환경 검증도 이번 판정 범위에서 제외한다.
+
+### 19.3 DB 정의 — 기존 DB 보존을 전제로 한 코드 확인 범위
+
+- **DB 서비스:** Supabase PostgreSQL. 관리자 신원 검증은 별도 **Supabase Auth** 사용(`app/admin_auth.py`에서 전달된 Bearer 토큰 검증 및 허용 관리자 UID 비교).
+- **`public.traffic_information`**: 레거시 자료 보존 대상. 인계 문서의 과거 약 30,538건이라는 수치는 **현시점 실 DB 건수 조회가 아님**. 본 절에서 전체 필드·제약조건 확인 안 됨.
+- **`public.traffic_news_articles`**: 코드상 `id`, `title`, `lead`, `body`, `scope_notice`, `analyzed_route_count`, `retrieved_at`, `created_at`, `generation_id`를 참조. 기사 보관 및 `generation_id` 중복 저장 방지 처리(`ON CONFLICT`)에 사용.
+- **`public.traffic_route_snapshots`**: 코드상 `article_id`, `start_place`, `end_place`, `distance_m`, `duration_seconds`, `total_road_count`, `congested_count`, `congested_distance_m`, `congestion_ratio`, `retrieved_at`를 사용. 기사와 연관된 경로별 당시 기록.
+- **저장 관계:** `news_database.py`에서 기사와 연결된 경로 스냅샷을 하나의 DB 연결 컨텍스트로 저장. `article_id` 연결은 코드로 확인되나 **실제 외래키·인덱스·NOT NULL·RLS 및 전체 DDL은 별도 실 DB 메타데이터 검증 필요**. 여기에 적은 열 이름 목록은 **코드 사용 열**이지 검증 완료된 전체 물리 스키마 정의서가 아님.
+- **F18 저장소:** 브라우저 `localStorage` 키 `seoul-traffic-favorites-v1`(Supabase 테이블 아님). **F19-A 및 F19-B 서버 메모리 값도 DB 테이블이 아니며 재시작/프로세스별로 지속성이 보장되지 않음.**
+- **이번 문서 작업의 DB 변경:** 없음. SQL 실행·마이그레이션·기존 데이터/계정/권한 변경 없음. 향후 DB 변경은 승인된 **변경 전/후 컬럼 정의, 제약조건·관계, 데이터 보존/되돌리기, 검증 SQL 결과**를 본 절에 추가한다.
+
+### 19.4 개발환경 정의 — 저장소 확인 기준
+
+| 항목 | 설정 및 확인 한계 |
+| --- | --- |
+| 작업 위치 | Windows 11 / VS Code / PowerShell. 프로젝트 `C:\workspace\traffic_app_domain`, API 폴더 `C:\workspace\traffic_app_domain\traffic-api` |
+| Python | 로컬 사용자 기준 **Python 3.10.10**; 이 문서 작성 시 실행 버전은 재확인하지 않음. 가상환경 `.venv` 사용 |
+| 서버·프런트 | FastAPI + Uvicorn; HTML/CSS/Vanilla JavaScript; Kakao Maps JavaScript SDK와 Kakao Local/Mobility REST |
+| 의존성 기준 | `traffic-api/requirements.txt`에 명시된 핀 버전이 저장소 설치 기준. 예: `fastapi==0.142.1`, `uvicorn==0.54.0`, `httpx==0.28.1`, `psycopg[binary]==3.3.6`. 현재 로컬 설치 여부는 미확인 |
+| DB·인증 | Supabase PostgreSQL 및 Supabase Auth. 프로젝트 URL은 사용자 제공 `https://lvokohdfixnpfudruguj.supabase.co`; 인증키·DB 비밀번호는 README 기록/노출 금지 |
+| 환경변수 | Kakao 서버 REST 키, `KAKAO_MAP_JS_KEY`(브라우저용 플랫폼 키), Supabase 접속·Auth 설정, 선택적 구 지도 `CARTO_BASEMAP_KEY`. 실제 값 및 설정 상태는 보존하며 문서에 복제하지 않음 |
+| Vercel | **배포 예정.** 저장소 `traffic-api/vercel.json`에서 지역 `icn1`, Python 함수와 정적 파일 라우팅 선언 확인. 배포 성공·환경변수 적용·빌드 호환성은 **미검증** |
+| 로컬 전체 검사 | `cd C:\workspace\traffic_app_domain\traffic-api` 후 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` |
+| 로컬 웹 실행 | `.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload` |
+| Git 동기화 | 사용자 작업 복구 시 작업 트리 상태 확인 후 `kakao`에서만 `git pull origin kakao`. `main`에 쓰기·병합 금지 |
+
+### 19.5 앞으로 README 갱신 시 필수 확인표
+
+새 기능 또는 환경 변화마다 **(1) 기능정의·승인 여부, (2) DB 테이블/스키마/데이터 영향 또는 변경 없음, (3) Python·패키지·환경변수 이름·외부 서비스·배포 설정 변화 또는 변경 없음, (4) 테스트 수치와 수행 환경, (5) 사용자 실화면 검증 상태, (6) `kakao` 커밋 및 배포 상태**를 같은 변경 기록에 덧붙인다. 확인되지 않은 내용은 '미확인/미검증'으로 표시하며 과거 검증 기록을 지우지 않는다.
+
+**이번 변경의 범위:** README 문서화만 수행. 앱 소스·테스트·DB·환경변수·관리자 인증·`main` 변경 없음. 향후 새로운 기능이 정해지면 먼저 이 문서에 구체적 설계를 쓰고 승인을 받는다.
