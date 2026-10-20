@@ -3087,3 +3087,14 @@ git pull origin kakao
 - 사용자 Windows `python -m unittest discover -s tests -p "test_*.py" -v` 실측: **94개 실행, 1개 실패**(`test_kakao_map.KakaoMapTests.test_map_html_tags_close_correctly`). 실패 원인은 map.html 마지막 인라인 `</script>` 뒤에 D03 사진 출처 `<footer>`가 있어 테스트가 요구하는 파일 말미 `</script>\n</body>\n</html>`와 불일치한 것. 다른 93개 테스트는 `ok`. 테스트용 모의 DB 예외 로그 및 StarletteDeprecationWarning은 별도 실패 아님.
 - 해결: `static/map.html` 내 사진 출처 `<footer class="d03-photo-credit">`를 마지막 인라인 JS `<script>` **앞**으로 이동(출처·라이선스 표시는 유지), 문서 종료를 `</script>\n</body>\n</html>`로 복원. 기존 지도 JS/API/마커, F18 저장 경로, Admin/DB 변경 없음.
 - GitHub 재조회로 footer 1개·스크립트 앞 배치·기대 종료 문자열 일치를 확인함. **수정 후 Windows 94개 테스트 재실행 결과는 아직 제출되지 않음**. `main` 미변경.
+
+
+### 23.11 F20 기사 발행 상태 제어 1차 연동 (2026-10-20)
+
+- 직전 사용자 Windows 자동 테스트 결과: **94개 실행, 94개 모두 OK**, 의도적인 mock DB 오류 로그 및 StarletteDeprecationWarning은 실패 아님. 본 변경 이전 결과이므로 F20 테스트 통과로 과장하지 않음.
+- **F20 FastAPI/DB 기능 연결:** `app/news_database.py` 기사 저장 트랜잭션 내 신규 기사에 `traffic_article_publication.status='review'`와 `traffic_article_publication_events` 생성 감사 이벤트를 동시 INSERT. 동일 `generation_id` 재저장 시 기존 id를 반환하고 기사·경로·상태 중복 생성 방지. 관리자 UID를 `changed_by`에 사용하며 CLI 기존 호출은 `system`으로 처리. 삽입 어느 부분이라도 실패하면 전체 트랜잭션 롤백.
+- **공개 자료 보호:** `/api/news/history`, `/api/news/search`, `/api/news/history/{id}`에서 기사별 공개 상태를 DB 서브쿼리로 확인. 명시된 `review`/`held` 기사는 공개 제외하고 기존 기사처럼 상태 레코드가 없는 경우 공개 유지. 기사 건수·검색 결과 모두 같은 규칙. `app/traffic_export.py` F17 조회 시점, F22 저장 경로 선택/CSV 경로 스냅샷도 비공개 기사에 속한 자료는 제외해 우회 노출 방지.
+- **관리자 보호 API:** `GET /api/admin/news/publications` 최근 최대 50건 상태 목록, `PATCH /api/admin/news/publications/{article_id}`에 `{status:'review'|'published'|'held'}`로 변환. 둘 다 `Depends(require_admin)`을 강제. 상태 변경은 기존 상태 확인/행 잠금/허용 전이 검사/변경 및 감사 이력을 하나의 DB 트랜잭션에서 수행. 미존재 ID 404, 잘못된 상태 422, 허용되지 않는 전이 409. 기존 공개 기사는 상태 레코드가 없더라도 'published'로 취급.
+- **관리자 화면:** 저장 후 공개 링크를 노출하지 않고 검토 중(비공개) 안내; 운영 작업실에 기사 발행 관리 섹션과 명시적 상태 변경 확인창·수동 새로고침을 추가. 로그인/저장/카카오 호출/기존 API 사용 현황과 F19/F21 운영 설정은 유지. 사용자의 포커스 테두리 금지 원칙과 390px 반응형을 고려한 CSS만 추가.
+- **회귀 테스트:** `tests/test_publication.py` 신규 **7개 테스트**(익명 관리 API 접근 차단, 관리자 목록 및 상태 변경, 잘못된 상태, 공개 기사 쿼리, 기사+상태 동일 트랜잭션, 공개 CSV·추세 우회 차단, 관리자 UI) 추가. 기존 사용자 검증 94개 + 신규 7개 = **101개 예상**. 개발 도구에서 Windows 실제 101개 테스트는 실행하지 않았으므로 사용자 실행 및 피드백 대기. 적용 후 실제 Supabase 테스트 저장/발행·보류와 공개 뉴스 링크 수동 검증이 별도 필요.
+- **데이터·운영 제약:** 기존 기사 상태 일괄 수정·백필 없음, 기존 Supabase 레코드 삭제/변경 SQL 없음, Auth 설정/비밀 키 무변경, F19 스케줄러/ F21 외부 알림 계속 OFF, `main` 미변경.
