@@ -3054,3 +3054,13 @@ git pull origin kakao
 - 사용자 제공 데스크톱 스크린샷 8개 검토: ① 히어로 차량 부족·부자연스러운 광선 ② 지도 관심 경로 라벨·버튼 줄바꿈 난잡 ③ 뉴스 대체로 양호 ④ 관리자 **로그인 전** 좌측 히어로가 흰색 배경에 흰 글자로 표시되는 대비 오류 ⑤ 카드·표 시각적 위계 강화 요청 ⑥ 관리자 로그인 후 작업실 대체로 양호 ⑦ 모바일 390px 사용자 검증 정상.
 - **우선 구현:** 차량 중심 교통사진 교체(저작권·출처·수정 표기 포함), 관리자 로그인의 CSS 특이성 충돌을 해결해 어두운 사진 배경 및 텍스트 가독성을 명시적으로 보장, 지도 즐겨찾기 목록의 grid/버튼 줄바꿈·단어 단위 개행·간격 수정, 공통 표·정보 카드·안내문 가독성 보강. 사진은 장식용 과거 사진임을 유지. 기존 기사 목록/로그인 후 작업실과 390px 정상 레이아웃은 광범위 재구성하지 않음.
 - **제약:** 앱 API/JS 이벤트·F18 저장 로직/관리자 인증/Supabase DB/F19~F21 운영 상태·main 브랜치 불변. 포커스 테두리·아웃라인·그림자는 신규 추가하지 않음. 기존 ID 유지. 코드 회귀 테스트를 추가하고 Windows 전체 테스트 결과 및 실제 배포 시각 검증을 분리 기록.
+
+
+### 23.7 D03 사용자 캡처 피드백 패치 적용 결과 (2026-10-20)
+
+- **사용자 요청에 따른 실 코드 수정 및 커밋:** GitHub `kakao` 브랜치의 `static/d03-urban-traffic.css`, 네 페이지 HTML, `tests/test_navigation.py` 수정. 다른 브랜치는 건드리지 않음.
+- 배경 사진을 `Gangnam traffic.jpg`로 교체(2022년 서울 강남 차량 교통 실사, 저작자 **kallerna**, 출처 Wikimedia Commons https://commons.wikimedia.org/wiki/File:Gangnam_traffic.jpg , **CC BY-SA 4.0** https://creativecommons.org/licenses/by-sa/4.0/). CSS 어두운 오버레이와 배경 위치 조정, 눈에 띄던 그래픽 광선 장식 제거. 사진을 자르거나 어두운 오버레이 적용했음을 4페이지 footer에 기재하며 실시간 교통 자료와 구분.
+- 관리자 로그인 좌측 사진 카드에 대해 `.login-container .admin-login-layout > .admin-hero` 등 **정확히 제한된 선택자**로 dark `background-color`, `background-image`, `color` 우선순위를 높여 공통 '흰색 section' 규칙과의 충돌 해결. 로그인 이후 관리자 작업실에는 동일 규칙을 적용하지 않음.
+- 지도 관심 경로 항목을 1열 grid(경로 라벨 위/불러오기·삭제 버튼 아래 2열)로 배치, 한국어 줄바꿈·안내문 line-height·단추 폭 조절. 기존 localStorage 저장/불러오기/삭제 JS 무변경.
+- 네 화면 공통 테이블 헤더 대비·교대행 배경·hover·설명문 행간 조절. 기사 데이터/CSV/사용 현황 실제 수치 무변경. 뉴스 및 관리자 로그인 후 레이아웃 대규모 개편 없음. 모바일 390px 사용자가 이전 버전에서 확인한 정상 상태는 보존을 목표로 했으나 **새 변경에 대해 사용자 재검증 필요**.
+- `test_d03_photo_led_layout_and_attribution`을 새 이미지 경로/라이선스로 정정하고 `test_d03_admin_login_contrast_and_map_favorite_spacing` 새 테스트 1개 추가. 기존 예상 92개에서 **93개 예상**, Windows `python -m unittest discover ...` 전체 테스트 실실행 결과는 아직 없음. 소스/배포 검증과 브라우저 육안 검증을 혼동하지 않음. 신규 포커스 테두리 없음. DB·관리자 인증·환경변수·`main` 무변경.
