@@ -2965,3 +2965,11 @@ git pull origin kakao
 - 5개: `traffic_collection_runs`, `traffic_observations`, `traffic_article_publication`, `traffic_article_publication_events`, `traffic_operational_events`. 예정 실행 시각 UNIQUE 및 회차별 경로 UNIQUE, 기사 FK, 발행 상태 제한, 오류 기록 최소화 규칙, 신규 테이블의 RLS 활성화·anon/authenticated 접근 철회를 초안에 포함했다.
 - 적용 전 검토 게이트: 실제 Supabase 역할 권한/기존 객체와의 이름 충돌, FK/인덱스/권한과 DB 접속 계정의 INSERT·SELECT 가능 여부, 런타임 코드 전환 원자성, 정상 복구·백업, 초기 신규 기사 비공개 여부를 검증해야 한다. 구 기사 상태 행은 생성하지 않으며 미존재 상태는 공개로 취급하는 설계.
 - **승인 전 실행 금지:** SQL 파일은 설계 산출물일 뿐이며 `apply_migration`과 SQL 변경을 실행하지 않았다. Cron 설정·요금/키·기사/DB 데이터도 그대로다.
+
+
+### 22.9 Windows 전체 89개 자동 테스트 통과 (2026-10-20)
+
+- 사용자 제공 Windows PowerShell 실행 로그에서 `Ran 89 tests in 0.506s`, `OK` 확인. 실패 및 오류 0개. 기존 85개에 신규 `tests/test_operation_policies.py`의 4개 테스트가 추가되어 모두 `ok`.
+- 신규 검증 항목: KST 09:00 → UTC 예약 시각 환산, 기사 상태 전환 제한, 기존 기사 공개·신규 검토 상태 비공개 판정, 임의 오류 원문 차단 정책.
+- `StarletteDeprecationWarning`과 테스트 중 표시된 DB/카카오 오류는 비치명적 경고 및 의도된 실패 대응 모의 시험이며 테스트 자체는 성공.
+- **범위:** 운영 정책 순수 함수·정적 회귀 테스트 합격. 아직 실제 Supabase 신규 테이블 생성, F19 예약 호출, F20 발행 API 연결, F21 오류 기록 저장은 수행·검증하지 않음. 실 DB 데이터, 관리자 인증, `main` 변경 없음.
