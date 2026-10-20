@@ -156,6 +156,9 @@ class SharedNavigationTests(unittest.TestCase):
                     else:
                         self.assertIn('id="' + name + '"', response.text)
         self.assertIn("교통 데이터를 읽는 뉴스룸", self.client.get("/news").text)
+        admin_html = self.client.get("/admin").text
+        self.assertIn('adminPanel.style.removeProperty("display");', admin_html)
+        self.assertNotIn('adminPanel.style.display = "block";', admin_html)
 
     def test_d02_map_news_admin_layout_refinement(self):
         css_response = self.client.get("/static/d02-journalism.css")
@@ -166,6 +169,7 @@ class SharedNavigationTests(unittest.TestCase):
             ".news-layout>#historySection{order:1;}",
             ".news-layout>#trafficDashboard{order:2;}",
             ".news-layout>article{order:4;}",
+            "body.admin-active .admin-panel{display:block;}",
             "body.admin-active .admin-panel{display:grid;",
             ".admin-panel > .workspace-section + .workspace-section{margin-top:24px;}",
             ".admin-panel #draftPreview[hidden]{display:none!important;}",
