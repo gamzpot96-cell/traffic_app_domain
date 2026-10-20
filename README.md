@@ -2510,3 +2510,11 @@ git pull origin kakao
 - 원인: 테스트 정규표현식의 `\s*` 역추적으로 실제 CSS `:where(input, textarea, select):focus { outline: none; }` 중 **`outline:none`을 포커스 외곽선 추가처럼 잘못 감지**. CSS는 이미 외곽선을 없애는 선언이어서 CSS/디자인 회귀라고 볼 근거 없음. 다른 테스트 76개 통과.
 - `tests/test_navigation.py`에서 문제 정규식을 **CSS `outline:` 선언의 실제 값 추출 후 `none`과 비교**하는 방식으로 바꾸고, `:focus`/`:focus-visible` 내부의 `box-shadow`와 `border` 선언을 별도 검사하도록 수정. `re` 표준 라이브러리 import 추가. 기존 전체 테스트 수 **77개 유지**.
 - **수정 후 Windows 77개 재실행 결과는 아직 확인되지 않음.** 노란색/파란색 등 모든 포커스 테두리 제거 규칙 유지하며 현재 CSS/HTML/JS/Supabase DB/`main`은 수정하지 않음. `kakao` 브랜치 테스트/README만 변경.
+
+### 17.16 포커스 테두리 제거 후 Windows 전체 77개 테스트 통과 (2026-10-20)
+
+- 사용자가 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 전체 테스트 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v`를 재실행한 로그를 제출함. **`Ran 77 tests in 0.488s`, `OK`**, 실패·오류 0개.
+- 17.15에서 정규식 오탐으로 실패했던 `test_all_shared_styles_have_no_focus_outline_rules`가 이번에는 **`ok`**. 즐겨찾기 6개·D02·F19-A·카카오 지도·뉴스/관리자 기존 회귀도 모두 `ok`.
+- 로그의 `StarletteDeprecationWarning`, mock DB `RuntimeError` 및 카카오 경로 조회 실패(502) 기록은 예상 예외 처리 테스트 과정의 비치명적 출력이며 개별 테스트 결과는 `ok`.
+- **검증 구분:** 현재 77개 Windows 자동 테스트 합격을 확인했으며, 포커스 테두리가 화면에서 완전히 보이지 않는지는 이번 로그만으로 직접 Chrome 시각 확인한 것이 아님. 사용자 요구인 **모든 색상의 포커스 테두리 재도입 금지**는 계속 유지.
+- `kakao` 브랜치 루트 README에 결과만 기록함. CSS·HTML·JS·DB·`main` 변경 없음.
