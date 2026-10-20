@@ -3000,3 +3000,11 @@ git pull origin kakao
 - **기능정의:** D03은 시각 개선만 수행; 실제 Kakao REST/지도, F18 수동 불러오기, F16/F17/F22 검색·차트·CSV, F19-A/B 메모리 캐시·관리자 현황, F13~15 인증·저장은 무변경. 포커스에 테두리/outline/box-shadow 신규 추가 **절대 금지**, 기존 콘텐츠 값/색 범례·접근성 라벨 보존.
 - **DB:** Supabase 기존/신규 F19/F20/F21 테이블의 스키마와 데이터 및 관리자 Auth 변경 없음. **개발환경:** 기존 FastAPI+Vanilla JS·Vercel 정적 파일 라우팅 활용, 외부 CSS/JS CDN 의존성 증가 없음, Python 3.14.7 로컬·Vercel 설정 무변경.
 - **검증:** 4페이지 D03 CSS 링크/정적 제공 및 필수 ID 보존/포커스 외곽선 미도입 회귀 테스트. 기존 Windows 89개는 D03 적용 *이전* 통과 결과로만 인정. 변경 후 전체 테스트와 실제 PC/390px Chrome 스크린샷 검증 별도 요청. `main` 미변경.
+
+
+### 23.1 D03 승인 디자인 1차 코드 적용 및 검증 상태 (2026-10-20)
+
+- 사용자 승인된 4화면 도시 교통 뉴스룸 디자인을 `static/d03-urban-traffic.css` 별도 레이어로 구현하고 `index.html`, `map.html`, `news.html`, `admin.html`에 기존 D02 CSS **뒤 순서**로 연결. 외부 이미지/CDN이나 가상 도로 데이터는 추가하지 않았음.
+- 네이비 히어로·차로와 빛 흐름 연상 패턴, 밝은 검색·기사·관리자 카드, 뉴스 검색 패널, 카카오 지도 외곽 프레임, 관심 경로 카드, 운영 통계 영역 강조 및 850px/600px 반응형 규칙 적용. 기존 JS/폼/지도/API/기사·CSV·저장 동작, 기존 색 범례/접근권한은 그대로. 포커스 outline/border/box-shadow 신규 규칙 없음.
+- `tests/test_navigation.py`에 `test_d03_urban_traffic_theme_on_all_pages` 1개 신규 회귀 테스트 추가: 새 CSS 정적 응답, 핵심 화면 셀렉터, CSS 적용 순서, 새 포커스 스타일 부재 검사. 수정 후 사용자 Windows 전체 테스트 수는 **90개 예상**이며 미실행. 이전 89개 OK는 적용 이전 근거로만 유지.
+- **DB:** Supabase F19/F20/F21 신규 테이블 및 기존 기사·경로·인증 변경 없음. **개발환경:** Python·의존성·Vercel 설정·환경변수 변경 없음. `main` 미변경. 실제 Desktop/390px 디자인 및 카카오맵·관리자 화면 동작은 사용자 브라우저 검증 대기.
