@@ -37,6 +37,7 @@ from app.overview_briefing import (
     create_news_briefing
 )
 from app.admin_auth import require_admin
+from app.api_usage import record_cache_result, usage_snapshot
 from app.news_database import save_news_article
 from app.news_drafts import (
     create_draft_token,
@@ -156,10 +157,12 @@ async def route_search(
             if cached is not None:
                 saved_at, result = cached
                 route_cache.move_to_end(key)
+                record_cache_result("hit")
                 response.headers["X-Route-Cache"] = "HIT"
                 response.headers["X-Route-Cache-Age-Seconds"] = str(int(now - saved_at))
                 return result
 
+            record_cache_result("miss")
             # Kakao API 오류는 저장되지 않으며 기존 HTTP 오류 처리로 전달합니다.
             start_place = await find_place(origin)
             end_place = await find_place(destination)
@@ -182,6 +185,7 @@ async def route_search(
             return result
 
     except KakaoApiError as error:
+        record_cache_result("failure")
 
         logger.warning(
             "카카오 경로 조회 실패 (%s): %s",
@@ -193,6 +197,12 @@ async def route_search(
             status_code=error.status_code,
             detail=error.message
         ) from error
+
+# F19-B: authenticated, read-only and anonymous process-local diagnostics.
+@app.get("/api/admin/api-usage")
+async def admin_api_usage(admin=Depends(require_admin)):
+    return usage_snapshot()
+
 
 # 서울 주요 경로 종합 교통 브리핑 API
 @app.get("/api/briefing/overview")
