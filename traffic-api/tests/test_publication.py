@@ -59,6 +59,32 @@ class PublicationTests(unittest.TestCase):
             self.assertIn("public.traffic_article_publication", source)
             self.assertIn("pub.status <> 'published'", source)
 
+    def test_unpublished_snapshots_not_public(self):
+        import inspect
+        from app import traffic_export
+        for func in (
+            traffic_export.get_export_route_options,
+            traffic_export.get_export_rows,
+            traffic_export.get_route_history,
+        ):
+            with self.subTest(function=func.__name__):
+                source = inspect.getsource(func)
+                self.assertIn("public.traffic_article_publication", source)
+                self.assertIn("pub.status <> 'published'", source)
+
+    def test_admin_page_has_publication_controls(self):
+        response = self.client.get("/admin")
+        self.assertEqual(response.status_code, 200)
+        for marker in (
+            'id="publicationSection"',
+            'id="refreshPublicationsButton"',
+            'id="publicationList"',
+            'id="publicationStatus"',
+            '/api/admin/news/publications',
+        ):
+            self.assertIn(marker, response.text)
+        self.assertIn("검토 중(비공개)", response.text)
+
     def test_article_and_review_status_in_same_transaction(self):
         import inspect
         source = inspect.getsource(news_database.save_news_article)
