@@ -221,7 +221,7 @@
 
                 // 4. 로그인 화면을 관리자 화면으로 전환
                 loginForm.style.display = "none";
-                adminPanel.style.display = "block";
+                adminPanel.style.removeProperty("display");
                 document.body.classList.add("admin-active");
 
                 loginMessage.textContent =
