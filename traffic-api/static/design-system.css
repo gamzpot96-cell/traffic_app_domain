@@ -24,7 +24,7 @@ body {
     outline: none;
 }
 :where(button, a):focus-visible {
-    outline: 3px solid #f59e0b;
+    outline: 2px solid #1558c5;
     outline-offset: 3px;
 }
 @media (prefers-reduced-motion: reduce) {
