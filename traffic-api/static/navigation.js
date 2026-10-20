@@ -31,7 +31,7 @@
                 {name: "교통 비교 현황·데이터 안내", href: "/news#trafficDashboard"},
                 {name: "시점별 교통 변화", href: "/news#trafficTrends"},
                 {name: "CSV 다운로드", href: "/news#trafficExport"},
-                {name: "뉴스 링크·읽기 모드", href: "/news#readingTools"}
+                {name: "기사 공유·읽기 모드", href: "/news#readingTools"}
             ]
         },
         {
