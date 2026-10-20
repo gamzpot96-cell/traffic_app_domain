@@ -166,6 +166,17 @@
                 <p id="publicationStatus" class="message" role="status" aria-live="polite">목록을 불러오려면 버튼을 누르세요.</p>
                 <div id="publicationList" class="publication-list"></div>
             </section>
+            <section id="operatingGuideSection" class="workspace-section" aria-labelledby="operatingGuideHeading">
+                <h2 id="operatingGuideHeading">운영 설정·공지</h2>
+                <p class="small-note">현재 서버에 적용된 운영 정책을 확인하는 읽기 전용 안내입니다. 이 화면에서 환경변수나 자동 수집 설정을 변경하지 않습니다.</p>
+                <div class="operations-list">
+                    <div class="operations-item"><strong>정기 수집</strong> — 비활성. 수집 이력 조회만 가능하며, 자동 실행은 별도 검증·승인 후 활성화합니다.</div>
+                    <div class="operations-item"><strong>기사 공개 정책</strong> — 신규 기사는 검토 중(비공개)으로 저장합니다. 관리자가 발행한 기사만 공개됩니다. 기존 기사는 기존 공개 상태를 유지합니다.</div>
+                    <div class="operations-item"><strong>장애 알림</strong> — 관리자 화면에서 수동 확인합니다. 이메일·메신저 등 외부 알림은 비활성입니다.</div>
+                    <div class="operations-item"><strong>API 사용 통계</strong> — 서버 프로세스별 참고용 집계이며, 카카오 공식 요청 한도·과금 정보가 아닙니다.</div>
+                </div>
+                <p class="small-note">서비스 공지는 이 운영 안내를 통해 제공하며, 공개적인 공지 게시·편집 기능은 아직 제공하지 않습니다.</p>
+            </section>
             <section id="collectionRunsSection" class="workspace-section" aria-labelledby="collectionRunsHeading">
                 <h2 id="collectionRunsHeading">정기 수집 현황</h2>
                 <p class="small-note">수집 처리기만 준비됐으며 실제 자동 실행은 비활성입니다. 수동 확인은 기존 기록만 조회합니다.</p>
