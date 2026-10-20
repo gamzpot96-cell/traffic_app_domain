@@ -159,6 +159,7 @@ body { background:var(--d02-canvas); color:var(--d02-ink); font-family:"Malgun G
 .news-layout article #newsRetrievedAt{color:#50657b;}
 .news-layout #trafficTrends{margin-top:18px;}
 /* Admin: prominent preview and workflow, with explicit save in a separate panel */
+body.admin-active .admin-panel{display:block;}
 .admin-panel .steps{gap:18px;}
 .admin-panel .step-card{min-height:155px;padding:23px;}
 .admin-panel .step-number{width:35px;height:35px;}
