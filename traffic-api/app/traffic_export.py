@@ -26,6 +26,11 @@ def get_export_route_options():
                 """
                 SELECT DISTINCT start_place, end_place
                 FROM public.traffic_route_snapshots
+                WHERE NOT EXISTS (
+    SELECT 1 FROM public.traffic_article_publication pub
+    WHERE pub.article_id = traffic_route_snapshots.article_id
+      AND pub.status <> 'published'
+)
                 ORDER BY start_place, end_place
                 """
             )
@@ -35,7 +40,11 @@ def get_export_route_options():
 
 def get_export_rows(origin=None, destination=None, start_time=None, end_time=None):
     """5001행째가 있으면 오류를 내고 절대로 일부 결과를 조용히 자르지 않습니다."""
-    filters = []
+    filters = ["""NOT EXISTS (
+    SELECT 1 FROM public.traffic_article_publication pub
+    WHERE pub.article_id = traffic_route_snapshots.article_id
+      AND pub.status <> 'published'
+)"""]
     params = []
     if origin is not None:
         filters.append("start_place = %s AND end_place = %s")
@@ -108,7 +117,11 @@ def encode_csv(rows):
 
 def get_route_history(origin, destination, start_time=None, end_time=None, limit=100):
     """F17: 실제 저장된 단일 경로 시점만 조회합니다. 집계/보간 없음."""
-    filters = ["start_place = %s", "end_place = %s"]
+    filters = ["""NOT EXISTS (
+    SELECT 1 FROM public.traffic_article_publication pub
+    WHERE pub.article_id = traffic_route_snapshots.article_id
+      AND pub.status <> 'published'
+)""", "start_place = %s", "end_place = %s"]
     params = [origin, destination]
     if start_time is not None:
         filters.append("retrieved_at >= %s")
