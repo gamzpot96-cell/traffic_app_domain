@@ -12,7 +12,7 @@ load_dotenv()
 
 
 # 뉴스 기사와 경로 정보를 하나의 작업으로 저장
-def save_news_article(news_data, generation_id=None):
+def save_news_article(news_data, generation_id=None, changed_by="system"):
 
     routes = news_data.get("routes", [])
 
@@ -185,6 +185,25 @@ def save_news_article(news_data, generation_id=None):
                     )
                 )
 
+            # F20: 기사·경로·공개 상태·감사 기록을 동일 트랜잭션으로 저장합니다.
+            # 상태 삽입에 실패하면 기사와 스냅샷 저장도 함께 롤백됩니다.
+            cursor.execute(
+                """
+                INSERT INTO public.traffic_article_publication
+                    (article_id, status, changed_by)
+                VALUES (%s, 'review', %s)
+                """,
+                (article_id, str(changed_by))
+            )
+            cursor.execute(
+                """
+                INSERT INTO public.traffic_article_publication_events
+                    (article_id, old_status, new_status, changed_by, note)
+                VALUES (%s, NULL, 'review', %s, 'article_created')
+                """,
+                (article_id, str(changed_by))
+            )
+
     # 여기까지 오류 없이 실행되면 저장 완료
     return {
         "article_id": article_id,
@@ -214,6 +233,11 @@ def get_saved_news_articles(limit=10):
                     retrieved_at,
                     created_at
                 FROM public.traffic_news_articles
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM public.traffic_article_publication pub
+                    WHERE pub.article_id = traffic_news_articles.id
+                      AND pub.status <> 'published'
+                )
                 ORDER BY created_at DESC, id DESC
                 LIMIT %s
                 """,
@@ -246,7 +270,15 @@ def search_saved_news_articles(
         raise ValueError("페이지 또는 페이지 크기가 올바르지 않습니다.")
 
     # 키워드를 SQL 패턴이 아닌 일반 문자열로 검색합니다.
-    conditions = []
+    # 기존 기사(공개 상태 기록 없음)는 계속 공개합니다.
+    # 새 검토/보류 기사는 공개 검색 결과와 개수에서 모두 제외합니다.
+    conditions = ["""
+        NOT EXISTS (
+            SELECT 1 FROM public.traffic_article_publication pub
+            WHERE pub.article_id = traffic_news_articles.id
+              AND pub.status <> 'published'
+        )
+    """]
     parameters = []
     if keyword:
         conditions.append(
@@ -326,6 +358,11 @@ def get_saved_news_article(article_id):
                     created_at
                 FROM public.traffic_news_articles
                 WHERE id = %s
+                  AND NOT EXISTS (
+                    SELECT 1 FROM public.traffic_article_publication pub
+                    WHERE pub.article_id = traffic_news_articles.id
+                      AND pub.status <> 'published'
+                  )
                 """,
                 (article_id,)
             )
