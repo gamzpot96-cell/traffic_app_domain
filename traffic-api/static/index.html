@@ -63,6 +63,7 @@
     </style>
     <link rel="stylesheet" href="/static/design-system.css">
     <link rel="stylesheet" href="/static/navigation.css">
+    <link rel="stylesheet" href="/static/d02-journalism.css">
     <script src="/static/navigation.js" defer></script>
 </head>
 <body>
@@ -70,8 +71,9 @@
 <header class="home-hero">
     <div class="home-hero-inner">
         <p class="home-eyebrow">SEOUL TRAFFIC BRIEFING</p>
-        <h1>서울 도로교통 브리핑</h1>
-        <p>출발지와 목적지로 선택한 자동차 경로의 교통정보를 조회합니다.</p>
+        <h1>교통정보와 뉴스를 함께 읽는<br>서울 도로교통 브리핑</h1>
+        <p class="d02-description">선택한 자동차 경로의 조회 시점 교통정보와 경로별 비교를 확인하세요. 저장된 분석 뉴스는 교통 뉴스 페이지에서 읽을 수 있습니다.</p>
+        <div class="d02-hero-actions"><a href="#routeForm">경로 교통정보 조회</a><a href="/news">저장된 교통 뉴스 읽기</a></div>
     </div>
 </header>
 <main class="home-main">
@@ -171,6 +173,7 @@
 
     <p id="overviewScopeNotice" class="muted"></p>
 </section>
+<section class="d02-home-news" aria-label="저장된 교통 뉴스 안내"><h2>교통 데이터로 읽는 뉴스</h2><p class="muted">저장된 경로 분석 기사에서 조회 시각과 수치를 확인하고, 해당 경로를 지도에서 다시 조회할 수 있습니다. 과거 기사 수치와 현재 경로 결과는 다를 수 있습니다.</p><a href="/news#historySection">저장된 교통 뉴스 바로가기 →</a></section>
 </main>
 <script>
     const routeForm = document.getElementById("routeForm");
