@@ -49,7 +49,7 @@ class AdminDesignTests(unittest.TestCase):
             'fetch("/api/admin/login"', 'fetch("/api/admin/me"',
             'fetch("/api/admin/news/generate"', 'fetch("/api/admin/news/save"',
             'if (!verifyData.authenticated || !verifyData.is_admin)',
-            'adminPanel.style.display = "block"',
+            'adminPanel.style.removeProperty("display")',
             'adminPanel.style.display = "none"',
             'pendingDraftToken = null;',
             'saveButton.disabled = true;',
