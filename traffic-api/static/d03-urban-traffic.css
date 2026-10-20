@@ -192,3 +192,90 @@ body{
   :is(.home-main>section,.news-layout>section,.news-layout>article,
       .admin-panel>.workspace-section){transition:none}
 }
+
+
+/* D03 phase 2: photo-led editorial composition — approved screenshot fidelity. */
+:root{--d03-traffic-photo:url("https://commons.wikimedia.org/wiki/Special:Redirect/file/View_of_Night_Traffic_from_Above_in_Seoul-1.jpg?width=1280")}
+.home-hero,.map-hero,.news-layout>.news-intro,.admin-hero{
+  background-image:
+    linear-gradient(90deg,rgba(6,17,35,.96) 0%,rgba(8,22,44,.89) 35%,rgba(11,30,53,.65) 70%,rgba(9,25,45,.40) 100%),
+    var(--d03-traffic-photo);
+  background-size:cover;
+  background-position:center center;
+}
+.home-hero{min-height:410px;padding:72px max(26px,calc((100vw - 1180px)/2)) 126px!important;}
+.home-hero h1{font-size:clamp(38px,4.9vw,66px);max-width:760px;line-height:1.14;}
+.home-hero .d02-description{max-width:580px;font-size:16px;}
+.home-hero-inner{max-width:1190px;margin:0 auto;}
+.home-main{max-width:1180px!important;position:relative;margin:-72px auto 60px!important;z-index:2;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px!important;}
+.home-main>section{min-width:0;margin:0!important;}
+.home-main>section.home-search,.home-main>section:nth-child(4),.home-main>#overviewSection,.home-main>.d02-home-news{grid-column:1/-1;}
+.home-main>section.home-search{box-shadow:0 24px 54px rgba(7,24,51,.17);border-radius:22px!important;}
+.home-main .home-search #routeForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;}
+.home-main .home-search #routeForm .field{min-width:0}
+.home-main .home-search #submitButton{min-height:47px;padding:11px 24px;}
+.home-main #summary{font-size:17px;font-weight:750;color:#1c416d;}
+.home-main #briefingContent{line-height:1.9;}
+.home-main>section:nth-child(4){border-top-color:#2864e8;}
+.map-hero{padding-block:53px 66px!important;min-height:230px;}
+.map-hero strong{font-size:clamp(30px,3.5vw,45px);}
+.map-hero-inner{max-width:1260px;margin-inline:auto;}
+.map-content{max-width:none!important;width:auto!important;margin:24px max(18px,calc((100vw - 1330px)/2)) 40px  max(18px,calc((100vw - 1330px)/2))!important;}
+.map-content .map-controls{width:min(390px,32vw)!important;min-width:0;padding:24px!important;}
+.map-content .map-controls #mapRouteForm{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;}
+.map-content .map-controls #mapRouteForm label{width:100%;}
+.map-content .map-controls #mapRouteForm input{width:100%;display:block;margin-top:7px;}
+.map-content .map-controls #mapRouteSubmit{width:100%;}
+.map-content #favoriteRoutes{margin-top:20px;padding:14px!important;}
+.map-content .map-controls #result{line-height:1.6;font-size:14px;}
+.map-canvas-frame{
+  position:relative;
+  width:calc(100% - min(390px,32vw) - 58px)!important;
+  max-width:none!important;
+  margin:-40px max(18px,calc((100vw - 1330px)/2)) 55px auto!important;
+}
+.map-canvas-frame #map{height:clamp(650px,75vh,900px)!important;min-height:600px;}
+.map-content:has(#savedArticlePanel:not([hidden]))+.map-canvas-frame{margin-top:0!important;}
+.news-layout>.news-intro{padding:62px 50px 70px!important;min-height:315px;display:flex;flex-direction:column;justify-content:center;}
+.news-layout>.news-intro h2{font-size:clamp(35px,4vw,54px);}
+.news-layout>.news-intro .d02-description{max-width:650px;}
+.news-layout>#historySection{margin-top:-36px!important;position:relative;z-index:1;}
+.news-layout #historyList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.news-layout #historyList .history-item{height:100%;margin:0;border-radius:14px;border-left-width:0;border-top:4px solid #2773df;box-shadow:0 7px 23px rgba(21,49,83,.05);}
+.news-layout #trafficDashboard .summary-cards{grid-template-columns:repeat(3,minmax(0,1fr));}
+.login-container{max-width:1280px!important;}
+.admin-login-layout{grid-template-columns:1.05fr .95fr!important;gap:25px;}
+.admin-login-layout>.admin-hero{min-height:480px;border-radius:20px;}
+.admin-hero h1{font-size:clamp(32px,3.4vw,49px);}
+.admin-panel>.workspace-header{min-height:200px;}
+.admin-panel>.workspace-section{border-radius:17px;}
+@media(max-width:1000px){
+  .map-content{margin:18px 18px 24px!important;}
+  .map-content .map-controls{width:35vw!important;}
+  .map-canvas-frame{width:calc(65vw - 54px)!important;margin:-24px 18px 44px auto!important;}
+  .admin-login-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;}
+}
+@media(max-width:850px){
+  .home-main{margin:-38px 18px 40px!important;grid-template-columns:minmax(0,1fr);}
+  .home-main>section{grid-column:1/-1;}
+  .home-hero{padding:58px 22px 85px!important;min-height:350px;}
+  .map-content .map-controls{width:100%!important;}
+  .map-content{margin:18px 16px!important;}
+  .map-canvas-frame{width:auto!important;margin:0 16px 44px!important;}
+  .map-content .map-controls #mapRouteForm{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .map-content .map-controls #mapRouteSubmit{grid-column:1/-1}
+  .map-canvas-frame #map{min-height:410px;height:60vh!important;}
+  .news-layout #historyList{grid-template-columns:minmax(0,1fr);}
+  .admin-login-layout{grid-template-columns:minmax(0,1fr)!important;}
+}
+@media(max-width:600px){
+  .home-hero{padding:44px 19px 82px!important;min-height:370px;}
+  .home-hero h1{font-size:35px;}
+  .home-main{margin:-28px 12px 30px!important;}
+  .home-main .home-search #routeForm{grid-template-columns:minmax(0,1fr)!important;}
+  .home-main .home-search #submitButton{width:100%;}
+  .map-content .map-controls #mapRouteForm{grid-template-columns:minmax(0,1fr)!important;}
+  .news-layout>.news-intro{min-height:270px;padding:32px 22px 64px!important;}
+  .news-layout>#historySection{margin-top:-28px!important;}
+  .news-layout #trafficDashboard .summary-cards{grid-template-columns:minmax(0,1fr);}
+}
