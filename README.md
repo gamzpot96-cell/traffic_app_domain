@@ -2754,3 +2754,12 @@ git pull origin kakao
 - 최초 조회 `BUILDING`, 재조회 **`READY`**. 배포 URL: `https://trafficappdomain-j4rw9xs7p-gamzpot966.vercel.app`. 이는 **Vercel 배포 상태가 READY라는 뜻**이며 홈페이지 HTTP 응답·FastAPI 라우팅·카카오 지도 SDK·Supabase 연결·관리자 인증의 실제 정상 동작을 보증하지 않는다.
 - **후속 확인 필수:** `/`, `/news`, `/map`, `/admin` 직접 로딩과 공개/인증 API, Root Directory 기준 정적 파일 제공, Kakao SDK 허용 도메인 및 Production 환경변수의 유효성. 배포 상태 점검 중 실제 기사 저장/DB 수정 호출 금지. 운영 공개 전에 이전 스크린샷에 노출된 외부 키 교체 검토.
 - 변경 범위: 이 절의 README 기록만 추가. 애플리케이션 코드, Supabase 데이터·스키마, `main` 브랜치 및 기존 `journalismstudy` 프로젝트 변경 없음.
+
+
+### 20.9 Vercel 대표 도메인 및 카카오맵 실제 화면 확인 (2026-10-20)
+
+- 사용자 Vercel Domains 화면: 신규 대표 도메인 `https://traffic-app-domain.vercel.app`이 **Valid Configuration / Production**으로 표시됨. 구 `project-z00fk.vercel.app`은 신규 도메인으로 **307 리디렉션** 설정. 배포별 임시 URL과 구분한다.
+- 사용자가 Kakao Developers에 새 대표 도메인의 JavaScript SDK 허용 도메인을 등록했다고 보고.
+- 사용자 Chrome `https://traffic-app-domain.vercel.app/map` 스크린샷: 이전 SDK 로딩 실패 상태 대신 **카카오맵 지도 타일, 한글 지명, 서울역→잠실역 2호선 출발/도착 마커, 교통상태별 경로선, 당시 예상 43.5분**이 실제 표시됨. 대표 도메인에서 지도 SDK 로딩 및 경로 렌더링 정상 판정.
+- **검증 한계:** 사진에 표시된 값은 당시 조회 결과로 실시간 고정 수치가 아니며, 지도 줌 버튼 조작/모바일 390px/기사 링크 재진입/인증·저장 전 과정은 이 캡처만으로 입증되지 않음. 이전 Chrome 일부 화면의 '위험' 경고 표시 원인은 별도 확인 필요.
+- **기능정의·DB·환경 반영:** 기존 기능·DB/기사/관리자 인증과 앱 코드는 변경하지 않음. Vercel 대표 도메인 및 Kakao SDK 웹 도메인 설정만 변경됨. `main` 및 `journalismstudy` 변경 없음. API 키 값/비밀번호는 README에 기록하지 않음.
