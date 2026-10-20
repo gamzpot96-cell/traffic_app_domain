@@ -241,10 +241,11 @@ class SharedNavigationTests(unittest.TestCase):
             ("/news", 'id="trafficTrends"'),
             ("/news", 'id="trafficExport"'),
             ("/admin", 'id="apiUsageSection"'),
+            ("/admin", 'id="publicationSection"'),
         ):
             with self.subTest(path=path, anchor=anchor):
                 self.assertIn(anchor, self.client.get(path).text)
-        self.assertIn('{name: "기사 발행·보류", planned: true}', navigation)
+        self.assertIn('{name: "기사 발행·보류", href: "/admin#publicationSection"}', navigation)
         self.assertIn('{name: "정기 수집 상태", planned: true}', navigation)
         self.assertIn('{name: "장애 기록·경고", planned: true}', navigation)
 
