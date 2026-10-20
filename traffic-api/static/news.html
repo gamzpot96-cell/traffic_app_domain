@@ -512,6 +512,11 @@ body { background: #f3f6fa; color: #17253a; }
 
             <p id="newsLead" class="lead"></p>
 
+            <div id="readingTools" class="reading-tools" aria-label="기사 공유 및 읽기 모드">
+                <button type="button" id="toggleReadingMode" aria-pressed="false">집중 읽기 모드</button>
+                <button type="button" id="copyNewsLink">뉴스 페이지 링크 복사</button>
+                <p id="readingToolsStatus" class="small-note" role="status" aria-live="polite">저장된 기사를 읽거나 현재 뉴스 페이지 주소를 공유할 수 있습니다.</p>
+            </div>
             <div id="newsBody" class="article-body"></div>
 
             <p class="notice" id="newsNotice"></p>
@@ -519,6 +524,26 @@ body { background: #f3f6fa; color: #17253a; }
 
     </main>
 
+    <script>
+        // Reading-only controls: no article data or network request is modified.
+        document.getElementById("toggleReadingMode").addEventListener("click", function () {
+            const active = document.body.classList.toggle("news-reading-mode");
+            this.setAttribute("aria-pressed", String(active));
+            this.textContent = active ? "기본 화면으로 돌아가기" : "집중 읽기 모드";
+            document.getElementById("readingToolsStatus").textContent =
+                active ? "기사 본문 읽기 화면입니다." : "기본 뉴스 화면입니다.";
+        });
+        document.getElementById("copyNewsLink").addEventListener("click", async function () {
+            const address = window.location.origin + "/news";
+            const status = document.getElementById("readingToolsStatus");
+            try {
+                await navigator.clipboard.writeText(address);
+                status.textContent = "뉴스 페이지 주소를 복사했습니다. 개별 기사 주소가 아닙니다.";
+            } catch (error) {
+                status.textContent = "주소 복사가 제한되었습니다. 주소창의 /news 주소를 복사해 주세요.";
+            }
+        });
+    </script>
     <script>
         async function loadTrafficNews() {
 
