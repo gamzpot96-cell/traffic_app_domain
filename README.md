@@ -2445,3 +2445,11 @@ git pull origin kakao
 - **신규 정적 회귀 `traffic-api/tests/test_favorites.py` 6개**: 홈/지도 공통 스크립트·버튼 ID, 키/저장 한도/유효성/중복, `textContent` 출력, 수동 불러오기/삭제 및 자동 API 조회 방지, 저장소 오류 처리, 모바일/노란 외곽선 금지. 이전 Windows 전체 70개에 신규 6개로 **76개 예상**. 테스트는 구현 계약을 정적으로 확인하며 브라우저에서 실제 localStorage 동작까지 실행한 검증은 아님.
 - **현재 확인된 사항과 한계:** GitHub 저장소에 코드/스타일/테스트를 커밋했으며 파일 구조와 선택자를 읽어 확인함. 사용자 Windows에서 `git pull origin kakao` 이후 `unittest` 76개 실행, Chrome 홈에서 '현재 입력 경로 저장'→'불러오기'→수동 조회→새로고침 후 유지→개별 삭제, 지도에서 같은 목록 공유·기사 #11 링크 정상 보존, 모바일 390px 확인이 **필수**. 통과 전 F18 사용자 실환경 완료라고 선언하지 않음.
 - 기존 테스트 `70개 OK` 및 D02 Chrome 검증 결과는 앞선 절에 기록됨. F18 새 코드에 대한 Windows 테스트와 실제 Chrome 결과는 추후 별도로 기록.
+
+### 17.7 F18 Windows 전체 76개 자동 테스트 통과 (2026-10-20)
+
+- 사용자가 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 결과를 첨부하여 전달. 최종 결과 **`Ran 76 tests in 1.040s`, `OK`**. 실패·오류 0개.
+- 신규 `test_favorites.RouteFavoritesTests` 6개(홈·지도 스크립트 공유, 저장소 예외 처리, 수동 불러오기/단일 삭제, 모바일·노란 포커스 금지, `textContent` 표시, 저장 한도·입력 검증)가 모두 `ok`. 기존 D02/F23/F19-A 및 관리자/뉴스 테스트 포함 76개 전체 통과.
+- `StarletteDeprecationWarning`과 mock DB 예외·카카오 502 문자열은 의도된 오류 처리 시험에서 로깅된 것이며 개별 테스트는 `ok`. 사용자 Windows에서 실행한 테스트 결과와 GitHub 정적 코드 검사는 구분하여 기록.
+- **실제 Chrome F18 검증 미완료**: `/`의 현재 입력 경로 저장→항목 표시→새로고침 후 유지→불러오기(자동 조회 없이 입력만 변경)→`/map` 동일 목록 공유→개별 삭제·모바일 390px·저장 기사 #11 경로 연동 확인이 필요. 브라우저 실동작을 검증 전까지 F18 전체 완료로 선언하지 않음.
+- `kakao` 루트 README 확인 사실만 추가; 구현 코드·DB·기존 기사·비밀키·`main` 변경 없음.
