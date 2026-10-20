@@ -339,6 +339,21 @@ def search_news(
         raise HTTPException(status_code=503, detail="뉴스 검색 중 오류가 발생했습니다.")
 
 
+# F21: 관리자만 안전한 운영 오류 기록을 조회합니다.
+@app.get("/api/admin/operations")
+async def admin_operations(admin_user=Depends(require_admin)):
+    from app.operational_events import get_recent_operational_events
+
+    try:
+        return await run_in_threadpool(get_recent_operational_events)
+    except Exception:
+        logger.exception("관리자 운영 오류 이력 조회 실패")
+        raise HTTPException(
+            status_code=503,
+            detail="운영 오류 이력을 불러오지 못했습니다."
+        )
+
+
 # F17: 선택한 경로의 실제 저장 조회 시점을 조회합니다(보간·집계 없음).
 @app.get("/api/traffic/history")
 def get_traffic_history(
