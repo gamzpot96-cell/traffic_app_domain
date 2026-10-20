@@ -53,11 +53,20 @@
         .save-note { color: var(--d01-muted); }
         #savedArticleLink { overflow-wrap: anywhere; }
         #savedArticleLink a { color: #1556c0; font-weight: 700; }
-        .api-usage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
-        .api-usage-stat { padding: 16px; background: #f2f6fb; border: 1px solid var(--d01-border); border-radius: 10px; min-width: 0; }
-        .api-usage-stat span { display: block; color: var(--d01-muted); font-size: 13px; margin-bottom: 8px; }
-        .api-usage-stat strong { display: block; overflow-wrap: anywhere; font-size: 22px; }
-        @media (max-width: 850px) { .api-usage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .api-usage-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .api-usage-head h2 { margin-bottom: 8px; }
+        .api-usage-head .small-note { margin: 0; }
+        .api-usage-head button { flex-shrink: 0; }
+        .api-usage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 18px 0 20px; }
+        .api-usage-stat { padding: 20px; background: #f2f6fb; border: 1px solid var(--d01-border); border-radius: 12px; min-width: 0; }
+        .api-usage-stat span { display: block; color: var(--d01-muted); font-size: 13px; margin-bottom: 10px; }
+        .api-usage-stat strong { display: block; overflow-wrap: anywhere; font-size: clamp(22px, 2.4vw, 30px); color: var(--d01-navy); font-variant-numeric: tabular-nums; }
+        .api-usage-details { border-top: 1px solid var(--d01-border); padding-top: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; }
+        .api-usage-details > p { margin: 0; line-height: 1.75; overflow-wrap: anywhere; }
+        .api-usage-details #apiUsageTimes, .api-usage-details #apiUsageNotice { grid-column: 1 / -1; }
+        .api-usage-details #apiUsageNotice { color: var(--d01-muted); }
+        #apiUsageDetails[hidden] { display: none !important; }
+        @media (max-width: 850px) { .api-usage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .api-usage-details { grid-template-columns: 1fr; } }
         @media (max-width: 390px) { .api-usage-grid { grid-template-columns: minmax(0, 1fr); } }
         @media (max-width: 850px) {
             .admin-login-layout { grid-template-columns: 1fr; }
@@ -150,21 +159,27 @@
                 <p id="savedArticleLink" role="status"></p>
             </section>
             <section id="apiUsageSection" class="workspace-section" aria-labelledby="apiUsageHeading">
-                <h2 id="apiUsageHeading">4. API 사용 현황</h2>
-                <p class="small-note">이 서버 프로세스에서 집계한 수치입니다. 서버 재시작 시 초기화되며 카카오 공식 월간 이용량과 다릅니다.</p>
-                <button type="button" id="refreshApiUsageButton">사용 현황 새로고침</button>
-                <p id="apiUsageStatus" class="message" role="status">버튼을 눌러 현재 집계 값을 확인하세요.</p>
+                <div class="api-usage-head">
+                    <div>
+                        <h2 id="apiUsageHeading">4. API 사용 현황</h2>
+                        <p class="small-note">이 서버 프로세스의 누적 호출 통계 · 서버 재시작 시 초기화</p>
+                    </div>
+                    <button type="button" id="refreshApiUsageButton">사용 현황 새로고침</button>
+                </div>
+                <p id="apiUsageStatus" class="message" role="status">새로고침 버튼을 누르면 외부 API 호출과 캐시 사용 현황을 볼 수 있습니다.</p>
                 <div id="apiUsageDetails" hidden>
-                    <div class="api-usage-grid">
-                        <div class="api-usage-stat"><span>외부 요청</span><strong id="apiUsageTotal">0건</strong></div>
+                    <div class="api-usage-grid" aria-label="API 호출 요약">
+                        <div class="api-usage-stat"><span>외부 호출</span><strong id="apiUsageTotal">0건</strong></div>
                         <div class="api-usage-stat"><span>성공</span><strong id="apiUsageSuccess">0건</strong></div>
                         <div class="api-usage-stat"><span>실패</span><strong id="apiUsageFailure">0건</strong></div>
                         <div class="api-usage-stat"><span>캐시 HIT / MISS</span><strong id="apiUsageCache">0 / 0</strong></div>
                     </div>
-                    <p id="apiUsageTypes" class="small-note"></p>
-                    <p id="apiUsageFailureTypes" class="small-note"></p>
-                    <p id="apiUsageTimes" class="small-note"></p>
-                    <p id="apiUsageNotice" class="small-note"></p>
+                    <div class="api-usage-details" aria-label="API 사용 상세 정보">
+                        <p id="apiUsageTypes" class="small-note"></p>
+                        <p id="apiUsageFailureTypes" class="small-note"></p>
+                        <p id="apiUsageTimes" class="small-note"></p>
+                        <p id="apiUsageNotice" class="small-note"></p>
+                    </div>
                 </div>
             </section>
         </section>
@@ -272,7 +287,7 @@
             adminAccessToken = null;
             pendingDraftToken = null;
             document.getElementById("apiUsageDetails").hidden = true;
-            document.getElementById("apiUsageStatus").textContent = "버튼을 눌러 현재 집계 값을 확인하세요.";
+            document.getElementById("apiUsageStatus").textContent = "새로고침 버튼을 누르면 외부 API 호출과 캐시 사용 현황을 볼 수 있습니다.";
             document.getElementById("draftPreview").hidden = true;
             document.getElementById("saveDraftButton").disabled = true;
             document.getElementById("draftStatus").textContent = "아직 생성된 기사가 없습니다.";
