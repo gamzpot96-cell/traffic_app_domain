@@ -2844,3 +2844,11 @@ git pull origin kakao
 - traceback의 Python314 경로로 인해 Python 3.10.10 기준과 실제 가상환경 버전 일치 여부를 별도 점검 예정.
 - GitHub kakao의 UI 수정 검증 자동 테스트 완료, 사용자 Chrome에서 메뉴 및 안내 문구 수동 확인은 대기.
 - 프로그램, DB, 관리자 인증, main 브랜치 변경 없음.
+
+
+### 20.20 Windows 가상환경 Python 실제 버전 확인 (2026-10-20)
+
+- 사용자 PowerShell에서 `.\.venv\Scripts\python.exe --version` 실행 결과 **Python 3.14.7** 직접 확인. 기존 README의 Python 3.10.10은 이전 학습·환경 기준이었으며 현재 `traffic-api/.venv` 실제 실행 버전과 다르다.
+- 같은 Windows 가상환경에서 전체 85개 자동 테스트가 `OK`로 통과한 기록이 있다. 따라서 현재 정상 환경을 재생성하거나 다운그레이드하지 않는다.
+- Vercel Production Python 런타임의 실제 버전은 별도 확인 전까지 미확인. 애플리케이션 코드·의존성·Supabase 데이터·관리자 인증·Vercel 설정 및 `main` 브랜치 변경 없음.
+- 향후 개발환경 정의는 Windows 실제 Python 3.14.7과 Vercel 런타임을 구분해 관리한다.
