@@ -64,6 +64,8 @@
     <link rel="stylesheet" href="/static/design-system.css">
     <link rel="stylesheet" href="/static/navigation.css">
     <link rel="stylesheet" href="/static/d02-journalism.css">
+    <link rel="stylesheet" href="/static/favorites.css">
+    <script src="/static/favorites.js" defer></script>
     <script src="/static/navigation.js" defer></script>
 </head>
 <body>
@@ -84,6 +86,13 @@
             <div class="field"><label for="destination">목적지</label><input id="destination" value="잠실역" required minlength="2"></div>
             <button id="submitButton" type="submit">경로 조회</button>
         </form>
+<div id="favoriteRoutes" class="favorite-routes" aria-label="관심 경로 즐겨찾기">
+    <h3>관심 경로</h3>
+    <p class="favorite-note">자주 이용하는 출발지와 목적지를 이 브라우저에만 저장합니다. 다른 컴퓨터와 동기화되지 않습니다.</p>
+    <button type="button" id="saveFavoriteRoute">현재 입력 경로 저장</button>
+    <ul id="favoriteRouteList" class="favorite-list"></ul>
+    <p id="favoriteRouteStatus" class="favorite-status" role="status" aria-live="polite"></p>
+</div>
         <p id="message" role="status"></p>
         <a class="link" href="/map">지도에서 경로 보기</a>
     </section>
