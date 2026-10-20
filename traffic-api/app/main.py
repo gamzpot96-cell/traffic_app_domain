@@ -637,7 +637,7 @@ async def save_admin_news(
     try:
         # psycopg 동기 호출은 요청 이벤트 루프 밖에서 수행
         return await run_in_threadpool(
-            save_news_article, news_data, generation_id
+            save_news_article, news_data, generation_id, admin_user["id"]
         )
     except (ValueError, KeyError, TypeError):
         logger.exception("저장 데이터 유효성 검사 실패")
