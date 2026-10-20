@@ -7,48 +7,42 @@
         return;
     }
 
+    // M03: group navigation by actual page, not by overlapping feature names.
     const menuGroups = [
         {
-            name: "교통 현황",
+            name: "경로 조회",
             items: [
                 {name: "자동차 경로 검색", href: "/"},
-                {name: "교통 경로 지도", href: "/map"},
+                {name: "대표 경로 브리핑", href: "/#overviewSection"},
+                {name: "이용 안내·FAQ", planned: true}
+            ]
+        },
+        {
+            name: "경로 지도",
+            items: [
+                {name: "지도에서 경로 확인", href: "/map"},
                 {name: "관심 경로", href: "/map#favoriteRoutes"}
             ]
         },
         {
-            name: "분석·통계",
+            name: "교통 뉴스·분석",
             items: [
-                {name: "경로별 비교 현황", href: "/news#trafficDashboard"},
-                {name: "날짜·시간대별 교통 변화", href: "/news#trafficTrends"},
-                {name: "일별·주별 비교", planned: true},
-                {name: "교통정보 CSV 다운로드", href: "/news#trafficExport"}
-            ]
-        },
-        {
-            name: "교통 뉴스",
-            items: [
-                {name: "최신 교통 뉴스", href: "/news"},
-                {name: "저장된 기사 아카이브", href: "/news#historySection"},
-                {name: "기사 검색·기간 필터", href: "/news#historySection"},
+                {name: "기사 검색·아카이브", href: "/news#historySection"},
+                {name: "교통 비교 현황·데이터 안내", href: "/news#trafficDashboard"},
+                {name: "시점별 교통 변화", href: "/news#trafficTrends"},
+                {name: "CSV 다운로드", href: "/news#trafficExport"},
                 {name: "기사 공유·읽기 모드", planned: true}
             ]
         },
         {
-            name: "서비스 안내",
+            name: "관리자·운영",
             items: [
-                {name: "교통 데이터 범위·한계", href: "/news#trafficDashboard"},
-                {name: "사용법·FAQ", planned: true},
-                {name: "공지·장애 안내", planned: true}
-            ]
-        },
-        {
-            name: "관리자",
-            items: [
-                {name: "관리자 로그인·뉴스 작업실", href: "/admin"},
-                {name: "기사 승인·게시 관리", planned: true},
-                {name: "수집 상태·오류 로그", planned: true},
-                {name: "운영 설정", planned: true}
+                {name: "기사 생성·검토·저장", href: "/admin"},
+                {name: "API 사용 현황", href: "/admin#apiUsageSection"},
+                {name: "기사 발행·보류", planned: true},
+                {name: "정기 수집 상태", planned: true},
+                {name: "장애 기록·경고", planned: true},
+                {name: "운영 설정·공지", planned: true}
             ]
         }
     ];
