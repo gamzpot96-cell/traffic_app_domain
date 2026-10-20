@@ -421,3 +421,102 @@ def get_saved_news_article(article_id):
         "created_at": article_row[7].isoformat(),
         "routes": routes
     }
+
+
+# F20: 관리자 전용 전체 기사 및 공개 상태 목록
+def get_admin_publication_articles(limit=50):
+    if not 1 <= limit <= 100:
+        raise ValueError("조회 개수가 올바르지 않습니다.")
+
+    with get_database_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT news.id, news.title, news.retrieved_at,
+                       publication.status, news.created_at
+                FROM public.traffic_news_articles news
+                LEFT JOIN public.traffic_article_publication publication
+                    ON publication.article_id = news.id
+                ORDER BY news.created_at DESC, news.id DESC
+                LIMIT %s
+                """,
+                (limit,)
+            )
+            rows = cursor.fetchall()
+
+    return [
+        {
+            "id": row[0],
+            "title": row[1],
+            "retrieved_at": row[2].isoformat(),
+            "status": row[3] if row[3] is not None else "published",
+            "legacy": row[3] is None,
+            "created_at": row[4].isoformat()
+        }
+        for row in rows
+    ]
+
+
+# F20: 같은 트랜잭션에서 상태 변경과 변경 이력을 기록합니다.
+def change_article_publication_status(article_id, target_status, changed_by):
+    from app.operation_policies import publication_transition_allowed
+
+    with get_database_connection() as connection:
+        with connection.cursor() as cursor:
+            # 기존 공개 기사는 상태 기록이 없을 수 있습니다.
+            cursor.execute(
+                """
+                SELECT id FROM public.traffic_news_articles
+                WHERE id = %s FOR UPDATE
+                """,
+                (article_id,)
+            )
+            if cursor.fetchone() is None:
+                return None
+
+            cursor.execute(
+                """
+                SELECT status FROM public.traffic_article_publication
+                WHERE article_id = %s FOR UPDATE
+                """,
+                (article_id,)
+            )
+            current_row = cursor.fetchone()
+            previous = current_row[0] if current_row else "published"
+
+            if not publication_transition_allowed(previous, target_status):
+                raise ValueError("허용되지 않는 기사 상태 변경입니다.")
+
+            if current_row:
+                cursor.execute(
+                    """
+                    UPDATE public.traffic_article_publication
+                    SET status = %s, changed_by = %s, changed_at = now()
+                    WHERE article_id = %s
+                    """,
+                    (target_status, str(changed_by), article_id)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO public.traffic_article_publication
+                        (article_id, status, changed_by)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (article_id, target_status, str(changed_by))
+                )
+
+            cursor.execute(
+                """
+                INSERT INTO public.traffic_article_publication_events
+                    (article_id, old_status, new_status, changed_by, note)
+                VALUES (%s, %s, %s, %s, 'admin_transition')
+                """,
+                (article_id, previous, target_status, str(changed_by))
+            )
+
+    return {
+        "article_id": article_id,
+        "old_status": previous,
+        "status": target_status
+    }
