@@ -2826,3 +2826,11 @@ git pull origin kakao
 - **구현 설계:** `static/navigation.js`에서 관심 경로를 `/map#favoriteRoutes` 링크로 전환하고 기존 예정 기능 표시는 나머지 메뉴에 유지. `static/map.html`의 `#result` 초기 안내를 `경로 표시 버튼을 눌러 현재 교통정보를 조회하세요.`로 변경. `static/favorites.js`에서 지도 페이지의 즐겨찾기 불러오기 후 `#result` 메시지를 `경로를 불러왔습니다. 경로 표시 버튼을 눌러 현재 교통정보를 조회하세요.`로 갱신하되 **자동 API 호출은 하지 않는다**. 기본 지도 경로 조회 결과와 오류 메시지는 그대로 유지.
 - **검증 설계:** 기존 공통 메뉴·즐겨찾기·자동 조회 금지 회귀 테스트 유지, 메뉴 링크·초기 안내·불러오기 안내 관련 검사를 추가. Windows 전체 `unittest discover` 사용자 환경 실행 및 PC/390px 화면 확인 후 정상 여부 판정.
 - **기능정의:** F18 기존 완료 기능에 대한 UI 연결·문구만 정리. **DB:** Supabase 데이터·기사·인증·스키마 무변경. **개발환경:** Vercel/Windows/Python/의존성/환경변수 무변경. CSS·포커스 외곽선 신규 추가 금지; `main` 불변.
+
+
+### 20.18 관심 경로 메뉴·안내 문구 수정 결과 및 검증 대기 (2026-10-20)
+
+- **승인 범위 구현:** 공통 `static/navigation.js`의 '관심 경로'를 '준비 중'에서 `/map#favoriteRoutes` 링크로 전환. 지도 `static/map.html`의 경로 미조회 초기 메시지를 수동 '경로 표시' 안내로 교체. `static/favorites.js`에서 지도 페이지 즐겨찾기를 '불러오기'한 경우 지도 결과 안내를 함께 갱신; API 자동 호출 없음.
+- **테스트:** `tests/test_favorites.py`에 메뉴 링크·대상 ID·초기 안내·불러오기 문구·자동 호출 금지에 관한 정적 회귀 테스트 1개 추가. GitHub 파일 재조회에서 지정한 변경 문자열의 존재와 기존 `planned` 표현 제거를 확인함. **Windows 전체 unittest 및 실제 Chrome 화면 테스트는 아직 재실행되지 않았으며 결과 대기.** 기존 84개 통과는 수정 전 기록이고, 현재 테스트 파일에는 새 테스트 1개가 추가됨.
+- **개발환경/DB:** Python·Vercel 배포 설정·환경변수·Supabase 테이블/데이터·기사·관리자 인증 **변경 없음**. CSS·포커스 테두리·`main` **변경 없음**. `kakao`의 문서/JS/HTML/테스트 파일만 커밋됨.
+- **확인 절차:** 사용자 Windows `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 후 합격 건수/실패를 기록하고, Vercel `kakao` 배포가 READY인지 확인. 지도 드롭다운 '관심 경로' 링크를 눌러 즐겨찾기 영역으로 이동되는지, 불러오기 뒤 경로를 자동 재조회하지 않고 '경로 표시' 안내가 보이는지 데스크톱·390px에서 점검.
