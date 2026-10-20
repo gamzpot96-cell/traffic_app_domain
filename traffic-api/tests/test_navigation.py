@@ -135,6 +135,28 @@ class SharedNavigationTests(unittest.TestCase):
             with self.subTest(required=required):
                 self.assertIn(required, response.text)
 
+    def test_d02_shared_styles_and_legacy_function_ids(self):
+        css = self.client.get("/static/d02-journalism.css")
+        self.assertEqual(css.status_code, 200)
+        self.assertIn("text/css", css.headers.get("content-type", ""))
+        self.assertIn("@media(max-width:600px)", css.text)
+        for path, required in {
+            "/": ("routeForm", "overviewButton", "briefingContent", "historySection"),
+            "/map": ("mapRouteForm", "map", "savedArticlePanel"),
+            "/news": ("newsSearchForm", "newsTitle", "savedArticleRouteList", "trafficExportForm"),
+            "/admin": ("loginForm", "adminPanel", "generateDraftButton", "saveDraftButton"),
+        }.items():
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('/static/d02-journalism.css', response.text)
+                for name in required:
+                    if path == "/" and name == "historySection":
+                        self.assertIn('/news#historySection', response.text)
+                    else:
+                        self.assertIn('id="' + name + '"', response.text)
+        self.assertIn("교통 데이터를 읽는 뉴스룸", self.client.get("/news").text)
+
     def test_existing_admin_guard(self):
         for route in ("/api/admin/me", "/api/admin/news/generate"):
             with self.subTest(route=route):
