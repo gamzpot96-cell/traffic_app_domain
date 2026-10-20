@@ -2254,3 +2254,11 @@ git pull origin kakao
 - **직접 코드 정적 점검:** GitHub 최신 4개 파일에 D02 CSS 링크 및 공통 내비게이션이 존재하고 HTML `main/body/html`과 `script` 열고 닫는 태그 개수(2쌍)가 일치함. 이 정적 확인을 **사용자 로컬 Windows 자동 테스트나 실제 Chrome 렌더링 합격으로 표현하지 않음**.
 - **사용자 Windows 추가 확인 필요:** `git pull origin kakao` 후 67개 전체 unittest, Chrome `/` 홈·`/map` 카카오 지도와 기사 저장 경로·`/news` 기사 #11 본문·검색 및 `/admin` 로그인 전/후, 320/390/768px 메뉴·표/카드, Console 빨간 오류, 네트워크 CSS 200 확인. 이 결과를 받기 전 D02 전체 검증 완료라 단정하지 않음.
 - **잔여 한계:** 사용자 제공 이미지 콘셉트와 픽셀 단위 동일 구현이 아니라 **기존 기능을 보존한 D02 시각 리디자인 1차 적용**이며 브라우저별 레이아웃은 실제 확인·후속 수정이 필요할 수 있음. 별도 새 기능은 README 변경·승인 후 진행.
+
+### 16.8 D02 Windows 전체 67개 자동 테스트 통과 (2026-10-20)
+
+- 사용자가 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`에서 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실행 로그를 제출함.
+- **실제 최종 결과: `Ran 67 tests in 0.893s`, `OK`**. 기존 66개와 D02 신규 `test_d02_shared_styles_and_legacy_function_ids` 1개 모두 `ok`, 실패·오류 0건.
+- `RuntimeError: test DB error`, `private DB detail`, `secret DB`, '카카오 경로 조회 실패 (502)'는 mock 예외 처리 테스트의 의도된 로그이며 해당 테스트 각각 `ok`. `StarletteDeprecationWarning`은 비치명적 경고.
+- **검증 범위:** D02 공통 CSS 전달과 핵심 HTML ID 및 기존 Python 회귀 테스트 확인. Chrome에서 실제 4개 페이지 렌더링/버튼/카카오맵/로그인·뉴스 상세/모바일 반응형을 확인했다는 뜻은 아님.
+- **다음 사용자 확인:** `/` 홈을 Chrome에서 연 뒤 Ctrl+Shift+R로 최신 CSS를 반영하고 전체 화면 스크린샷 제출. 이후 `/map` → `/news` → `/admin` 순서로 시각·기능 점검. 현재 코드는 더 수정하지 않았고 README 증거만 업데이트.
