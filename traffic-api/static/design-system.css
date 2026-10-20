@@ -23,10 +23,6 @@ body {
 :where(input, textarea, select):focus {
     outline: none;
 }
-:where(button, a):focus-visible {
-    outline: 2px solid #1558c5;
-    outline-offset: 3px;
-}
 @media (prefers-reduced-motion: reduce) {
     html:focus-within { scroll-behavior: auto; }
 }
