@@ -39,7 +39,7 @@
             items: [
                 {name: "기사 생성·검토·저장", href: "/admin"},
                 {name: "API 사용 현황", href: "/admin#apiUsageSection"},
-                {name: "기사 발행·보류", planned: true},
+                {name: "기사 발행·보류", href: "/admin#publicationSection"},
                 {name: "정기 수집 상태", planned: true},
                 {name: "장애 기록·경고", planned: true},
                 {name: "운영 설정·공지", planned: true}
