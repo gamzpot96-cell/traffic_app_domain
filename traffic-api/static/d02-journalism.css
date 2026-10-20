@@ -178,6 +178,7 @@ body.admin-active .admin-panel{display:block;}
   .admin-panel>.workspace-section:nth-of-type(1){grid-column:1/-1;margin-top:0;}
   .admin-panel>.workspace-section:nth-of-type(2){grid-column:1;grid-row:auto;margin-top:0;}
   .admin-panel>.workspace-section:nth-of-type(3){grid-column:2;grid-row:auto;margin-top:0;position:sticky;top:18px;}
+  .admin-panel>#apiUsageSection{grid-column:1/-1;grid-row:auto;margin-top:0;}
 }
 @media(max-width:850px){
   .map-content .map-controls #mapRouteForm{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
