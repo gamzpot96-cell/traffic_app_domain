@@ -166,6 +166,13 @@
                 <p id="publicationStatus" class="message" role="status" aria-live="polite">목록을 불러오려면 버튼을 누르세요.</p>
                 <div id="publicationList" class="publication-list"></div>
             </section>
+            <section id="operationsSection" class="workspace-section" aria-labelledby="operationsHeading">
+                <h2 id="operationsHeading">운영 오류 기록</h2>
+                <p class="small-note">실패 유형과 시각만 저장합니다. 출발지·목적지, API 키, 응답 본문은 기록하지 않습니다. 외부 알림은 사용하지 않습니다.</p>
+                <button type="button" id="refreshOperationsButton">오류 기록 조회</button>
+                <p id="operationsStatus" class="message" role="status">버튼을 누르면 최근 오류 기록을 확인합니다.</p>
+                <div id="operationsList" class="operations-list"></div>
+            </section>
             <section id="apiUsageSection" class="workspace-section" aria-labelledby="apiUsageHeading">
                 <div class="api-usage-head">
                     <div>
@@ -294,6 +301,8 @@
 
             adminAccessToken = null;
             pendingDraftToken = null;
+            document.getElementById("operationsList").replaceChildren();
+            document.getElementById("operationsStatus").textContent = "버튼을 누르면 최근 오류 기록을 확인합니다.";
             document.getElementById("publicationList").replaceChildren();
             document.getElementById("publicationStatus").textContent = "목록을 불러오려면 버튼을 누르세요.";
             document.getElementById("apiUsageDetails").hidden = true;
@@ -439,6 +448,46 @@
         document.getElementById("refreshPublicationsButton").addEventListener(
             "click", loadPublications
         );
+
+        // F21: 외부 메시지 없이 관리자에게만 최근 안전한 오류 코드 표시.
+        document.getElementById("refreshOperationsButton").addEventListener("click", async function () {
+            if (!adminAccessToken) return;
+            const button = this;
+            const status = document.getElementById("operationsStatus");
+            const list = document.getElementById("operationsList");
+            button.disabled = true;
+            status.textContent = "운영 오류 기록을 조회하고 있습니다.";
+            try {
+                const response = await fetch("/api/admin/operations", {
+                    headers: {"Authorization": "Bearer " + adminAccessToken}
+                });
+                if (!response.ok) throw new Error("운영 오류 기록을 조회하지 못했습니다.");
+                const data = await response.json();
+                list.replaceChildren();
+                data.events.forEach(function (event) {
+                    const item = document.createElement("div");
+                    item.className = "operations-item";
+                    const labels = {
+                        timeout: "시간 초과", http_error: "HTTP 오류",
+                        network_error: "연결 오류", invalid_json: "JSON 오류",
+                        invalid_response: "응답 형식 오류",
+                        database_error: "DB 오류", unexpected_error: "기타 오류"
+                    };
+                    const when = new Date(event.event_time).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"});
+                    item.textContent = when + " · " + event.source + " / " + event.event_type +
+                        " · " + (labels[event.error_code] || "기타 오류") +
+                        (event.http_status ? " (HTTP " + event.http_status + ")" : "");
+                    list.appendChild(item);
+                });
+                status.textContent = data.count
+                    ? "최근 운영 오류 " + data.count + "건을 확인했습니다."
+                    : "저장된 최근 운영 오류가 없습니다.";
+            } catch (error) {
+                status.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
 
         // 서버에서 생성한 기사를 미리보기 화면에 표시
         function showDraft(news) {
