@@ -225,6 +225,20 @@ class SharedNavigationTests(unittest.TestCase):
                 self.assertIn("CC BY-SA 4.0", page)
                 self.assertIn("실시간 교통 상황이 아닙니다", page)
 
+    def test_completed_navigation_features_have_real_controls(self):
+        home = self.client.get("/").text
+        news = self.client.get("/news").text
+        admin = self.client.get("/admin").text
+        for text in ("자동차 경로는 어떻게 확인하나요?", "관심 경로는 어디에 저장되나요?", "뉴스와 교통정보는 실시간인가요?"):
+            self.assertIn(text, home)
+        for marker in ('id="toggleReadingMode"', 'id="copyNewsLink"',
+                       'id="readingToolsStatus"', 'navigator.clipboard.writeText',
+                       'news-reading-mode'):
+            self.assertIn(marker, news)
+        for marker in ('id="operatingGuideSection"', "정기 수집", "비활성",
+                       "외부 알림", "이 화면에서 환경변수나 자동 수집 설정을 변경하지 않습니다"):
+            self.assertIn(marker, admin)
+
     def test_m03_route_based_menu_links(self):
         navigation = self.client.get("/static/navigation.js").text
         self.assertEqual(navigation.count('name: "경로 조회",'), 1)
