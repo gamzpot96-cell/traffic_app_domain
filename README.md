@@ -2503,3 +2503,10 @@ git pull origin kakao
 - 이미 있는 일반 입력창 `outline:none` 선언은 외곽선을 추가하지 않는 **무테 처리용**이므로 유지. 카드의 일반 장식용 border/box-shadow·hover 상태는 포커스 테두리가 아니므로 현행 디자인 유지. 키보드 Tab/Enter/Esc 본래 동작은 변경하지 않았지만, **키보드 사용자가 현재 초점 위치를 시각적으로 확인하기 어려울 수 있는 접근성 영향**이 있음.
 - 테스트: `tests/test_navigation.py`에서 과거 파란 포커스 테두리를 필수로 요구하던 구식 검사 변경 및 **공통 CSS 4개에서 포커스 outline/box-shadow 도입 금지 검사 1개 추가**; `tests/test_favorites.py`는 즐겨찾기 :focus-visible/outline이 없도록 변경. `news.html` 저장 경로 링크의 이전 포커스 스타일도 제거. 전체 자동 테스트는 기존 76개에서 **77개 예상**이며 **수정 후 Windows 전체 77개 실행·Chrome 시각 검증은 아직 완료되지 않음**.
 - 서버/기사/카카오 경로/Supabase DB/로그인 권한/기존 저장 즐겨찾기는 변경하지 않음. `main` 불변, `kakao`만 수정. **향후 어떤 색상의 포커스 테두리도 재도입 금지.**
+
+### 17.15 포커스 테두리 제거 후 77개 테스트의 정규식 오탐 수정 (2026-10-20)
+
+- 사용자 Windows PowerShell F18/D02 전체 unittest 로그에서 **`Ran 77 tests in 0.619s`, `FAILED (failures=1)`** 확인. 유일한 실패: `test_navigation.SharedNavigationTests.test_all_shared_styles_have_no_focus_outline_rules`의 `design-system.css` subTest.
+- 원인: 테스트 정규표현식의 `\s*` 역추적으로 실제 CSS `:where(input, textarea, select):focus { outline: none; }` 중 **`outline:none`을 포커스 외곽선 추가처럼 잘못 감지**. CSS는 이미 외곽선을 없애는 선언이어서 CSS/디자인 회귀라고 볼 근거 없음. 다른 테스트 76개 통과.
+- `tests/test_navigation.py`에서 문제 정규식을 **CSS `outline:` 선언의 실제 값 추출 후 `none`과 비교**하는 방식으로 바꾸고, `:focus`/`:focus-visible` 내부의 `box-shadow`와 `border` 선언을 별도 검사하도록 수정. `re` 표준 라이브러리 import 추가. 기존 전체 테스트 수 **77개 유지**.
+- **수정 후 Windows 77개 재실행 결과는 아직 확인되지 않음.** 노란색/파란색 등 모든 포커스 테두리 제거 규칙 유지하며 현재 CSS/HTML/JS/Supabase DB/`main`은 수정하지 않음. `kakao` 브랜치 테스트/README만 변경.
