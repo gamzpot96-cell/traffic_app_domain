@@ -87,12 +87,22 @@ class ApiUsageTests(unittest.TestCase):
         with TestClient(main.app) as client:
             page = client.get("/admin")
         self.assertEqual(page.status_code, 200)
+        self.assertIn('id="apiUsageSection" class="workspace-section"', page.text)
         self.assertIn('id="refreshApiUsageButton"', page.text)
         self.assertIn('id="apiUsageDetails" hidden', page.text)
         self.assertIn('fetch("/api/admin/api-usage"', page.text)
         self.assertIn('adminAccessToken', page.text)
         self.assertIn('document.getElementById("apiUsageDetails").hidden = true', page.text)
         self.assertNotIn(":focus-visible", page.text)
+
+
+    def test_admin_usage_section_spans_both_columns(self):
+        with TestClient(main.app) as client:
+            response = client.get("/static/d02-journalism.css")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(".admin-panel>#apiUsageSection{grid-column:1/-1;grid-row:auto;margin-top:0;}", response.text)
+        self.assertIn("@media(min-width:1080px)", response.text)
+        self.assertNotIn("#apiUsageSection:focus", response.text)
 
 
 if __name__ == "__main__":
