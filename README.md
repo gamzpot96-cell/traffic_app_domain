@@ -2896,3 +2896,54 @@ git pull origin kakao
 - **기능정의서:** F16~F22의 옛 상태 표기 정정 및 메뉴 IA의 구현 위치 최신화. **운영 기능 자체 변경 없음**.
 - **DB:** 새 테이블/열/인덱스/쿼리·데이터 쓰기 **없음**. 기존 기사·경로 스냅샷·Supabase Auth 유지.
 - **개발환경:** Windows `traffic-api/.venv` 실제 Python **3.14.7**(기존 19.4의 3.10.10은 역사적 기준), Vercel `traffic_app_domain`에서 `kakao` Production 배포가 READY로 확인됐으며 대표 도메인은 `https://traffic-app-domain.vercel.app`. Vercel Python 실행 버전은 직접 확인 전 미확인. 프로그램 의존성 변경 없음.
+
+
+## 22. F19 정기 수집·F20 발행 상태·F21 장애 모니터링 — 통합 구현 승인 설계 (2026-10-20)
+
+> **상태: 설계 작성 / 동작 변경·DB 마이그레이션·스케줄 활성화 승인 대기.** 사용자가 세 기능 전체 구현 방향은 승인했지만 주기, 공개 정책, DB 변경, 알림 정책과 요금 관련 운영 결정은 아직 확정되지 않았다. 승인 전 기존 운영 동작과 데이터를 변경하지 않는다.
+
+### 22.1 현행 구현과 확인 근거
+
+- `app/main.py`에서 기존 공개 라우트, 관리자 Bearer 인증, 기사 초안 생성 및 명시 저장, `/api/admin/api-usage` 확인. 정기 수집 트리거 및 발행·보류 상태 변경 API는 없음.
+- `app/news_database.py`는 `traffic_news_articles` + `traffic_route_snapshots`를 저장하며 기존 `generation_id` 중복 방지 유지. `app/api_usage.py` 통계는 현재 서버 프로세스 메모리이며 모든 Vercel 인스턴스 간 영구 집계가 아님.
+- **Supabase 읽기 전용 실 DB 메타데이터 확인:** public.traffic_news_articles 컬럼은 `id, title, lead, body, scope_notice, analyzed_route_count, retrieved_at, created_at, generation_id`; public.traffic_route_snapshots 컬럼은 `id, article_id, start_place, end_place, distance_m, duration_seconds, total_road_count, congested_count, congested_distance_m, congestion_ratio, retrieved_at`. public.traffic_information은 기존 수집 테이블이며 `id, road_name, road_type, link_id, speed, travel_time, created_date, created_at, traffic_status, latitude, longitude, collected_at`를 보유. 메타데이터 조회만 수행했으며 기존 레코드·인덱스·RLS의 상세 검사는 후속 읽기 전용 확인이 필요.
+- Vercel 배포 프로젝트 `traffic_app_domain`, Root Directory `traffic-api`, Production `kakao`. 기존 `vercel.json`은 Python 함수·정적 라우팅 선언만 있고 `crons` 없음. Windows Python 가상환경 3.14.7에서 최근 85개 unittest OK; Vercel 런타임 Python 버전 미확인.
+
+### 22.2 F19 기능정의 — 자동 수집과 영구 기록
+
+- **목적:** 사용자의 수동 조회와 분리하여 설정된 대표 경로의 당시 거리·시간·정체 수치를 주기적으로 수집. 현재 API 호출 30초 캐시는 유지하고, 수집된 자료는 *기사 승인/발행과 무관한 관측 기록*으로 구분.
+- **제안 기본 범위:** 기존 3개 대표 경로를 **하루 1회, KST 09시경** 수집. 실행별 지정 경로의 Local 출발/도착 검색 및 Mobility 길찾기; 가능한 한 요청 과다·요금 위험을 낮추고 중복 실행 시 이중 저장 방지. 이 주기/시간은 **최종 승인 선택사항**이며 운영에서 임의 활성화하지 않음.
+- **실행 구조:** Vercel Cron 또는 대체 관리형 스케줄 → 비공개 `GET /api/internal/collect`(제안) → `CRON_SECRET` 인증 확인, 시간 제한·중복 락/DB 유일 식별자 적용 → 정상 조회별 별도 저장. Cron 가용 빈도·시간대 해석·Vercel 프로젝트 요금제 한도는 활성화 전에 공식 현재 설정과 사용자 계정에서 확인.
+- **저장 제안:** 신규 `traffic_collection_runs`(실행 ID UUID PK, scheduled_for timestamptz, started_at/finished_at, outcome, count_total/count_succeeded/count_failed, safe_error_code, unique dedupe key)와 `traffic_observations`(ID PK, run_id FK, origin/destination, 조회 시각, 거리/소요시간/정체 비율, source='kakao', unique(run_id,origin,destination)). 기존 `traffic_route_snapshots`는 기사에 연결된 과거 기록이므로 자동 수집 자료를 기존 기사에 가짜로 연결하지 않는다.
+- **중요 제약:** 카카오 응답에서 확보하지 못한 지표를 생성하거나 과거 도로 선형을 복원하지 않는다. 서버리스 재시도·일부 경로 실패 시 성공 결과만 저장하고 실행 상태/오류 기록을 남긴다. 외부 API 요금·쿼터 증가 가능성 별도 확인.
+
+### 22.3 F20 기능정의 — 기사 발행·보류와 공개 범위
+
+- **목적:** 기존 관리자 생성→검토→저장 흐름을 유지하면서 '저장된 기사'와 '공개 승인된 기사'를 구분. 기존 `generation_id` 중복 저장 보호 유지.
+- **데이터 보존 우선 제안:** 기존 기사/경로 테이블은 즉시 덮어쓰지 않고 신규 `traffic_article_publication`(article_id BIGINT UNIQUE FK, status CHECK draft/review/published/held, changed_at, changed_by 관리자 UID)과 `traffic_article_publication_events`(id PK, article_id FK, old_status, new_status, changed_at, changed_by, note)를 사용해 상태/감사 이력 구성. 실제 FK·기본키·권한·RLS는 읽기 전용 검증 후 정확한 SQL 마이그레이션 설계.
+- **공개 정책 제안:** 기존 저장 기사들은 **기존처럼 계속 공개 조회**(상태 레코드 미존재를 legacy_public으로 간주); 새로 저장되는 기사는 기본 `review`로 비공개하고 관리자가 확인 후 `published`로 공개. 단, 새 기사 저장 시 기존 공개 목록에서 즉시 보이지 않게 되는 **사용자 경험 변경이므로 명시 승인 필수**.
+- **API/화면 제안:** 관리자 전용 기사 상태 목록·변경 `GET /api/admin/articles`, `PATCH /api/admin/articles/{id}/publication`; 인증 `require_admin`, 화이트리스트 전이 검증, `news.html`의 공개 기사 목록·검색/상세는 공개 상태 필터. 서버 측 필터·총 페이지 수·기사 ID 직접 접근 제어도 일치해야 함. 보류 후 과거 기사 링크 처리 정책 확인 필요. 관리자 새 기사 저장·중복 저장 방지·경로 스냅샷 트랜잭션 보존.
+- **안전 제한:** 기존 기사 일괄 비공개/삭제/발행 상태 임의 변경 없음. 편집 이력은 상태 변경 내역부터 시작하며 기사 본문 버전관리까지는 별도 확장으로 둔다.
+
+### 22.4 F21 기능정의 — 지속 가능한 운영 오류 진단
+
+- **목적:** F19-B 메모리 통계와 별도로 정기 수집 실패/외부 API 오류를 지속 기록해 관리자 작업실에서 원인 유형·최종 발생 시각을 볼 수 있게 한다.
+- **저장 제안:** 신규 `traffic_operational_events`(id PK, event_time timestamptz, source, event_type, outcome, safe_error_code, http_status nullable, run_id nullable, request_id nullable, occurrence_count). 외부 키, 토큰, 사용자 입력의 원문, 개인정보, API 원본 응답은 저장 금지. 필수 최소 메타데이터만 기록.
+- **화면/API:** 관리자 전용 `GET /api/admin/operations` 읽기 전용 진단(최근 실패, 유형별 집계, 수집 성공률). F19-B 기존 프로세스 메모리 대시보드 유지, 공식 Kakao 쿼터로 표현하지 않음.
+- **알림 제안:** 초기에는 관리자 화면 경고 + 연속 실패 임계치 초과 시 **명시적 채널 설정 후** 외부 알림. 무승인 외부 이메일·메신저 발송 금지. 보존 기간은 30일(제안), DB 정리 실행도 별도 승인을 받은 뒤 활성화. 기존 기록을 지우지 않음.
+
+### 22.5 DB 마이그레이션·개발환경·수용 검증 계획
+
+- **DB:** 기존 Supabase 데이터를 보존하는 additive migration을 우선. 신규 테이블의 권한/접근 정책, FK, 인덱스/제약, 실패 시 롤백 절차와 과거 기사 호환성을 코드 구현 전에 확정. 신규 SQL 작성만으로 적용 간주 금지. DB 쓰기·백필·인증 정책 변경은 사용자 승인 후 단계적으로 처리.
+- **개발환경:** `traffic-api`의 FastAPI + psycopg + 기존 Supabase Auth 보존. 신규 `CRON_SECRET` 생성/등록 필요 시 값은 문서/채팅에 기록 금지. Vercel Cron 구성은 무료 요금제의 지원/실행 한도와 UTC 설정 재확인 후 배포하고, 단순 코드 반영으로 자동 실행 활성화되지 않게 단계 분리.
+- **구현 순서:** (A) 정확한 DDL/권한 읽기 전용 확인 및 마이그레이션/실패 테스트 설계 → (B) 승인된 별도 테이블과 테스트 → (C) F20 관리자·공개 상태 제어와 회귀 → (D) F21 운영 이력 기록·관리자 읽기 전용 진단 → (E) F19 수집 처리기·중복방지 및 수동 비운영 테스트 → (F) 스케줄/알림 활성화 및 운영 검증. 단계별 Windows 전체 unittest + 실제 Vercel 읽기 전용 점검 + GitHub `kakao` 커밋.
+- **검수 조건:** 기존 기사 개수·원본/스냅샷 보존, 비관리자 401/403, 서명 없는 저장 차단, 신규 기사 출고 전 비공개, 상태 전이/직접 URL 차단, 예약 중복 실행 1회 처리, 일부 실패 복구, 키/개인정보 로그 누출 없음, 기존 F18/F19-A/F19-B 및 PC/390px 회귀.
+- **범위 제한:** 사용자의 명시 최종 종료 이전 `main` 병합 금지. 별도 과제는 README에 기록하지 않는다. 모든 새 포커스 테두리/외곽선 추가 금지.
+
+### 22.6 승인 필요한 세 가지 운영 결정 (기본 제안)
+
+1. **F19 수집 주기:** 하루 1회 KST 오전 9시 / 기존 3개 대표 경로. 초기 배포에서 예약 실행은 일단 비활성화하고 수동·테스트 검증 후 활성화.
+2. **F20 공개 정책:** 기존 기사는 그대로 공개, 새 기사부터 관리자 승인 전 비공개(`review`), 발행 시 공개. 기존 기사 원본 변경 금지.
+3. **F21 알림·보존:** 관리자 화면에 오류 경고 먼저 구현, 외부 알림(메일·메신저)은 별도 채널 승인까지 비활성화. 향후 30일 보존 정책은 제안에 그치며 사용자 승인 전 삭제 작업 금지.
+
+위 사항이 승인되면 세부 구현·테스트·`kakao` 커밋은 일괄 진행하되, 실제 DB 마이그레이션/운영 스케줄 활성화/새 요금 발생이나 외부 알림 연결은 해당 단계의 결과와 위험을 보고 필요한 승인을 다시 확인한다.
