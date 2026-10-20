@@ -3,7 +3,7 @@
 .site-nav *{box-sizing:border-box}
 .site-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:22px;padding:14px 18px}
 .site-nav-brand{color:white!important;font-weight:700;text-decoration:none;font-size:18px;letter-spacing:-.4px;white-space:nowrap}
-.site-nav-brand:focus-visible,.site-nav button:focus-visible,.site-nav a:focus-visible{outline:3px solid #facc15;outline-offset:3px}
+.site-nav-brand:focus-visible,.site-nav button:focus-visible,.site-nav a:focus-visible{outline:2px solid #93c5fd;outline-offset:3px}
 .site-nav-toggle{display:none!important;background:#25405d!important;color:white!important;border:1px solid #64748b!important;border-radius:7px!important;padding:9px 12px!important;margin:0!important;width:auto!important;font-size:14px!important;cursor:pointer}
 .site-nav-groups{display:flex;align-items:center;gap:5px;margin-left:auto}
 .site-nav-group{position:relative}
@@ -34,5 +34,5 @@
 .site-nav-item a { min-height:42px; }
 .site-nav-item a:hover { background:#edf4ff;color:#1d4ed8!important; }
 .site-nav-brand:hover { color:#dbeafe!important; }
-.site-nav-trigger:focus-visible,.site-nav-toggle:focus-visible,.site-nav-item a:focus-visible { outline:3px solid #facc15;outline-offset:2px; }
+.site-nav-trigger:focus-visible,.site-nav-toggle:focus-visible,.site-nav-item a:focus-visible { outline:2px solid #93c5fd;outline-offset:2px; }
 @media (prefers-reduced-motion:reduce) { .site-nav-trigger { transition:none; } }
