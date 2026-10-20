@@ -188,6 +188,20 @@ class SharedNavigationTests(unittest.TestCase):
                 with self.subTest(route=route, marker=marker):
                     self.assertIn(marker, page.text)
 
+    def test_d03_photo_led_layout_and_attribution(self):
+        css = self.client.get("/static/d03-urban-traffic.css").text
+        self.assertIn("View_of_Night_Traffic_from_Above_in_Seoul-1.jpg", css)
+        self.assertIn("body:has(>.map-content)", css)
+        self.assertIn("grid-template-columns:minmax(300px,390px) minmax(0,1fr)", css)
+        self.assertIn("@media(max-width:850px)", css)
+        self.assertNotIn(":focus", css)
+        for path in ("/", "/map", "/news", "/admin"):
+            with self.subTest(path=path):
+                page = self.client.get(path).text
+                self.assertIn('class="d03-photo-credit"', page)
+                self.assertIn("CC BY 4.0", page)
+                self.assertIn("실시간 교통 상황이 아닙니다", page)
+
     def test_m03_route_based_menu_links(self):
         navigation = self.client.get("/static/navigation.js").text
         self.assertEqual(navigation.count('name: "경로 조회",'), 1)
