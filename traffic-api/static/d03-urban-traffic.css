@@ -195,7 +195,7 @@ body{
 
 
 /* D03 phase 2: photo-led editorial composition — approved screenshot fidelity. */
-:root{--d03-traffic-photo:url("https://commons.wikimedia.org/wiki/Special:Redirect/file/View_of_Night_Traffic_from_Above_in_Seoul-1.jpg?width=1280")}
+:root{--d03-traffic-photo:url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Gangnam%20traffic.jpg?width=1280")}
 .home-hero,.map-hero,.news-layout>.news-intro,.admin-hero{
   background-image:
     linear-gradient(90deg,rgba(6,17,35,.96) 0%,rgba(8,22,44,.89) 35%,rgba(11,30,53,.65) 70%,rgba(9,25,45,.40) 100%),
@@ -290,3 +290,105 @@ body:has(>.map-content)>.map-canvas-frame{grid-column:2;width:auto!important;min
 .d03-photo-credit a{color:#d3e8ff;text-decoration:underline;text-underline-offset:3px;}
 body:has(>.map-content)>.d03-photo-credit{grid-column:1/-1;}
 @media(max-width:850px){body:has(>.map-content){display:block;}body:has(>.map-content)>.map-content{margin:18px 16px!important;}body:has(>.map-content)>.map-canvas-frame{margin:0 16px 40px!important;}}
+
+/* D03 phase 3: screenshot fixes — no new focus treatment. */
+/* Photography should read as traffic, not a bright street-light installation. */
+.home-hero,.map-hero,.news-layout>.news-intro{
+  background-image:
+    linear-gradient(90deg,rgba(6,19,37,.94) 0%,rgba(9,29,56,.85) 40%,rgba(9,27,51,.56) 100%),
+    var(--d03-traffic-photo);
+  background-position:center 54%;
+}
+.home-hero::before,.map-hero::before,.news-layout>.news-intro::before{opacity:.12;}
+.home-hero::after,.map-hero::after,.news-layout>.news-intro::after{opacity:0;}
+/* Fix white-on-white admin login caused by generic section background specificity. */
+body:not(.admin-active) .admin-login-layout > section.admin-hero,
+.login-container .admin-login-layout > .admin-hero{
+  background-color:#0b1b32!important;
+  background-image:
+    linear-gradient(105deg,rgba(5,17,35,.94) 0%,rgba(8,26,51,.79) 65%,rgba(11,34,64,.63) 100%),
+    var(--d03-traffic-photo)!important;
+  background-position:58% center!important;
+  background-size:cover!important;
+  color:#fff!important;
+  border-color:rgba(160,204,250,.2)!important;
+}
+.login-container .admin-login-layout > .admin-hero h1,
+.login-container .admin-login-layout > .admin-hero p{color:#fff!important;}
+.login-container .admin-login-layout > .admin-hero .site-title{color:#a6e4ff!important;}
+.login-container .admin-login-layout > .admin-hero .hero-note{
+  color:#e0eeff!important;
+  border-left-color:#62d2e5!important;
+  background:rgba(5,24,49,.35);
+  border-radius:0 10px 10px 0;
+  padding:12px 15px;
+}
+.login-container .admin-login-layout > .admin-hero::before{opacity:.08;}
+.login-container .admin-login-layout > .admin-hero::after{opacity:0;}
+/* Map favorite routes: one readable label row and a predictable action row. */
+.map-content #favoriteRoutes{min-width:0;}
+.map-content #favoriteRoutes .favorite-note{
+  overflow-wrap:normal;
+  word-break:keep-all;
+  line-height:1.8;
+}
+.map-content #favoriteRoutes .favorite-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:14px;
+  align-items:start;
+}
+.map-content #favoriteRoutes .favorite-label{
+  display:block;
+  width:100%;
+  overflow-wrap:break-word;
+  word-break:keep-all;
+  white-space:normal;
+  line-height:1.6;
+  font-size:14px;
+  font-weight:750;
+}
+.map-content #favoriteRoutes .favorite-item-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  flex-shrink:1;
+  min-width:0;
+}
+.map-content #favoriteRoutes .favorite-action{
+  width:100%;
+  min-width:0;
+  padding:8px 7px;
+  white-space:nowrap;
+  font-size:13px;
+  line-height:1.35;
+}
+.map-content #favoriteRoutes #saveFavoriteRoute{
+  width:100%;
+  white-space:normal;
+  line-height:1.5;
+}
+.map-content .map-controls .note{
+  line-height:1.8;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+.map-content .map-controls #result{word-break:keep-all;overflow-wrap:break-word;}
+/* Align information density and preserve the data-oriented look. */
+.home-main>section,.news-layout>section,.workspace-section{line-height:1.65;}
+:is(.home-main,.news-layout,.map-content,.login-container) :is(.muted,.chart-notice,.favorite-note){
+  line-height:1.75;
+}
+.home-main .scroll table,.news-layout table{border-collapse:collapse;width:100%;}
+.home-main .scroll table thead th,.news-layout table thead th{
+  background:#eaf1fa;
+  color:#253e60;
+  font-weight:800;
+}
+.home-main .scroll table tbody tr:nth-child(even),.news-layout table tbody tr:nth-child(even){background:#f6f9fd;}
+.home-main .scroll table tbody tr:hover,.news-layout table tbody tr:hover{background:#edf5ff;}
+.home-main #favoriteRoutes .favorite-item{gap:12px;}
+@media(max-width:850px){
+  .map-content #favoriteRoutes .favorite-item{grid-template-columns:minmax(0,1fr);}
+}
