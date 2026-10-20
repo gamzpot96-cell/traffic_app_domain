@@ -188,6 +188,29 @@ class SharedNavigationTests(unittest.TestCase):
                 with self.subTest(route=route, marker=marker):
                     self.assertIn(marker, page.text)
 
+    def test_m03_route_based_menu_links(self):
+        navigation = self.client.get("/static/navigation.js").text
+        self.assertEqual(navigation.count('name: "경로 조회",'), 1)
+        self.assertEqual(navigation.count('name: "경로 지도",'), 1)
+        self.assertEqual(navigation.count('name: "교통 뉴스·분석",'), 1)
+        self.assertEqual(navigation.count('name: "관리자·운영",'), 1)
+        for old_name in ('name: "교통 현황",', 'name: "분석·통계",', 'name: "서비스 안내",'):
+            self.assertNotIn(old_name, navigation)
+        for path, anchor in (
+            ("/", 'id="overviewSection"'),
+            ("/map", 'id="favoriteRoutes"'),
+            ("/news", 'id="historySection"'),
+            ("/news", 'id="trafficDashboard"'),
+            ("/news", 'id="trafficTrends"'),
+            ("/news", 'id="trafficExport"'),
+            ("/admin", 'id="apiUsageSection"'),
+        ):
+            with self.subTest(path=path, anchor=anchor):
+                self.assertIn(anchor, self.client.get(path).text)
+        self.assertIn('{name: "기사 발행·보류", planned: true}', navigation)
+        self.assertIn('{name: "정기 수집 상태", planned: true}', navigation)
+        self.assertIn('{name: "장애 기록·경고", planned: true}', navigation)
+
     def test_d03_urban_traffic_theme_on_all_pages(self):
         css_response = self.client.get("/static/d03-urban-traffic.css")
         self.assertEqual(css_response.status_code, 200)
