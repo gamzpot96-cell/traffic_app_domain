@@ -2957,3 +2957,11 @@ git pull origin kakao
 - **검증:** 파일 생성과 GitHub kakao 커밋 확인; Windows 전체 자동 회귀는 추가된 테스트 4개 포함 **89개 예상이며 미실행**. 지난 85개 OK를 이번 변경 테스트 결과로 재사용하지 않음.
 - **기능정의:** F19/F20/F21 정책 단위 코드 1차 착수(실행 기능 미완료). **DB:** 읽기 전용 스키마 확인만 수행하고 DDL/DML·기존 기사·인증 미변경. **개발환경:** Python 3.14.7 로컬 기록, Vercel Cron/환경변수·의존성 변경 없음. 포커스 외곽선·CSS·`main` 변경 없음.
 - **다음 게이트:** 실제 신규 테이블·인덱스·정책을 적용할 정확한 SQL을 별도 작성·검수하고 **사용자에게 마이그레이션 실행 승인**을 받기 전에는 DB를 변경하지 않는다. 승인 이후 기능 연동/회귀 및 Vercel 예약 활성화는 별도 단계.
+
+
+### 22.8 F19/F20/F21 신규 DB 구조 SQL 초안 (미적용)
+
+- `traffic-api/sql/f19_f20_f21_migration_PROPOSAL.sql` 파일로 기존 테이블을 수정·삭제하지 않고 신규 5개 테이블을 추가하는 **검토용 SQL**을 `kakao`에 저장했다. 실행하지 않았고 실제 DB 테이블 생성 여부를 주장하지 않는다.
+- 5개: `traffic_collection_runs`, `traffic_observations`, `traffic_article_publication`, `traffic_article_publication_events`, `traffic_operational_events`. 예정 실행 시각 UNIQUE 및 회차별 경로 UNIQUE, 기사 FK, 발행 상태 제한, 오류 기록 최소화 규칙, 신규 테이블의 RLS 활성화·anon/authenticated 접근 철회를 초안에 포함했다.
+- 적용 전 검토 게이트: 실제 Supabase 역할 권한/기존 객체와의 이름 충돌, FK/인덱스/권한과 DB 접속 계정의 INSERT·SELECT 가능 여부, 런타임 코드 전환 원자성, 정상 복구·백업, 초기 신규 기사 비공개 여부를 검증해야 한다. 구 기사 상태 행은 생성하지 않으며 미존재 상태는 공개로 취급하는 설계.
+- **승인 전 실행 금지:** SQL 파일은 설계 산출물일 뿐이며 `apply_migration`과 SQL 변경을 실행하지 않았다. Cron 설정·요금/키·기사/DB 데이터도 그대로다.
