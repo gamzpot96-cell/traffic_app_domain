@@ -52,13 +52,10 @@ class SharedNavigationTests(unittest.TestCase):
 
     def test_d01_form_fields_do_not_receive_orange_outline(self):
         css = self.client.get("/static/design-system.css").text.replace("\r\n", "\n")
-        self.assertIn(":where(button, a):focus-visible {", css)
         self.assertIn(":where(input, textarea, select):focus {\n    outline: none;\n}", css)
-        self.assertNotIn(":where(button, a):focus {\n    outline: none;\n}", css)
         self.assertNotIn(":where(button, input, select, textarea, a):focus-visible", css)
-        self.assertIn("outline: 2px solid #1558c5;", css)
         navigation_css = self.client.get("/static/navigation.css").text
-        self.assertIn(".site-nav-item a:focus-visible", navigation_css)
+        self.assertNotIn(".site-nav-item a:focus-visible", navigation_css)
 
     def test_d01_menu_links_refer_to_implemented_features(self):
         navigation = self.client.get("/static/navigation.js")
@@ -84,8 +81,8 @@ class SharedNavigationTests(unittest.TestCase):
         self.assertNotIn('trigger.classList.add("site-nav-current")', javascript)
         self.assertIn("linkUrl.hash === currentHash", javascript)
         self.assertIn('link.setAttribute("aria-current", "page")', javascript)
-        # 키보드 포커스 강조를 지우지 않아야 합니다.
-        self.assertIn(".site-nav-item a:focus-visible", css)
+        # 사용자 정책: 메뉴에 포커스 외곽선을 추가하지 않습니다.
+        self.assertNotIn(".site-nav-item a:focus-visible", css)
 
     def test_d01_home_layout_keeps_existing_query_and_briefing(self):
         response = self.client.get("/")
@@ -189,6 +186,17 @@ class SharedNavigationTests(unittest.TestCase):
             for marker in markers:
                 with self.subTest(route=route, marker=marker):
                     self.assertIn(marker, page.text)
+
+    def test_all_shared_styles_have_no_focus_outline_rules(self):
+        for filename in (
+            "design-system.css", "navigation.css",
+            "d02-journalism.css", "favorites.css",
+        ):
+            with self.subTest(filename=filename):
+                css = self.client.get("/static/" + filename).text
+                self.assertEqual(self.client.get("/static/" + filename).status_code, 200)
+                self.assertNotRegex(css, r"(?i):focus(?:-visible)?[^{}]*\{[^{}]*(?:outline\s*:\s*(?!none\b)|box-shadow\s*:)")
+                self.assertNotRegex(css, r"(?i)outline\s*:\s*(?!none\b)[^;{}]+;")
 
     def test_d02_no_yellow_focus_outlines(self):
         styles = (
