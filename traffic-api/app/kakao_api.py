@@ -38,6 +38,9 @@ async def request_kakao_json(url: str, parameters: dict) -> dict:
 
     # Durable diagnostic writes run in a worker thread and never store request details.
     async def record_failure(code: str, status: int | None = None):
+        # Optional diagnostics must never connect to an unconfigured DB.
+        if not os.getenv("POSTGRES_HOST") or not os.getenv("POSTGRES_PASSWORD"):
+            return
         await asyncio.to_thread(
             record_operational_failure, "kakao", kind + "_request", code, status
         )
