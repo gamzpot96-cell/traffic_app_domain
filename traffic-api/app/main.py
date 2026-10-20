@@ -339,6 +339,23 @@ def search_news(
         raise HTTPException(status_code=503, detail="뉴스 검색 중 오류가 발생했습니다.")
 
 
+# F19: 관리자 전용 수집 실행 이력 읽기 (스케줄러 비활성).
+@app.get("/api/admin/collection-runs")
+async def admin_collection_runs(admin_user=Depends(require_admin)):
+    from app.collection_runs import get_collection_run_history
+    try:
+        runs = await run_in_threadpool(get_collection_run_history)
+        return {
+            "runs": runs,
+            "count": len(runs),
+            "scheduler_enabled": False,
+            "notice": "정기 자동 수집은 아직 활성화되지 않았습니다."
+        }
+    except Exception:
+        logger.exception("수집 실행 이력 조회 실패")
+        raise HTTPException(status_code=503, detail="수집 이력을 불러오지 못했습니다.")
+
+
 # F21: 관리자만 안전한 운영 오류 기록을 조회합니다.
 @app.get("/api/admin/operations")
 async def admin_operations(admin_user=Depends(require_admin)):
