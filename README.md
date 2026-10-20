@@ -3161,9 +3161,9 @@ git pull origin kakao
 - 사용자 제출 Windows 전체 테스트 로그 **111개 실행/111개 OK** 확인. 이번 UI 개선 전 검증 결과이며 신규 UI 이후 전체 재실행은 미확인.
 - 최신 traffic-api/static/navigation.js에서 실제 남아 있던 planned:true 항목은 세 가지: 홈 이용 안내·FAQ, 뉴스 기사 공유·읽기 모드, 관리자 운영 설정·공지. 다른 F19/F20/F21 메뉴는 이미 실제 관리자 보호 화면으로 연결되어 있었으므로 다시 변경하지 않음.
 - 홈 static/index.html에 #helpSection을 추가하고 현재 구현 사실 기반 FAQ 네 개(경로 검색, 관심 경로의 브라우저별 보존, 조회 시각과 뉴스의 시점 구분, 카카오 API 실패 안내)를 제공. 메뉴 /#helpSection 연결.
-- 뉴스 static/news.html의 실제 기사 본문 앞에 #readingTools를 추가. 현재 기사 본문의 집중 읽기 모드 토글과 **현재 뉴스 페이지 /news 링크** 클립보드 복사를 제공. 개별 기사 고유 URL 공유는 아직 제공하지 않으므로 메뉴 명칭을 '뉴스 링크·읽기 모드'로 정확히 변경, 개별 기사 공유가 가능한 것처럼 안내하지 않음. 메뉴 /news#readingTools 연결.
+- 뉴스 static/news.html의 실제 기사 본문 앞에 #readingTools를 추가. 집중 읽기 모드 토글, 기본 뉴스 페이지 주소 복사 및 저장된 **공개 기사** 선택 시 /news?article_id=<기사 ID> 고유 링크 복사를 제공. 이 링크를 열면 기존 공개 상세 API로 저장된 기사를 조회하며 새 카카오 API를 호출하지 않는다. 검토/보류 상태의 기사는 서버의 공개 상세 API가 차단한다. 메뉴 '기사 공유·읽기 모드'는 /news#readingTools로 연결.
 - 관리자 static/admin.html의 기존 인증 후 작업실에 #operatingGuideSection 추가. 정기 수집 OFF, 신규 기사 review→승인 발행, 외부 오류 알림 OFF, API 메모리 계측을 읽기 전용 문구로 안내. 비밀키/환경변수 설정이나 공지 DB 편집 기능은 제공하지 않음. 메뉴 '운영 정책·공지 안내'로 표기를 제한하여 /admin#operatingGuideSection로 연결.
 - 모든 상단 메뉴의 planned:true 항목 제거. 이는 모든 기능이 완성되었다는 뜻이 아니며 F19 실제 Cron과 운영 설정 변경 및 개별 뉴스 링크 공유/공지 CRUD는 여전히 범위 밖. 구현된 설명/컨트롤에 링크를 연결하되 새 비용·DB 조작/업데이트/외부 알림은 가하지 않음.
 - static/d03-urban-traffic.css에서 FAQ details, 뉴스 읽기 모드, 운영 안내 카드의 390px 반응형 스타일 추가. 어떠한 포커스 아웃라인·테두리도 신규 추가하지 않음.
-- tests/test_navigation.py에 메뉴 앵커 실체 3개, 미구현 메뉴 표기 제거, 실제 컨트롤/운영 경고를 확인하는 테스트 1개 추가. 이전 실측 111개에 1개 추가되어 총 112개 예상(사용자 Windows 재실행 필요).
+- tests/test_navigation.py에 메뉴 앵커 3개, 준비 중 표기 제거, FAQ·읽기 모드·운영 안내 확인 테스트 1개와 공개 기사 고유 링크 검증 테스트 1개 추가. 이전 실측 111개에 2개 추가되어 총 113개 예상(사용자 Windows 재실행 필요).
 - 브랜치 kakao만 수정, 기존 데이터·카카오 API·인증, Supabase 테이블과 Vercel Cron 설정 및 main 브랜치 변경 없음. README 최종 전체 감사는 모든 운영 검증 완료 후 별도로 수행.
