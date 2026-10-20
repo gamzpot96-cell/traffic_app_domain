@@ -167,6 +167,7 @@ class SharedNavigationTests(unittest.TestCase):
             ".news-layout>#trafficDashboard{order:2;}",
             ".news-layout>article{order:4;}",
             "body.admin-active .admin-panel{display:grid;",
+            ".admin-panel > .workspace-section + .workspace-section{margin-top:24px;}",
             ".admin-panel #draftPreview[hidden]{display:none!important;}",
             ".admin-panel #draftPreview[hidden]{display:none!important;}",
             "@media(max-width:600px)",
