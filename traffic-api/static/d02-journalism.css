@@ -36,7 +36,7 @@ body { background:var(--d02-canvas); color:var(--d02-ink); font-family:"Malgun G
 :is(.home-main,.news-layout,.map-content,.login-container) :is(input,select,textarea):focus-visible{
   outline:none;
 }
-:is(.home-main,.news-layout,.map-content,.login-container) :is(button,a):focus-visible{ outline:2px solid #1558c5;outline-offset:3px; }
+
 :is(.home-main,.news-layout,.login-container) p{overflow-wrap:anywhere;}
 .d02-eyebrow{display:block;font-size:12px;letter-spacing:.1em;font-weight:800;color:#bfe1ff;margin-bottom:12px;}
 .d02-description{color:#dfeaff !important;max-width:720px;line-height:1.85;}
