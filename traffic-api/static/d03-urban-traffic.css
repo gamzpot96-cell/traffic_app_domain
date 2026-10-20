@@ -279,3 +279,14 @@ body{
   .news-layout>#historySection{margin-top:-28px!important;}
   .news-layout #trafficDashboard .summary-cards{grid-template-columns:minmax(0,1fr);}
 }
+
+/* Map uses sibling page regions; real grid instead of visual overlap. */
+body:has(>.map-content){display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);column-gap:20px;align-items:start;}
+body:has(>.map-content)>#sharedNavigation,body:has(>.map-content)>.map-hero{grid-column:1/-1;width:100%;}
+body:has(>.map-content)>.map-content{grid-column:1;width:auto!important;min-width:0;margin:24px 0 48px max(18px,calc((100vw - 1360px)/2))!important;}
+body:has(>.map-content)>.map-content .map-controls{width:100%!important;}
+body:has(>.map-content)>.map-canvas-frame{grid-column:2;width:auto!important;min-width:0;margin:24px max(18px,calc((100vw - 1360px)/2)) 48px 0!important;}
+.d03-photo-credit{margin:0;padding:12px 24px;background:#0d2038;color:#c8d8eb;text-align:center;font-size:11px;line-height:1.7;}
+.d03-photo-credit a{color:#d3e8ff;text-decoration:underline;text-underline-offset:3px;}
+body:has(>.map-content)>.d03-photo-credit{grid-column:1/-1;}
+@media(max-width:850px){body:has(>.map-content){display:block;}body:has(>.map-content)>.map-content{margin:18px 16px!important;}body:has(>.map-content)>.map-canvas-frame{margin:0 16px 40px!important;}}
