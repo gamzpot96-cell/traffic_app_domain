@@ -3098,3 +3098,26 @@ git pull origin kakao
 - **관리자 화면:** 저장 후 공개 링크를 노출하지 않고 검토 중(비공개) 안내; 운영 작업실에 기사 발행 관리 섹션과 명시적 상태 변경 확인창·수동 새로고침을 추가. 로그인/저장/카카오 호출/기존 API 사용 현황과 F19/F21 운영 설정은 유지. 사용자의 포커스 테두리 금지 원칙과 390px 반응형을 고려한 CSS만 추가.
 - **회귀 테스트:** `tests/test_publication.py` 신규 **7개 테스트**(익명 관리 API 접근 차단, 관리자 목록 및 상태 변경, 잘못된 상태, 공개 기사 쿼리, 기사+상태 동일 트랜잭션, 공개 CSV·추세 우회 차단, 관리자 UI) 추가. 기존 사용자 검증 94개 + 신규 7개 = **101개 예상**. 개발 도구에서 Windows 실제 101개 테스트는 실행하지 않았으므로 사용자 실행 및 피드백 대기. 적용 후 실제 Supabase 테스트 저장/발행·보류와 공개 뉴스 링크 수동 검증이 별도 필요.
 - **데이터·운영 제약:** 기존 기사 상태 일괄 수정·백필 없음, 기존 Supabase 레코드 삭제/변경 SQL 없음, Auth 설정/비밀 키 무변경, F19 스케줄러/ F21 외부 알림 계속 OFF, `main` 미변경.
+
+
+## 24. 최신 README·소스·상단 메뉴 3중 감사 및 F21 연결 (2026-10-20)
+
+### 24.1 사용자 실측 검증 및 기능 ID 완료율 재점검
+- 최신 사용자 Windows 전체 테스트: Ran 101 tests in 0.644s / OK, 실패 0. 기존 F20 신규 7개 테스트 포함. 이후 F21 변경에 대한 재실행 결과는 아직 없음.
+- 기존 README 21장 기준 F01~F18, F22~F23 등 20/23개 완료(약 87%). F19/F20/F21 부분 구현. 새 F20 코드의 실제 DB 저장·발행 공개·보류 상태 수동 검증 전이라 완료율을 인위적으로 올리지 않고 20/23을 유지. 코드 수준 구현률과 운영 검증 완료율을 구별한다.
+
+### 24.2 실제 구현 파일·상단 메뉴 불일치 점검
+- 확인 파일: README §21~23, app/main.py, app/news_database.py, app/traffic_export.py, app/operation_policies.py, app/api_usage.py, static/navigation.js, static/admin.html 및 vercel.json. 페이지 경로 /, /map, /news, /admin 유지.
+- F20 기사 발행·보류는 보호 API 및 관리자 #publicationSection이 구현됐는데도 준비 중이던 표시 오류를 고쳐 /admin#publicationSection로 연결했다.
+- F21 장애 기록·경고는 기존에는 메모리 통계뿐이었으나 신규 안전 오류 이력 UI #operationsSection을 구현하여 /admin#operationsSection로 실제 링크 연결했다.
+- 미완료로 유지: 정기 수집 상태(F19), 홈 FAQ, 뉴스 공유·읽기 모드, 운영 설정·공지. 구현된 페이지가 없으므로 준비 중 표시 유지.
+
+### 24.3 F21 영구 운영 오류 기록 1차 연동
+- app/operational_events.py가 승인된 traffic_operational_events 테이블에 허용된 source/event_type/safe_error_code/http_status만 기록. URL·입력값·API 키·원문 예외·응답 전문 기록 금지. DB 기록 실패가 원래 카카오 호출 오류를 감추지 않게 처리.
+- app/kakao_api.py에서 외부 HTTP 시간 초과·오류·네트워크 및 JSON/응답 형식 실패에 안전 코드로 기록하며, 기존 F19-B 인메모리 카운터 유지.
+- 관리자 전용 GET /api/admin/operations와 수동 조회 UI 구현. 외부 이메일/메신저 알림·자동 기록 삭제는 구현하지 않음.
+- tests/test_operational_events.py 안전 정보 저장, 관리자 인증 및 UI 등 테스트 5개 추가. 기존 실측 101개 + 5개 = 총 106개 예상, 변경 후 Windows 재시험 미확인.
+
+### 24.4 운영 경계
+- 기존 DB 테이블·기사 데이터·관리자 인증, 환경변수 및 main 브랜치 변경 없음. F19 예약 실행은 OFF. F20 실 DB 발행·보류 및 F21 실제 오류 저장은 아직 수동 실서비스 검증 대기.
+- 다음은 F19 승인된 3개 경로 정기 수집의 비활성 처리기·중복 방지 테스트, 실제 Cron 켜기는 별도 승인 필요.
