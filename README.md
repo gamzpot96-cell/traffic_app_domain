@@ -2973,3 +2973,11 @@ git pull origin kakao
 - 신규 검증 항목: KST 09:00 → UTC 예약 시각 환산, 기사 상태 전환 제한, 기존 기사 공개·신규 검토 상태 비공개 판정, 임의 오류 원문 차단 정책.
 - `StarletteDeprecationWarning`과 테스트 중 표시된 DB/카카오 오류는 비치명적 경고 및 의도된 실패 대응 모의 시험이며 테스트 자체는 성공.
 - **범위:** 운영 정책 순수 함수·정적 회귀 테스트 합격. 아직 실제 Supabase 신규 테이블 생성, F19 예약 호출, F20 발행 API 연결, F21 오류 기록 저장은 수행·검증하지 않음. 실 DB 데이터, 관리자 인증, `main` 변경 없음.
+
+
+### 22.10 마이그레이션 전 실 DB 제약·기존 테이블 조회 (2026-10-20)
+
+- Supabase `information_schema.table_constraints`를 **SELECT만 수행**하여 기존 `traffic_information.id`, `traffic_news_articles.id`, `traffic_route_snapshots.id`의 PK 확인. `traffic_route_snapshots.article_id`의 실제 FK 및 `traffic_news_articles.generation_id` UNIQUE 확인. 기존 NOT NULL/CHECK 제약 다수 유지.
+- 제안된 신규 다섯 테이블 이름(`traffic_collection_runs`, `traffic_observations`, `traffic_article_publication`, `traffic_article_publication_events`, `traffic_operational_events`)의 현재 public 스키마 조회 결과는 **0건**. SQL 초안은 **실행하지 않음**.
+- 기존 기사·경로의 PK/FK와 호환되는 추가 테이블 설계 방향은 가능하나, 기존 데이터 건수/권한·새 테이블 생성 후 쓰기 권한 및 현재 마이그레이션 SQL의 실제 실행 성공은 **아직 검증되지 않음**. 다음 단계는 사용자에게 SQL 실행 승인을 받기 전 권한/롤백 점검.
+- 본 확인은 기능 실행이나 DB 구조·데이터·인증·`main` 변경 없이 읽기 전용 조회 및 README 기록만 수행.
