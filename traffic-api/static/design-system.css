@@ -1,0 +1,28 @@
+/* D01-F 공통 디자인 토큰과 접근성 기초.
+   기존 페이지의 레이아웃, 지도 색상, JS DOM 연결을 덮어쓰지 않습니다. */
+:root {
+    --d01-navy: #13243b;
+    --d01-blue: #2463eb;
+    --d01-teal: #087e8b;
+    --d01-page: #f3f6fa;
+    --d01-white: #ffffff;
+    --d01-text: #17253a;
+    --d01-muted: #52647a;
+    --d01-border: #dee6f0;
+    --d01-warning: #b45309;
+    --d01-error: #b42318;
+    --d01-success: #087443;
+    --d01-card-radius: 14px;
+    --d01-control-radius: 8px;
+}
+body {
+    background-color: var(--d01-page);
+    color: var(--d01-text);
+    font-family: "Malgun Gothic", "Noto Sans KR", Arial, sans-serif;
+}
+:where(input, textarea, select):focus {
+    outline: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    html:focus-within { scroll-behavior: auto; }
+}

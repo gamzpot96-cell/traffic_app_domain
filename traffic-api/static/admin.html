@@ -1,0 +1,657 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>관리자 로그인 - 서울 교통 뉴스</title>
+
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--d01-page); color: var(--d01-text); font-family: "Malgun Gothic", Arial, sans-serif; }
+        .login-container { max-width: 1168px; padding: 32px 24px 72px; margin: 0 auto; }
+        .admin-login-layout { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: 24px; align-items: stretch; }
+        .admin-hero { padding: 58px 48px; background: var(--d01-navy); border-radius: 18px; color: #fff; display: flex; flex-direction: column; justify-content: center; min-height: 430px; }
+        .site-title { color: #b2e7ea; font-weight: 800; letter-spacing: .12em; font-size: 13px; margin: 0 0 24px; }
+        .admin-hero h1 { font-size: clamp(28px, 3vw, 40px); line-height: 1.3; margin: 0 0 22px; }
+        .admin-hero p { line-height: 1.85; max-width: 48ch; }
+        .hero-note { padding-left: 16px; border-left: 3px solid #73d4dc; color: #dfebf7; }
+        .login-card { background: #fff; border: 1px solid var(--d01-border); box-shadow: 0 12px 30px #13243b12; border-radius: 18px; padding: 42px 36px; }
+        .login-card h2 { font-size: 26px; margin: 0 0 8px; }
+        .login-card > p { color: var(--d01-muted); line-height: 1.65; }
+        label { display: block; margin: 22px 0 8px; font-weight: 700; }
+        input { width: 100%; padding: 13px 14px; border: 1px solid #a9b8cc; border-radius: var(--d01-control-radius); font: inherit; background: #fff; }
+        button { cursor: pointer; border: 0; border-radius: var(--d01-control-radius); background: var(--d01-blue); color: #fff; padding: 13px 20px; font: inherit; font-weight: 700; }
+        button:disabled { background: #8796a8; cursor: not-allowed; }
+        #loginButton { display: block; width: 100%; margin-top: 28px; }
+        .message { margin: 18px 0 0; line-height: 1.65; overflow-wrap: anywhere; }
+        .admin-panel { display: none; }
+        body.admin-active .admin-login-layout { display: none; }
+        .workspace-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding: 26px 30px; background: var(--d01-navy); border-radius: 16px; color: #fff; }
+        .workspace-header h1 { margin: 6px 0; font-size: 29px; }
+        .workspace-header p { margin: 0; color: #dce8f7; line-height: 1.6; }
+        .workspace-eyebrow { color: #9fe0e5 !important; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+        .draft-actions button { margin: 0; }
+        .draft-actions .secondary { background: #475569; }
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin: 24px 0; }
+        .step-card { background: #fff; border: 1px solid var(--d01-border); border-radius: 12px; padding: 19px; }
+        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 29px; height: 29px; border-radius: 50%; color: #fff; background: var(--d01-teal); font-weight: 800; margin-bottom: 10px; }
+        .step-card h2 { margin: 0 0 7px; font-size: 17px; }
+        .step-card p { margin: 0; color: var(--d01-muted); line-height: 1.6; font-size: 14px; }
+        .workspace-section { background: #fff; border: 1px solid var(--d01-border); border-radius: 14px; padding: 26px 30px; margin-top: 18px; }
+        .workspace-section h2 { margin: 0 0 12px; font-size: 21px; }
+        .workspace-section > p { line-height: 1.75; }
+        .draft-preview[hidden] { display: none !important; }
+        .draft-preview h3 { line-height: 1.5; overflow-wrap: anywhere; }
+        .draft-preview p { line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
+        .draft-preview table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .draft-preview th, .draft-preview td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--d01-border); }
+        .draft-preview th { background: #eef4fa; white-space: nowrap; }
+        .table-scroll { overflow-x: auto; }
+        .small-note { font-size: 13px; color: var(--d01-muted); }
+        .save-note { color: var(--d01-muted); }
+        #savedArticleLink { overflow-wrap: anywhere; }
+        #savedArticleLink a { color: #1556c0; font-weight: 700; }
+        .api-usage-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .api-usage-head h2 { margin-bottom: 8px; }
+        .api-usage-head .small-note { margin: 0; }
+        .api-usage-head button { flex-shrink: 0; }
+        .api-usage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 18px 0 20px; }
+        .api-usage-stat { padding: 20px; background: #f2f6fb; border: 1px solid var(--d01-border); border-radius: 12px; min-width: 0; }
+        .api-usage-stat span { display: block; color: var(--d01-muted); font-size: 13px; margin-bottom: 10px; }
+        .api-usage-stat strong { display: block; overflow-wrap: anywhere; font-size: clamp(22px, 2.4vw, 30px); color: var(--d01-navy); font-variant-numeric: tabular-nums; }
+        .api-usage-details { border-top: 1px solid var(--d01-border); padding-top: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; }
+        .api-usage-details > p { margin: 0; line-height: 1.75; overflow-wrap: anywhere; }
+        .api-usage-details #apiUsageTimes, .api-usage-details #apiUsageNotice { grid-column: 1 / -1; }
+        .api-usage-details #apiUsageNotice { color: var(--d01-muted); }
+        #apiUsageDetails[hidden] { display: none !important; }
+        @media (max-width: 850px) { .api-usage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .api-usage-details { grid-template-columns: 1fr; } }
+        @media (max-width: 390px) { .api-usage-grid { grid-template-columns: minmax(0, 1fr); } }
+        @media (max-width: 850px) {
+            .admin-login-layout { grid-template-columns: 1fr; }
+            .admin-hero { min-height: 230px; padding: 32px; }
+            .steps { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .login-container { padding: 16px 12px 40px; }
+            .login-card, .workspace-section { padding: 22px 18px; }
+            .admin-hero { padding: 26px 22px; }
+            .workspace-header { padding: 23px 18px; align-items: stretch; }
+            .workspace-header h1 { font-size: 24px; }
+            .draft-actions button, #generateDraftButton, #saveDraftButton, #logoutButton { width: 100%; }
+        }
+    </style>
+    <link rel="stylesheet" href="/static/design-system.css">
+    <link rel="stylesheet" href="/static/navigation.css">
+    <link rel="stylesheet" href="/static/d02-journalism.css">
+    <link rel="stylesheet" href="/static/d03-urban-traffic.css">
+    <script src="/static/navigation.js" defer></script>
+</head>
+
+<body>
+    <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
+    <main class="login-container">
+        <div class="admin-login-layout">
+            <section class="admin-hero" aria-labelledby="adminIntroTitle">
+                <p class="site-title">SEOUL TRAFFIC NEWS</p>
+                <h1 id="adminIntroTitle">교통 데이터를 기사로 만드는<br>뉴스 브리핑 작업실</h1>
+                <p>관리자 인증 후 선택된 서울 자동차 경로의 교통정보를 바탕으로 뉴스 초안을 생성하고 검토할 수 있습니다.</p>
+                <p class="hero-note">초안을 생성해도 자동 저장되지 않습니다. 내용을 검토한 뒤 저장 버튼을 직접 눌러야 합니다.</p>
+            </section>
+            <section class="login-card" aria-labelledby="loginTitle">
+                <h2 id="loginTitle">관리자 로그인</h2>
+                <p>승인된 관리자 계정으로 로그인하세요.</p>
+                <form id="loginForm">
+                    <label for="adminEmail">이메일</label>
+                    <input type="email" id="adminEmail" autocomplete="username" required>
+                    <label for="adminPassword">비밀번호</label>
+                    <input type="password" id="adminPassword" autocomplete="current-password" required>
+                    <button type="submit" id="loginButton">로그인</button>
+                </form>
+                <p id="loginMessage" class="message" role="status"></p>
+            </section>
+        </div>
+
+        <section id="adminPanel" class="admin-panel">
+            <div class="workspace-header">
+                <div>
+                    <p class="workspace-eyebrow">SEOUL TRAFFIC NEWS · ADMIN</p>
+                    <h1>관리자 작업실</h1>
+                    <p>관리자 권한 확인 완료 · 생성 → 검토 → 직접 저장</p>
+                </div>
+                <div class="draft-actions">
+                    <button type="button" id="logoutButton" class="secondary">로그아웃</button>
+                </div>
+            </div>
+            <div class="steps" aria-label="기사 작업 순서">
+                <div class="step-card"><span class="step-number">1</span><h2>새 교통 뉴스 생성</h2><p>서울의 3개 경로를 분석한 Fact Sheet를 OpenAI API에 전달해 초안을 작성합니다.</p></div>
+                <div class="step-card"><span class="step-number">2</span><h2>내용과 수치 검토</h2><p>조회 시각, 기사 내용, 경로별 자료를 확인합니다.</p></div>
+                <div class="step-card"><span class="step-number">3</span><h2>확인한 뉴스 저장</h2><p>직접 저장 버튼을 누른 경우에만 저장을 요청합니다.</p></div>
+            </div>
+            <section class="workspace-section" aria-labelledby="generateHeading">
+                <h2 id="generateHeading">1. 뉴스 초안 생성</h2>
+                <p>교통정보 분석 후 OpenAI API가 기사를 작성합니다. 생성 전 API 이용 요금이 발생할 수 있습니다.</p>
+                <button type="button" id="generateDraftButton">새 교통 뉴스 생성</button>
+                <p id="draftStatus" class="message" role="status">아직 생성된 기사가 없습니다.</p>
+            </section>
+            <section class="workspace-section" aria-labelledby="previewHeading">
+                <h2 id="previewHeading">2. 뉴스 미리보기 및 검토</h2>
+                <p class="small-note">조회된 실제 경로 정보와 기사 문구를 확인하세요. 초안 생성 전에는 미리보기가 표시되지 않습니다.</p>
+                <div id="draftPreview" class="draft-preview" hidden>
+                    <h3 id="draftTitle"></h3>
+                    <p id="draftRetrievedAt" class="small-note"></p>
+                    <p id="draftLead"></p>
+                    <p id="draftBody"></p>
+                    <p id="draftNotice" class="small-note"></p>
+                    <h3>경로별 분석 데이터</h3>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>경로</th><th>거리(km)</th><th>시간(분)</th><th>정체·지체 비율</th></tr></thead>
+                            <tbody id="draftRoutes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section class="workspace-section" aria-labelledby="saveHeading">
+                <h2 id="saveHeading">3. 검토 후 저장</h2>
+                <p class="save-note">기사와 경로별 수치를 검토한 경우에만 저장하세요. 초안 생성만으로는 Supabase에 저장되지 않습니다.</p>
+                <button type="button" id="saveDraftButton" disabled>확인한 뉴스 저장</button>
+                <p id="savedArticleLink" role="status"></p>
+            </section>
+            <section id="publicationSection" class="workspace-section" aria-labelledby="publicationHeading">
+                <h2 id="publicationHeading">4. 기사 발행 관리</h2>
+                <p class="small-note">새로 저장된 기사는 검토 중으로 비공개입니다. 관리자가 발행해야 뉴스 페이지에 표시됩니다. 기존 기사는 공개 상태를 유지합니다.</p>
+                <button type="button" id="refreshPublicationsButton">기사 상태 불러오기</button>
+                <p id="publicationStatus" class="message" role="status" aria-live="polite">목록을 불러오려면 버튼을 누르세요.</p>
+                <div id="publicationList" class="publication-list"></div>
+            </section>
+            <section id="operatingGuideSection" class="workspace-section" aria-labelledby="operatingGuideHeading">
+                <h2 id="operatingGuideHeading">운영 설정·공지</h2>
+                <p class="small-note">현재 서버에 적용된 운영 정책을 확인하는 읽기 전용 안내입니다. 이 화면에서 환경변수나 자동 수집 설정을 변경하지 않습니다.</p>
+                <div class="operations-list">
+                    <div class="operations-item"><strong>정기 수집</strong> — 비활성. 수집 이력 조회만 가능하며, 자동 실행은 별도 검증·승인 후 활성화합니다.</div>
+                    <div class="operations-item"><strong>기사 공개 정책</strong> — 신규 기사는 검토 중(비공개)으로 저장합니다. 관리자가 발행한 기사만 공개됩니다. 기존 기사는 기존 공개 상태를 유지합니다.</div>
+                    <div class="operations-item"><strong>장애 알림</strong> — 관리자 화면에서 수동 확인합니다. 이메일·메신저 등 외부 알림은 비활성입니다.</div>
+                    <div class="operations-item"><strong>API 사용 통계</strong> — 서버 프로세스별 참고용 집계이며, 카카오 공식 요청 한도·과금 정보가 아닙니다.</div>
+                </div>
+                <p class="small-note">서비스 공지는 이 운영 안내를 통해 제공하며, 공개적인 공지 게시·편집 기능은 아직 제공하지 않습니다.</p>
+            </section>
+            <section id="collectionRunsSection" class="workspace-section" aria-labelledby="collectionRunsHeading">
+                <h2 id="collectionRunsHeading">정기 수집 현황</h2>
+                <p class="small-note">수집 처리기만 준비됐으며 실제 자동 실행은 비활성입니다. 수동 확인은 기존 기록만 조회합니다.</p>
+                <button type="button" id="refreshCollectionRunsButton">수집 이력 조회</button>
+                <p id="collectionRunsStatus" class="message" role="status">수집 이력을 조회하려면 버튼을 누르세요.</p>
+                <div id="collectionRunsList" class="operations-list"></div>
+            </section>
+            <section id="operationsSection" class="workspace-section" aria-labelledby="operationsHeading">
+                <h2 id="operationsHeading">운영 오류 기록</h2>
+                <p class="small-note">실패 유형과 시각만 저장합니다. 출발지·목적지, API 키, 응답 본문은 기록하지 않습니다. 외부 알림은 사용하지 않습니다.</p>
+                <button type="button" id="refreshOperationsButton">오류 기록 조회</button>
+                <p id="operationsStatus" class="message" role="status">버튼을 누르면 최근 오류 기록을 확인합니다.</p>
+                <div id="operationsList" class="operations-list"></div>
+            </section>
+            <section id="apiUsageSection" class="workspace-section" aria-labelledby="apiUsageHeading">
+                <div class="api-usage-head">
+                    <div>
+                        <h2 id="apiUsageHeading">5. API 사용 현황</h2>
+                        <p class="small-note">이 서버 프로세스의 누적 호출 통계 · 서버 재시작 시 초기화</p>
+                    </div>
+                    <button type="button" id="refreshApiUsageButton">사용 현황 새로고침</button>
+                </div>
+                <p id="apiUsageStatus" class="message" role="status">새로고침 버튼을 누르면 외부 API 호출과 캐시 사용 현황을 볼 수 있습니다.</p>
+                <div id="apiUsageDetails" hidden>
+                    <div class="api-usage-grid" aria-label="API 호출 요약">
+                        <div class="api-usage-stat"><span>외부 호출</span><strong id="apiUsageTotal">0건</strong></div>
+                        <div class="api-usage-stat"><span>성공</span><strong id="apiUsageSuccess">0건</strong></div>
+                        <div class="api-usage-stat"><span>실패</span><strong id="apiUsageFailure">0건</strong></div>
+                        <div class="api-usage-stat"><span>캐시 HIT / MISS</span><strong id="apiUsageCache">0 / 0</strong></div>
+                    </div>
+                    <div class="api-usage-details" aria-label="API 사용 상세 정보">
+                        <p id="apiUsageTypes" class="small-note"></p>
+                        <p id="apiUsageFailureTypes" class="small-note"></p>
+                        <p id="apiUsageTimes" class="small-note"></p>
+                        <p id="apiUsageNotice" class="small-note"></p>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        // 인증 토큰은 브라우저 메모리에만 저장
+        let adminAccessToken = null;
+        let pendingDraftToken = null;
+
+        const loginForm = document.getElementById("loginForm");
+        const loginButton = document.getElementById("loginButton");
+        const loginMessage = document.getElementById("loginMessage");
+        const adminPanel = document.getElementById("adminPanel");
+        const logoutButton = document.getElementById("logoutButton");
+
+        loginForm.addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const email = document.getElementById(
+                "adminEmail"
+            ).value;
+
+            const passwordInput = document.getElementById(
+                "adminPassword"
+            );
+
+            loginButton.disabled = true;
+            loginMessage.textContent = "관리자 로그인 확인 중입니다.";
+
+            try {
+
+                // 1. 로그인 API 호출
+                const loginResponse = await fetch("/api/admin/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: passwordInput.value
+                    })
+                });
+
+                const loginData = await loginResponse.json();
+
+                if (!loginResponse.ok) {
+                    throw new Error(
+                        typeof loginData.detail === "string"
+                            ? loginData.detail
+                            : "로그인에 실패했습니다."
+                    );
+                }
+
+                // 로그인에 사용한 비밀번호 입력값 지우기
+                passwordInput.value = "";
+
+                // 2. 인증 토큰을 임시로 보관
+                adminAccessToken = loginData.access_token;
+
+                // 3. FastAPI에서 관리자 권한 재확인
+                const verifyResponse = await fetch("/api/admin/me", {
+                    headers: {
+                        "Authorization": "Bearer " + adminAccessToken
+                    }
+                });
+
+                if (!verifyResponse.ok) {
+                    throw new Error("관리자 권한을 확인하지 못했습니다.");
+                }
+
+                const verifyData = await verifyResponse.json();
+
+                if (!verifyData.authenticated || !verifyData.is_admin) {
+                    throw new Error("관리자 인증 결과가 올바르지 않습니다.");
+                }
+
+                // 4. 로그인 화면을 관리자 화면으로 전환
+                loginForm.style.display = "none";
+                adminPanel.style.removeProperty("display");
+                document.body.classList.add("admin-active");
+
+                loginMessage.textContent =
+                    "관리자 로그인 및 권한 확인에 성공했습니다.";
+
+            } catch (error) {
+
+                adminAccessToken = null;
+
+                loginMessage.textContent =
+                    "오류: " + error.message;
+
+            } finally {
+
+                passwordInput.value = "";
+                loginButton.disabled = false;
+
+            }
+        });
+
+        // 로그아웃
+        logoutButton.addEventListener("click", function () {
+
+            adminAccessToken = null;
+            pendingDraftToken = null;
+            document.getElementById("collectionRunsList").replaceChildren();
+            document.getElementById("collectionRunsStatus").textContent = "수집 이력을 조회하려면 버튼을 누르세요.";
+            document.getElementById("operationsList").replaceChildren();
+            document.getElementById("operationsStatus").textContent = "버튼을 누르면 최근 오류 기록을 확인합니다.";
+            document.getElementById("publicationList").replaceChildren();
+            document.getElementById("publicationStatus").textContent = "목록을 불러오려면 버튼을 누르세요.";
+            document.getElementById("apiUsageDetails").hidden = true;
+            document.getElementById("apiUsageStatus").textContent = "새로고침 버튼을 누르면 외부 API 호출과 캐시 사용 현황을 볼 수 있습니다.";
+            document.getElementById("draftPreview").hidden = true;
+            document.getElementById("saveDraftButton").disabled = true;
+            document.getElementById("draftStatus").textContent = "아직 생성된 기사가 없습니다.";
+            document.getElementById("savedArticleLink").replaceChildren();
+            document.body.classList.remove("admin-active");
+
+            loginForm.style.display = "block";
+            adminPanel.style.display = "none";
+
+            loginMessage.textContent = "로그아웃했습니다.";
+
+        });
+
+        // F19-B: administrator-only on-demand usage diagnostics.
+        function formatUsageTime(value) {
+            return value ? new Date(value).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"}) + " (KST)" : "없음";
+        }
+
+        document.getElementById("refreshApiUsageButton").addEventListener("click", async function () {
+            if (!adminAccessToken) {
+                return;
+            }
+            const button = this;
+            const status = document.getElementById("apiUsageStatus");
+            button.disabled = true;
+            status.textContent = "사용 현황을 조회하고 있습니다.";
+            try {
+                const response = await fetch("/api/admin/api-usage", {
+                    headers: {"Authorization": "Bearer " + adminAccessToken}
+                });
+                if (!response.ok) {
+                    throw new Error("관리자 사용 현황을 조회할 수 없습니다. 다시 로그인하거나 잠시 후 시도하세요.");
+                }
+                const data = await response.json();
+                const external = data.external_requests;
+                const cache = data.route_cache;
+                document.getElementById("apiUsageTotal").textContent = external.total + "건";
+                document.getElementById("apiUsageSuccess").textContent = external.success + "건";
+                document.getElementById("apiUsageFailure").textContent = external.failure + "건";
+                document.getElementById("apiUsageCache").textContent = cache.hit + " / " + cache.miss;
+                const local = external.by_type.local;
+                const directions = external.by_type.directions;
+                document.getElementById("apiUsageTypes").textContent =
+                    "장소 검색 " + local.total + "건 / 자동차 길찾기 " + directions.total
+                    + "건 / 캐시 HIT 비율 " + cache.hit_rate_percent + "% / 경로 조회 실패 " + cache.failure + "건";
+                const failureLabels = {
+                    timeout: "시간 초과", http_error: "HTTP 오류", network_error: "연결 오류",
+                    invalid_json: "JSON 오류", invalid_response: "응답 형식 오류"
+                };
+                document.getElementById("apiUsageFailureTypes").textContent =
+                    "외부 요청 실패 유형: " + Object.entries(failureLabels).map(function (entry) {
+                        const key = entry[0];
+                        return entry[1] + " " + (local[key] + directions[key]) + "건";
+                    }).join(" · ");
+                document.getElementById("apiUsageTimes").textContent =
+                    "집계 시작: " + formatUsageTime(data.measurement_started_at)
+                    + " / 최근 외부 요청 실패: " + formatUsageTime(data.last_api_failure_at);
+                document.getElementById("apiUsageNotice").textContent = data.scope_notice;
+                document.getElementById("apiUsageDetails").hidden = false;
+                status.textContent = "사용 현황을 갱신했습니다.";
+            } catch (error) {
+                status.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        // F20: 상태 변경은 관리자 Bearer 토큰을 서버가 검증한 후 수행합니다.
+        const publicationList = document.getElementById("publicationList");
+        const publicationStatus = document.getElementById("publicationStatus");
+        async function loadPublications() {
+            if (!adminAccessToken) return;
+            const refreshButton = document.getElementById("refreshPublicationsButton");
+            refreshButton.disabled = true;
+            publicationStatus.textContent = "기사 발행 상태를 조회하고 있습니다.";
+            try {
+                const response = await fetch("/api/admin/news/publications", {
+                    headers: {"Authorization": "Bearer " + adminAccessToken}
+                });
+                if (!response.ok) throw new Error("기사 발행 상태를 조회하지 못했습니다.");
+                const data = await response.json();
+                publicationList.replaceChildren();
+                const labels = {review: "검토 중 · 비공개", published: "발행 · 공개", held: "보류 · 비공개"};
+                const nextStates = {
+                    review: [{value: "published", name: "발행"}, {value: "held", name: "보류"}],
+                    published: [{value: "held", name: "발행 보류"}],
+                    held: [{value: "review", name: "재검토"}, {value: "published", name: "발행"}]
+                };
+                data.articles.forEach(function (article) {
+                    const item = document.createElement("div");
+                    item.className = "publication-item";
+                    const heading = document.createElement("strong");
+                    heading.textContent = "#" + article.id + " · " + article.title;
+                    const badge = document.createElement("span");
+                    badge.className = "publication-state publication-state-" + article.status;
+                    badge.textContent = labels[article.status] || "상태 미확인";
+                    const actions = document.createElement("div");
+                    actions.className = "publication-actions";
+                    (nextStates[article.status] || []).forEach(function (option) {
+                        const button = document.createElement("button");
+                        button.type = "button";
+                        button.textContent = option.name;
+                        button.addEventListener("click", async function () {
+                            if (!adminAccessToken) return;
+                            const accepted = window.confirm(
+                                "기사 #" + article.id + "의 상태를 '" + option.name + "'으로 변경할까요?"
+                            );
+                            if (!accepted) return;
+                            button.disabled = true;
+                            publicationStatus.textContent = "기사 상태 변경 중입니다.";
+                            try {
+                                const response = await fetch(
+                                    "/api/admin/news/publications/" + encodeURIComponent(article.id),
+                                    {method: "PATCH", headers: {
+                                        "Authorization": "Bearer " + adminAccessToken,
+                                        "Content-Type": "application/json"
+                                    }, body: JSON.stringify({status: option.value})}
+                                );
+                                if (!response.ok) throw new Error("기사 상태를 변경하지 못했습니다.");
+                                await loadPublications();
+                            } catch (error) {
+                                publicationStatus.textContent = error.message;
+                                button.disabled = false;
+                            }
+                        });
+                        actions.appendChild(button);
+                    });
+                    item.append(heading, badge, actions);
+                    publicationList.appendChild(item);
+                });
+                publicationStatus.textContent =
+                    "최근 저장 기사 " + data.count + "건의 발행 상태를 확인했습니다.";
+            } catch (error) {
+                publicationStatus.textContent = error.message;
+            } finally {
+                refreshButton.disabled = false;
+            }
+        }
+        document.getElementById("refreshPublicationsButton").addEventListener(
+            "click", loadPublications
+        );
+
+        // F19: 자동 호출/수집 없이 실행 이력만 조회합니다.
+        document.getElementById("refreshCollectionRunsButton").addEventListener("click", async function () {
+            if (!adminAccessToken) return;
+            const button = this;
+            const status = document.getElementById("collectionRunsStatus");
+            const list = document.getElementById("collectionRunsList");
+            button.disabled = true;
+            status.textContent = "수집 실행 이력을 확인하고 있습니다.";
+            try {
+                const response = await fetch("/api/admin/collection-runs", {
+                    headers: {"Authorization": "Bearer " + adminAccessToken}
+                });
+                if (!response.ok) throw new Error("수집 실행 이력을 확인하지 못했습니다.");
+                const data = await response.json();
+                list.replaceChildren();
+                data.runs.forEach(function (run) {
+                    const item = document.createElement("div");
+                    item.className = "operations-item";
+                    const when = new Date(run.scheduled_for).toLocaleString(
+                        "ko-KR", {timeZone: "Asia/Seoul"}
+                    );
+                    item.textContent = when + " · " + run.outcome + " · 성공 " +
+                        run.count_succeeded + " / 실패 " + run.count_failed +
+                        " (전체 " + run.count_total + "개 경로)";
+                    list.appendChild(item);
+                });
+                status.textContent = data.notice + " 저장된 실행 이력: " + data.count + "건";
+            } catch (error) {
+                status.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        // F21: 외부 메시지 없이 관리자에게만 최근 안전한 오류 코드 표시.
+        document.getElementById("refreshOperationsButton").addEventListener("click", async function () {
+            if (!adminAccessToken) return;
+            const button = this;
+            const status = document.getElementById("operationsStatus");
+            const list = document.getElementById("operationsList");
+            button.disabled = true;
+            status.textContent = "운영 오류 기록을 조회하고 있습니다.";
+            try {
+                const response = await fetch("/api/admin/operations", {
+                    headers: {"Authorization": "Bearer " + adminAccessToken}
+                });
+                if (!response.ok) throw new Error("운영 오류 기록을 조회하지 못했습니다.");
+                const data = await response.json();
+                list.replaceChildren();
+                data.events.forEach(function (event) {
+                    const item = document.createElement("div");
+                    item.className = "operations-item";
+                    const labels = {
+                        timeout: "시간 초과", http_error: "HTTP 오류",
+                        network_error: "연결 오류", invalid_json: "JSON 오류",
+                        invalid_response: "응답 형식 오류",
+                        database_error: "DB 오류", unexpected_error: "기타 오류"
+                    };
+                    const when = new Date(event.event_time).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"});
+                    item.textContent = when + " · " + event.source + " / " + event.event_type +
+                        " · " + (labels[event.error_code] || "기타 오류") +
+                        (event.http_status ? " (HTTP " + event.http_status + ")" : "");
+                    list.appendChild(item);
+                });
+                status.textContent = data.count
+                    ? "최근 운영 오류 " + data.count + "건을 확인했습니다."
+                    : "저장된 최근 운영 오류가 없습니다.";
+            } catch (error) {
+                status.textContent = error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        // 서버에서 생성한 기사를 미리보기 화면에 표시
+        function showDraft(news) {
+            document.getElementById("draftTitle").textContent = news.title;
+            document.getElementById("draftLead").textContent = news.lead;
+            document.getElementById("draftBody").textContent = news.body;
+            document.getElementById("draftNotice").textContent = news.scope_notice;
+            document.getElementById("draftRetrievedAt").textContent =
+                "조회 완료: " + new Date(news.retrieved_at).toLocaleString(
+                    "ko-KR", {timeZone: "Asia/Seoul"}
+                ) + " (KST)";
+
+            const routeTable = document.getElementById("draftRoutes");
+            routeTable.replaceChildren();
+            news.routes.forEach(function (route) {
+                const row = document.createElement("tr");
+                const ratio = route.congested_distance_m / route.distance_m * 100;
+                const values = [
+                    route.start + " → " + route.end,
+                    (route.distance_m / 1000).toFixed(2),
+                    route.duration_seconds == null
+                        ? "정보 없음"
+                        : (route.duration_seconds / 60).toFixed(1),
+                    ratio.toFixed(1) + "%"
+                ];
+                values.forEach(function (value) {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                routeTable.appendChild(row);
+            });
+            document.getElementById("draftPreview").hidden = false;
+        }
+
+        // 관리자 로그인 후 새 기사 생성
+        document.getElementById("generateDraftButton").addEventListener(
+            "click", async function () {
+                const generateButton = this;
+                const saveButton = document.getElementById("saveDraftButton");
+                const status = document.getElementById("draftStatus");
+                pendingDraftToken = null;
+                saveButton.disabled = true;
+                generateButton.disabled = true;
+                document.getElementById("draftPreview").hidden = true;
+                document.getElementById("savedArticleLink").replaceChildren();
+                status.textContent = "교통정보 3개 경로 분석 및 AI 기사 초안 작성 중입니다.";
+
+                try {
+                    const response = await fetch("/api/admin/news/generate", {
+                        method: "POST",
+                        headers: {"Authorization": "Bearer " + adminAccessToken}
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.detail || "기사 생성에 실패했습니다.");
+                    }
+                    pendingDraftToken = data.draft_token;
+                    showDraft(data.news);
+                    saveButton.disabled = false;
+                    status.textContent = "미리보기 확인 후 저장하세요. 저장 가능 시간: 약 "
+                        + Math.round(data.expires_in / 60) + "분";
+                } catch (error) {
+                    status.textContent = "오류: " + error.message;
+                } finally {
+                    generateButton.disabled = false;
+                }
+            }
+        );
+
+        // 미리보기와 동일한 기사를 서버에서 검증 후 저장
+        document.getElementById("saveDraftButton").addEventListener(
+            "click", async function () {
+                if (!pendingDraftToken || !adminAccessToken) {
+                    return;
+                }
+                const saveButton = this;
+                const status = document.getElementById("draftStatus");
+                saveButton.disabled = true;
+                status.textContent = "뉴스를 Supabase에 저장하는 중입니다.";
+
+                try {
+                    const response = await fetch("/api/admin/news/save", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + adminAccessToken,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({draft_token: pendingDraftToken})
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.detail || "저장에 실패했습니다.");
+                    }
+                    status.textContent = data.already_saved
+                        ? "이미 저장된 뉴스입니다. 기사 #" + data.article_id
+                        : "저장 완료! 기사 #" + data.article_id;
+                    document.getElementById("savedArticleLink").textContent =
+                        "기사 #" + data.article_id + " · 검토 중(비공개). 아래 기사 발행 관리에서 발행하세요.";
+                    // 저장 성공 후 동일 기사의 추가 클릭은 비활성화
+                    pendingDraftToken = null;
+                } catch (error) {
+                    status.textContent = "오류: " + error.message;
+                    // 재시도 시 서버의 중복 차단이 동일 generation_id를 보호
+                    saveButton.disabled = false;
+                }
+            }
+        );
+
+    </script>
+<footer class="d03-photo-credit">상단 교통 사진: <a href="https://commons.wikimedia.org/wiki/File:Gangnam_traffic.jpg" target="_blank" rel="noopener noreferrer">kallerna · Wikimedia Commons</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>, 어두운 오버레이·화면에 맞게 잘라 사용). 장식용 과거 사진이며 실시간 교통 상황이 아닙니다.</footer>
+</body>
+</html>

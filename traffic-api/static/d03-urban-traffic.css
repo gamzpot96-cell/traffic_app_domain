@@ -1,0 +1,543 @@
+/* D03 Urban Traffic Newsroom — approved visual-only enhancement.
+   Preserve live data, existing functionality, all IDs and keyboard behavior.
+   Never add focus outlines, focus borders or focus shadows. */
+:root{
+  --d03-midnight:#0b1830;
+  --d03-navy:#12294b;
+  --d03-sky:#2864e8;
+  --d03-ice:#e8f1ff;
+  --d03-line:#dce6f2;
+  --d03-ink:#172b49;
+  --d03-muted:#5a6f88;
+  --d03-shadow:0 14px 36px rgba(19,42,76,.075);
+}
+html{scroll-behavior:smooth}
+body{
+  background:linear-gradient(165deg,#eef4fb 0%,#f7f9fc 55%,#edf3fa 100%);
+  color:var(--d03-ink);
+}
+#sharedNavigation{
+  background:#101f36;
+  border-bottom:1px solid rgba(177,207,246,.15);
+  box-shadow:0 4px 20px rgba(10,23,45,.10);
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header){
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 86% 13%,rgba(57,121,203,.34),transparent 46%),
+    linear-gradient(118deg,#0d1d37 4%,#173657 60%,#214b75 100%);
+  color:#fff;
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header)::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  pointer-events:none;
+  inset:0;
+  opacity:.72;
+  background:
+    repeating-linear-gradient(154deg,transparent 0 81px,rgba(151,206,253,.07) 82px 83px,transparent 84px 158px),
+    radial-gradient(ellipse at 63% 110%,rgba(51,150,240,.24),transparent 55%);
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header)::after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  pointer-events:none;
+  width:62%;
+  height:160%;
+  bottom:-104%;
+  right:-9%;
+  transform:rotate(-22deg);
+  opacity:.36;
+  border-top:2px solid rgba(170,216,255,.35);
+  border-left:22px solid rgba(122,174,232,.08);
+  border-right:40px solid rgba(73,137,206,.08);
+  border-radius:50%;
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header) :is(h1,h2,strong){
+  text-shadow:0 2px 14px rgba(0,0,0,.13);
+}
+:is(.home-hero,.map-hero,.news-intro) :is(p,.d02-map-caption){
+  color:#d4e3f6;
+}
+:is(.home-hero,.map-hero,.news-intro,.admin-hero) a:not(.site-nav-brand){
+  text-underline-offset:4px;
+}
+:is(.home-main>section,.map-controls,.map-content .saved-article-panel,
+    .news-layout>section,.news-layout>article,.admin-login-layout>section,
+    .admin-panel>.workspace-section){
+  background:#fff;
+  border:1px solid var(--d03-line);
+  border-radius:20px;
+  box-shadow:var(--d03-shadow);
+}
+:is(.home-main>section,.news-layout>section,.news-layout>article,
+    .admin-panel>.workspace-section){
+  transition:box-shadow .18s ease;
+}
+:is(.home-main>section,.news-layout>section,.news-layout>article,
+    .admin-panel>.workspace-section):hover{
+  box-shadow:0 17px 42px rgba(14,36,70,.095);
+}
+:is(.home-main,.map-content,.news-layout,.login-container) :is(h2,h3){
+  letter-spacing:-.035em;
+}
+:is(.home-main,.map-content,.news-layout,.login-container) :is(input,select,textarea){
+  background-color:#fff;
+  border-color:#cbd9eb;
+  border-radius:10px;
+}
+:is(.home-main,.map-content,.news-layout,.login-container) button:not(.site-nav-toggle):not(.site-nav-trigger){
+  border-radius:10px;
+}
+:is(.home-main,.map-content,.news-layout,.login-container) button:not(.site-nav-toggle):not(.site-nav-trigger):hover:not(:disabled){
+  filter:brightness(1.045);
+}
+:is(.home-main,.map-content,.news-layout,.login-container) :is(button,input,select,textarea){
+  transition:background-color .18s ease,filter .18s ease;
+}
+.home-hero{border-bottom:1px solid rgba(191,217,249,.24)}
+.home-hero .home-eyebrow,.workspace-eyebrow{
+  color:#a9d7fa;
+  letter-spacing:.14em;
+  font-weight:800;
+}
+.home-search{
+  position:relative;
+  border-top:4px solid #2864e8!important;
+}
+.home-search::before{
+  content:"ROUTE SEARCH";
+  display:block;
+  margin:0 0 12px;
+  color:#3270bb;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.14em;
+}
+.home-main>section h2{
+  padding-bottom:10px;
+  border-bottom:1px solid #e6edf7;
+}
+.home-main #favoriteRoutes,.map-controls #favoriteRoutes{
+  background:linear-gradient(135deg,#f7faff,#f0f6ff);
+  border:1px solid #dce8f8;
+  border-radius:16px;
+}
+.home-main #favoriteRoutes .favorite-item,.map-controls #favoriteRoutes .favorite-item{
+  background:#fff;
+  border:1px solid #e1e9f5;
+  border-radius:10px;
+}
+.map-hero{border-bottom:1px solid rgba(172,209,242,.2)}
+.map-content .map-controls{border-top:3px solid #3172e8}
+.map-canvas-frame{
+  overflow:hidden;
+  border:1px solid #d6e4f4;
+  border-radius:18px;
+  background:#e8f1fa;
+  box-shadow:0 16px 40px rgba(11,30,58,.11);
+}
+.map-canvas-frame #map{border-radius:inherit}
+.map-controls #result{
+  background:#eef5ff;
+  color:#20416b;
+  border-left:4px solid #2864e8;
+  border-radius:10px;
+}
+.news-intro{border-radius:18px}
+.news-layout .news-search-form{
+  background:linear-gradient(125deg,#f8fbff,#f0f5fe);
+  border:1px solid #e2ebf7;
+  border-radius:14px;
+  padding:14px;
+}
+.news-layout #historySection,.news-layout #trafficDashboard,
+.news-layout #trafficTrends,.news-layout #trafficExport{
+  scroll-margin-top:32px;
+}
+.news-layout :is(.news-pagination,.news-search-actions){gap:10px}
+.news-layout #newsTitle{
+  border-left:4px solid #2864e8;
+  padding-left:15px;
+}
+.admin-hero{border:1px solid rgba(191,219,249,.15)}
+.admin-login-layout .login-card{
+  border:1px solid #dce6f2;
+  box-shadow:var(--d03-shadow);
+}
+.admin-panel .workspace-header{
+  border-radius:16px;
+}
+.admin-panel>.workspace-section{
+  border-top:3px solid #e0eaff;
+}
+.admin-panel #apiUsageSection{
+  border-top-color:#3477e8;
+}
+@media(max-width:850px){
+  :is(.home-main>section,.map-controls,.news-layout>section,
+      .news-layout>article,.admin-panel>.workspace-section){border-radius:16px}
+  .news-layout .news-search-form{padding:12px}
+}
+@media(max-width:600px){
+  :is(.home-hero,.map-hero,.news-intro,.admin-hero,.workspace-header)::after{width:90%;right:-35%}
+  .map-canvas-frame{border-radius:13px}
+  .home-search::before{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(.home-main>section,.news-layout>section,.news-layout>article,
+      .admin-panel>.workspace-section){transition:none}
+}
+
+
+/* D03 phase 2: photo-led editorial composition — approved screenshot fidelity. */
+:root{--d03-traffic-photo:url("https://commons.wikimedia.org/wiki/Special:Redirect/file/Gangnam%20traffic.jpg?width=1280")}
+.home-hero,.map-hero,.news-layout>.news-intro,.admin-hero{
+  background-image:
+    linear-gradient(90deg,rgba(6,17,35,.96) 0%,rgba(8,22,44,.89) 35%,rgba(11,30,53,.65) 70%,rgba(9,25,45,.40) 100%),
+    var(--d03-traffic-photo);
+  background-size:cover;
+  background-position:center center;
+}
+.home-hero{min-height:410px;padding:72px max(26px,calc((100vw - 1180px)/2)) 126px!important;}
+.home-hero h1{font-size:clamp(38px,4.9vw,66px);max-width:760px;line-height:1.14;}
+.home-hero .d02-description{max-width:580px;font-size:16px;}
+.home-hero-inner{max-width:1190px;margin:0 auto;}
+.home-main{max-width:1180px!important;position:relative;margin:-72px auto 60px!important;z-index:2;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px!important;}
+.home-main>section{min-width:0;margin:0!important;}
+.home-main>section.home-search,.home-main>section:nth-child(4),.home-main>#overviewSection,.home-main>.d02-home-news{grid-column:1/-1;}
+.home-main>section.home-search{box-shadow:0 24px 54px rgba(7,24,51,.17);border-radius:22px!important;}
+.home-main .home-search #routeForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end;}
+.home-main .home-search #routeForm .field{min-width:0}
+.home-main .home-search #submitButton{min-height:47px;padding:11px 24px;}
+.home-main #summary{font-size:17px;font-weight:750;color:#1c416d;}
+.home-main #briefingContent{line-height:1.9;}
+.home-main>section:nth-child(4){border-top-color:#2864e8;}
+.map-hero{padding-block:53px 66px!important;min-height:230px;}
+.map-hero strong{font-size:clamp(30px,3.5vw,45px);}
+.map-hero-inner{max-width:1260px;margin-inline:auto;}
+.map-content{max-width:none!important;width:auto!important;margin:24px max(18px,calc((100vw - 1330px)/2)) 40px  max(18px,calc((100vw - 1330px)/2))!important;}
+.map-content .map-controls{width:min(390px,32vw)!important;min-width:0;padding:24px!important;}
+.map-content .map-controls #mapRouteForm{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;}
+.map-content .map-controls #mapRouteForm label{width:100%;}
+.map-content .map-controls #mapRouteForm input{width:100%;display:block;margin-top:7px;}
+.map-content .map-controls #mapRouteSubmit{width:100%;}
+.map-content #favoriteRoutes{margin-top:20px;padding:14px!important;}
+.map-content .map-controls #result{line-height:1.6;font-size:14px;}
+.map-canvas-frame{
+  position:relative;
+  width:calc(100% - min(390px,32vw) - 58px)!important;
+  max-width:none!important;
+  margin:-40px max(18px,calc((100vw - 1330px)/2)) 55px auto!important;
+}
+.map-canvas-frame #map{height:clamp(650px,75vh,900px)!important;min-height:600px;}
+.map-content:has(#savedArticlePanel:not([hidden]))+.map-canvas-frame{margin-top:0!important;}
+.news-layout>.news-intro{padding:62px 50px 70px!important;min-height:315px;display:flex;flex-direction:column;justify-content:center;}
+.news-layout>.news-intro h2{font-size:clamp(35px,4vw,54px);}
+.news-layout>.news-intro .d02-description{max-width:650px;}
+.news-layout>#historySection{margin-top:-36px!important;position:relative;z-index:1;}
+.news-layout #historyList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.news-layout #historyList .history-item{height:100%;margin:0;border-radius:14px;border-left-width:0;border-top:4px solid #2773df;box-shadow:0 7px 23px rgba(21,49,83,.05);}
+.news-layout #trafficDashboard .summary-cards{grid-template-columns:repeat(3,minmax(0,1fr));}
+.login-container{max-width:1280px!important;}
+.admin-login-layout{grid-template-columns:1.05fr .95fr!important;gap:25px;}
+.admin-login-layout>.admin-hero{min-height:480px;border-radius:20px;}
+.admin-hero h1{font-size:clamp(32px,3.4vw,49px);}
+.admin-panel>.workspace-header{min-height:200px;}
+.admin-panel>.workspace-section{border-radius:17px;}
+@media(max-width:1000px){
+  .map-content{margin:18px 18px 24px!important;}
+  .map-content .map-controls{width:35vw!important;}
+  .map-canvas-frame{width:calc(65vw - 54px)!important;margin:-24px 18px 44px auto!important;}
+  .admin-login-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;}
+}
+@media(max-width:850px){
+  .home-main{margin:-38px 18px 40px!important;grid-template-columns:minmax(0,1fr);}
+  .home-main>section{grid-column:1/-1;}
+  .home-hero{padding:58px 22px 85px!important;min-height:350px;}
+  .map-content .map-controls{width:100%!important;}
+  .map-content{margin:18px 16px!important;}
+  .map-canvas-frame{width:auto!important;margin:0 16px 44px!important;}
+  .map-content .map-controls #mapRouteForm{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .map-content .map-controls #mapRouteSubmit{grid-column:1/-1}
+  .map-canvas-frame #map{min-height:410px;height:60vh!important;}
+  .news-layout #historyList{grid-template-columns:minmax(0,1fr);}
+  .admin-login-layout{grid-template-columns:minmax(0,1fr)!important;}
+}
+@media(max-width:600px){
+  .home-hero{padding:44px 19px 82px!important;min-height:370px;}
+  .home-hero h1{font-size:35px;}
+  .home-main{margin:-28px 12px 30px!important;}
+  .home-main .home-search #routeForm{grid-template-columns:minmax(0,1fr)!important;}
+  .home-main .home-search #submitButton{width:100%;}
+  .map-content .map-controls #mapRouteForm{grid-template-columns:minmax(0,1fr)!important;}
+  .news-layout>.news-intro{min-height:270px;padding:32px 22px 64px!important;}
+  .news-layout>#historySection{margin-top:-28px!important;}
+  .news-layout #trafficDashboard .summary-cards{grid-template-columns:minmax(0,1fr);}
+}
+
+/* Map uses sibling page regions; real grid instead of visual overlap. */
+body:has(>.map-content){display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);column-gap:20px;align-items:start;}
+body:has(>.map-content)>#sharedNavigation,body:has(>.map-content)>.map-hero{grid-column:1/-1;width:100%;}
+body:has(>.map-content)>.map-content{grid-column:1;width:auto!important;min-width:0;margin:24px 0 48px max(18px,calc((100vw - 1360px)/2))!important;}
+body:has(>.map-content)>.map-content .map-controls{width:100%!important;}
+body:has(>.map-content)>.map-canvas-frame{grid-column:2;width:auto!important;min-width:0;margin:24px max(18px,calc((100vw - 1360px)/2)) 48px 0!important;}
+.d03-photo-credit{margin:0;padding:12px 24px;background:#0d2038;color:#c8d8eb;text-align:center;font-size:11px;line-height:1.7;}
+.d03-photo-credit a{color:#d3e8ff;text-decoration:underline;text-underline-offset:3px;}
+body:has(>.map-content)>.d03-photo-credit{grid-column:1/-1;}
+@media(max-width:850px){body:has(>.map-content){display:block;}body:has(>.map-content)>.map-content{margin:18px 16px!important;}body:has(>.map-content)>.map-canvas-frame{margin:0 16px 40px!important;}}
+
+/* D03 phase 3: screenshot fixes — no new focus treatment. */
+/* Photography should read as traffic, not a bright street-light installation. */
+.home-hero,.map-hero,.news-layout>.news-intro{
+  background-image:
+    linear-gradient(90deg,rgba(6,19,37,.94) 0%,rgba(9,29,56,.85) 40%,rgba(9,27,51,.56) 100%),
+    var(--d03-traffic-photo);
+  background-position:center 54%;
+}
+.home-hero::before,.map-hero::before,.news-layout>.news-intro::before{opacity:.12;}
+.home-hero::after,.map-hero::after,.news-layout>.news-intro::after{opacity:0;}
+/* Fix white-on-white admin login caused by generic section background specificity. */
+body:not(.admin-active) .admin-login-layout > section.admin-hero,
+.login-container .admin-login-layout > .admin-hero{
+  background-color:#0b1b32!important;
+  background-image:
+    linear-gradient(105deg,rgba(5,17,35,.94) 0%,rgba(8,26,51,.79) 65%,rgba(11,34,64,.63) 100%),
+    var(--d03-traffic-photo)!important;
+  background-position:58% center!important;
+  background-size:cover!important;
+  color:#fff!important;
+  border-color:rgba(160,204,250,.2)!important;
+}
+.login-container .admin-login-layout > .admin-hero h1,
+.login-container .admin-login-layout > .admin-hero p{color:#fff!important;}
+.login-container .admin-login-layout > .admin-hero .site-title{color:#a6e4ff!important;}
+.login-container .admin-login-layout > .admin-hero .hero-note{
+  color:#e0eeff!important;
+  border-left-color:#62d2e5!important;
+  background:rgba(5,24,49,.35);
+  border-radius:0 10px 10px 0;
+  padding:12px 15px;
+}
+.login-container .admin-login-layout > .admin-hero::before{opacity:.08;}
+.login-container .admin-login-layout > .admin-hero::after{opacity:0;}
+/* Map favorite routes: one readable label row and a predictable action row. */
+.map-content #favoriteRoutes{min-width:0;}
+.map-content #favoriteRoutes .favorite-note{
+  overflow-wrap:normal;
+  word-break:keep-all;
+  line-height:1.8;
+}
+.map-content #favoriteRoutes .favorite-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:14px;
+  align-items:start;
+}
+.map-content #favoriteRoutes .favorite-label{
+  display:block;
+  width:100%;
+  overflow-wrap:break-word;
+  word-break:keep-all;
+  white-space:normal;
+  line-height:1.6;
+  font-size:14px;
+  font-weight:750;
+}
+.map-content #favoriteRoutes .favorite-item-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  flex-shrink:1;
+  min-width:0;
+}
+.map-content #favoriteRoutes .favorite-action{
+  width:100%;
+  min-width:0;
+  padding:8px 7px;
+  white-space:nowrap;
+  font-size:13px;
+  line-height:1.35;
+}
+.map-content #favoriteRoutes #saveFavoriteRoute{
+  width:100%;
+  white-space:normal;
+  line-height:1.5;
+}
+.map-content .map-controls .note{
+  line-height:1.8;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+.map-content .map-controls #result{word-break:keep-all;overflow-wrap:break-word;}
+/* Align information density and preserve the data-oriented look. */
+.home-main>section,.news-layout>section,.workspace-section{line-height:1.65;}
+:is(.home-main,.news-layout,.map-content,.login-container) :is(.muted,.chart-notice,.favorite-note){
+  line-height:1.75;
+}
+.home-main .scroll table,.news-layout table{border-collapse:collapse;width:100%;}
+.home-main .scroll table thead th,.news-layout table thead th{
+  background:#eaf1fa;
+  color:#253e60;
+  font-weight:800;
+}
+.home-main .scroll table tbody tr:nth-child(even),.news-layout table tbody tr:nth-child(even){background:#f6f9fd;}
+.home-main .scroll table tbody tr:hover,.news-layout table tbody tr:hover{background:#edf5ff;}
+.home-main #favoriteRoutes .favorite-item{gap:12px;}
+@media(max-width:850px){
+  .map-content #favoriteRoutes .favorite-item{grid-template-columns:minmax(0,1fr);}
+}
+
+
+/* D03 phase 4: readable desktop headings and proportionate map sidebar. */
+@media(min-width:1101px){
+  /* Keep the author's intentional <br> as the only break for desktop headlines. */
+  .home-hero h1{
+    font-size:clamp(29px,2.65vw,40px)!important;
+    max-width:1000px!important;
+    line-height:1.32!important;
+    letter-spacing:-.045em;
+    word-break:keep-all;
+  }
+  .login-container .admin-hero h1{
+    font-size:clamp(26px,2.15vw,33px)!important;
+    line-height:1.42!important;
+    letter-spacing:-.05em;
+    word-break:keep-all;
+  }
+  body:has(>.map-content){
+    grid-template-columns:minmax(410px,460px) minmax(0,1fr);
+    column-gap:24px;
+  }
+  body:has(>.map-content)>.map-content{
+    margin:24px 0 42px max(20px,calc((100vw - 1450px)/2))!important;
+  }
+  body:has(>.map-content)>.map-canvas-frame{
+    margin:24px max(20px,calc((100vw - 1450px)/2)) 42px 0!important;
+  }
+}
+@media(min-width:851px) and (max-width:1100px){
+  .home-hero h1{font-size:clamp(27px,3.15vw,35px)!important;max-width:900px!important;line-height:1.35!important;word-break:keep-all;}
+  .login-container .admin-hero h1{font-size:clamp(25px,2.7vw,30px)!important;line-height:1.4!important;word-break:keep-all;}
+  body:has(>.map-content){grid-template-columns:minmax(340px,37%) minmax(0,1fr);column-gap:16px;}
+  body:has(>.map-content)>.map-content{margin:18px 0 30px 16px!important;}
+  body:has(>.map-content)>.map-canvas-frame{margin:18px 16px 30px 0!important;}
+}
+/* Avoid squeezing the map's left controls inside double nested side gutters. */
+body:has(>.map-content) .map-content .map-controls{padding:24px 22px!important;min-width:0;}
+body:has(>.map-content) .map-content #favoriteRoutes{
+  box-sizing:border-box;
+  padding:18px!important;
+  width:100%;
+  max-width:100%;
+}
+body:has(>.map-content) .map-content #favoriteRoutes .favorite-note{
+  font-size:13px;
+  line-height:1.7;
+  margin-bottom:14px;
+}
+body:has(>.map-content) .map-content #favoriteRoutes .favorite-item{
+  min-width:0;
+  width:100%;
+  padding:13px 12px;
+  gap:11px;
+}
+body:has(>.map-content) .map-content #favoriteRoutes .favorite-label{
+  font-size:14px;
+  line-height:1.6;
+}
+body:has(>.map-content) .map-content #favoriteRoutes .favorite-item-actions{
+  width:100%;
+  min-width:0;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+body:has(>.map-content) .map-content #favoriteRoutes .favorite-action{
+  min-width:0;
+  box-sizing:border-box;
+  padding:9px 8px;
+  font-size:13px;
+  overflow:hidden;
+  text-overflow:clip;
+}
+body:has(>.map-content) .map-content #favoriteRoutes #saveFavoriteRoute{
+  font-size:14px;
+  padding:11px 9px;
+}
+body:has(>.map-content) .map-content #result{
+  margin:18px 0 12px;
+  padding:14px 16px;
+  line-height:1.65;
+  font-size:14px;
+}
+body:has(>.map-content) .map-content .map-controls>.note{
+  padding:0 4px;
+  font-size:12px;
+  line-height:1.8;
+}
+@media(max-width:850px){
+  body:has(>.map-content) .map-content .map-controls{padding:21px 18px!important;}
+  .home-hero h1{font-size:clamp(28px,5vw,39px)!important;line-height:1.3!important;word-break:keep-all;}
+  .login-container .admin-hero h1{font-size:clamp(25px,4vw,34px)!important;line-height:1.35!important;word-break:keep-all;}
+}
+
+
+/* F20: restrained administrator-only publication controls. */
+#publicationSection{border-top:3px solid #0c9ca1;}
+#publicationSection .publication-list{display:grid;gap:12px;margin-top:16px;}
+#publicationSection .publication-item{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;
+  align-items:center;padding:16px;border:1px solid #dce6f2;
+  border-radius:13px;background:#f8fbff;
+}
+#publicationSection .publication-item strong{
+  min-width:0;overflow-wrap:anywhere;line-height:1.65;
+}
+#publicationSection .publication-state{
+  display:inline-block;padding:6px 10px;border-radius:999px;
+  background:#eef2f8;color:#324967;font-size:12px;font-weight:750;
+}
+#publicationSection .publication-state-published{background:#e0f5e9;color:#116839;}
+#publicationSection .publication-state-review{background:#e6efff;color:#154ea5;}
+#publicationSection .publication-state-held{background:#fff0d9;color:#95530c;}
+#publicationSection .publication-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;}
+#publicationSection .publication-actions button{font-size:13px;padding:9px 15px;}
+@media(max-width:600px){
+  #publicationSection .publication-item{grid-template-columns:minmax(0,1fr);}
+  #publicationSection .publication-state{justify-self:start;}
+}
+
+
+/* F21 manual operational error list (no auto refresh or focus outlines). */
+#operationsSection{border-top:3px solid #d69333;}
+#operationsSection .operations-list{display:grid;gap:9px;margin-top:15px;}
+#operationsSection .operations-item{
+  background:#fff8ec;color:#624a2a;padding:12px 15px;
+  border-left:3px solid #d69333;border-radius:8px;
+  line-height:1.75;overflow-wrap:anywhere;font-size:13px;
+}
+
+
+/* M03 menu completion: help, reading tools, and operating notices */
+.home-main #helpSection details{background:#f7faff;border:1px solid #dce6f2;border-radius:10px;margin-top:12px;padding:0 17px;}
+.home-main #helpSection summary{cursor:pointer;font-weight:750;color:#1e3d64;padding:15px 0;line-height:1.6;word-break:keep-all;}
+.home-main #helpSection details p{margin:0 0 16px;line-height:1.85;color:#42566f;word-break:keep-all;}
+.news-layout #readingTools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0;padding:16px;background:#f2f6fd;border:1px solid #dce6f2;border-radius:12px;}
+.news-layout #readingTools button{padding:10px 14px;}
+.news-layout #readingToolsStatus{flex-basis:100%;margin:0;font-size:13px;line-height:1.7;color:#50637a;}
+body.news-reading-mode .news-layout>article{max-width:820px;width:100%;margin:22px auto!important;padding:38px 42px!important;}
+body.news-reading-mode .news-layout>article #newsBody{max-width:68ch;font-size:17px;line-height:2.05;}
+#operatingGuideSection{border-top:3px solid #2a73c5;}
+#operatingGuideSection .operations-item{background:#f3f7fd;color:#294463;border-left-color:#2a73c5;}
+#operatingGuideSection .operations-item strong{color:#173a66;}
+@media(max-width:600px){
+ .news-layout #readingTools{flex-direction:column;align-items:stretch;padding:13px;}
+ .news-layout #readingTools button{width:100%;}
+ body.news-reading-mode .news-layout>article{padding:22px 16px!important;}
+}

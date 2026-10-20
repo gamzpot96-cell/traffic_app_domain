@@ -1,188 +1,356 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="utf-8">
-    <title>ITS 실시간 교통정보 지도</title>
-
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/css/ol.css"
-        type="text/css"
-    >
-    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.9.0/build/ol.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>서울 도로교통 경로 지도</title>
 
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, "Noto Sans KR", sans-serif;
+        body { margin: 0; font-family: Arial, "Noto Sans KR", sans-serif; }
+        header { padding: 16px; background: #182437; color: #fff; }
+        header a { color: #93c5fd; margin-left: 12px; }
+        form { padding: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        button { padding: 11px 16px; border: 0; border-radius: 6px; background: #2563eb; color: white; cursor: pointer; }
+        #map { height: calc(100vh - 190px); min-height: 320px; }
+        #result { margin: 0 12px 12px; }
+        .note { color: #64748b; padding: 0 12px; font-size: 13px; }
+        /* F23: 과거 저장 분석 기록을 현재 지도 조회와 분리합니다. */
+        .saved-article-panel { margin: 14px 12px; padding: 18px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; }
+        .saved-article-panel[hidden] { display: none; }
+        .saved-article-panel h2 { font-size: 19px; margin: 0 0 12px; }
+        .saved-article-panel p { margin: 6px 0; line-height: 1.6; }
+        .saved-article-panel a { color: #1d4ed8; font-weight: 600; }
+        .map-article-status { margin: 10px 12px; color: #475569; line-height: 1.6; }
+        .saved-record-notice { font-size: 13px; color: #475569; }
+        @media (max-width: 600px) {
+            .saved-article-panel { margin: 10px; padding: 14px; }
+            form { align-items: stretch; }
+            form label { display: flex; flex-direction: column; flex: 1 1 100%; gap: 6px; }
+            form input { box-sizing: border-box; max-width: 100%; }
         }
-
-        h2 {
-            padding: 15px 20px;
-            margin: 0;
-            background-color: #1f2937;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* D01 지도 화면 디자인은 유지하고 카카오맵 SDK로 지도 표시만 교체합니다. */
+        .map-hero { padding: 25px max(18px, calc((100% - 1180px) / 2)); background: #13243b; color: #fff; }
+        .map-hero-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+        .map-hero strong { font-size: 23px; line-height: 1.4; }
+        .map-hero a { color: #bfdbfe; font-weight: 600; margin: 0; }
+        .map-content { max-width: 1180px; padding: 18px 16px 0; margin: 0 auto; box-sizing: border-box; }
+        .map-content .saved-article-panel { margin: 0 0 18px; padding: 24px; border: 1px solid #dce5f0; background: #fff; border-left: 4px solid #2463eb; border-radius: 14px; box-shadow: 0 4px 16px #13243b0a; }
+        .map-content .saved-article-panel h2 { font-size: 22px; color: #17253a; }
+        .map-content .saved-article-panel p { line-height: 1.8; }
+        .map-content .map-article-status { margin: 12px 0; }
+        .map-controls { padding: 20px 24px; background: #fff; border: 1px solid #dee6f0; border-radius: 14px; margin: 0 0 16px; box-shadow: 0 4px 16px #13243b0a; }
+        .map-controls #mapRouteForm { padding: 0; gap: 14px; align-items: end; }
+        .map-controls label { display: flex; flex: 1 1 210px; flex-direction: column; gap: 8px; font-weight: 600; color: #17253a; }
+        .map-controls input { min-height: 45px; width: 100%; box-sizing: border-box; font: inherit; border-radius: 8px; }
+        .map-controls #mapRouteSubmit { min-height: 45px; font: inherit; font-weight: 700; background: #2463eb; border-radius: 8px; }
+        .map-controls #result { margin: 14px 0 7px; line-height: 1.6; color: #334155; }
+        .map-controls .note { padding: 0; margin: 8px 0 0; line-height: 1.6; }
+        .map-canvas-frame { max-width: 1180px; margin: 0 auto 24px; padding: 0 16px; box-sizing: border-box; }
+        .map-canvas-frame #map { height: clamp(440px, 62vh, 740px); min-height: 320px; background: #e5edf4; border: 1px solid #dee6f0; border-radius: 14px; overflow: hidden; }
+        @media (max-width: 850px) {
+            .map-hero { padding: 24px 18px; }
+            .map-content { padding: 14px 12px 0; }
+            .map-canvas-frame { padding: 0 12px; }
         }
-
-        .header-link {
-            color: #60a5fa;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        #map {
-            width: 100%;
-            height: calc(100vh - 60px);
-        }
-
-        .control-box {
-            position: absolute;
-            top: 75px;
-            left: 20px;
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: white;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .btn:hover {
-            background-color: #f3f4f6;
-        }
-
-        .ol-popup {
-            position: absolute;
-            background-color: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #cccccc;
-            bottom: 12px;
-            left: -50px;
-            min-width: 150px;
+        @media (max-width: 600px) {
+            .map-content .saved-article-panel { padding: 16px; }
+            .map-controls { padding: 16px; }
+            .map-controls label { flex-basis: 100%; }
+            .map-controls #mapRouteSubmit { width: 100%; }
+            .map-canvas-frame #map { height: 55vh; min-height: 360px; }
         }
     </style>
+    <link rel="stylesheet" href="/static/design-system.css">
+    <link rel="stylesheet" href="/static/navigation.css">
+    <link rel="stylesheet" href="/static/d02-journalism.css">
+    <link rel="stylesheet" href="/static/d03-urban-traffic.css">
+    <link rel="stylesheet" href="/static/favorites.css">
+    <script src="/static/favorites.js" defer></script>
+    <script src="/static/navigation.js" defer></script>
 </head>
-
 <body>
+    <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
+<header class="map-hero"><div class="map-hero-inner"><div><strong>도로 위 경로, 데이터로 확인하기</strong><span class="d02-map-caption">선택한 자동차 경로의 현재 조회 결과를 지도로 확인하고, 저장된 기사와 비교해 보세요.</span></div><a href="/">홈으로 돌아가기</a></div></header>
+<main class="map-content">
+<section id="savedArticlePanel" class="saved-article-panel" hidden aria-label="과거 기사 저장 분석 정보">
+    <h2 id="savedArticleTitle">과거 기사에서 선택한 경로</h2>
+    <p id="savedArticleTime"></p>
+    <p id="savedArticleRoute"></p>
+    <p id="savedArticleMetrics"></p>
+    <p class="saved-record-notice">이 정보는 기사 조회 당시 저장된 요약입니다. 당시 실제 경로 선형은 저장되지 않았습니다. 아래에서 새로 조회하는 경로는 현재 길찾기 결과이며 달라질 수 있습니다.</p>
+    <a id="backToSavedArticle" href="/news">뉴스 기사로 돌아가기</a>
+</section>
+<p id="mapArticleStatus" class="map-article-status" role="status" aria-live="polite" hidden></p>
+<section class="map-controls" aria-label="현재 자동차 경로 검색">
+<form id="mapRouteForm">
+    <label>출발지 <input id="origin" value="서울역" required minlength="2"></label>
+    <label>목적지 <input id="destination" value="잠실역" required minlength="2"></label>
+    <button type="submit" id="mapRouteSubmit">경로 표시</button>
+</form>
+<div id="favoriteRoutes" class="favorite-routes" aria-label="관심 경로 즐겨찾기">
+    <h3>관심 경로</h3>
+    <p class="favorite-note">자주 이용하는 출발지와 목적지를 이 브라우저에만 저장합니다. 다른 컴퓨터와 동기화되지 않습니다.</p>
+    <button type="button" id="saveFavoriteRoute">현재 입력 경로 저장</button>
+    <ul id="favoriteRouteList" class="favorite-list"></ul>
+    <p id="favoriteRouteStatus" class="favorite-status" role="status" aria-live="polite"></p>
+</div>
+<p id="result" role="status">경로 표시 버튼을 눌러 현재 교통정보를 조회하세요.</p>
+<p class="note">회색: 교통 상태 미확인 · 녹색: 원활 · 노란색: 서행 · 빨간색: 정체 (경로 구간별 표시)</p>
+</section>
+</main>
+<div class="map-canvas-frame"><p id="mapBasemapStatus" class="note" role="status" aria-live="polite">카카오맵을 불러오는 중입니다.</p><p id="mapRecovery" class="note" hidden>지도가 표시되지 않나요? <a id="legacyMapLink" href="/static/legacy-map.html">기존 OpenLayers 지도로 열기</a></p><div id="map"></div></div>
+<footer class="d03-photo-credit">상단 교통 사진: <a href="https://commons.wikimedia.org/wiki/File:Gangnam_traffic.jpg" target="_blank" rel="noopener noreferrer">kallerna · Wikimedia Commons</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>, 어두운 오버레이·화면에 맞게 잘라 사용). 장식용 과거 사진이며 실시간 교통 상황이 아닙니다.</footer>
+<script>
+    // 지도 표시 엔진만 카카오맵으로 교체합니다. 기사 연결/F23은 아래 기존 로직을 유지합니다.
+    let kakaoMap = null;
+    let displayedPolylines = [];
+    let displayedMarkers = [];
+    let mapReady = false;
+    const roadColors = { 1: "#16a34a", 2: "#eab308", 3: "#dc2626" };
+    const mapStatus = document.getElementById("mapBasemapStatus");
+    const recovery = document.getElementById("mapRecovery");
+    document.getElementById("legacyMapLink").href =
+        "/static/legacy-map.html" + window.location.search;
 
-    <h2>
-        <span>🚗 ITS 실시간 교통정보 지도</span>
-        <a href="/" class="header-link">목록으로 이동 ➔</a>
-    </h2>
+    function showMapError(message) {
+        mapReady = false;
+        mapStatus.textContent = message;
+        recovery.hidden = false;
+    }
 
-    <div class="control-box">
-        <input type="text" id="mapSearchInput" placeholder="동네 이름 (예: 인사동)" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
-        <button id="searchMapBtn" class="btn">동네 이동 및 조회</button>
-        <button id="trafficTileBtn" class="btn">교통정보 레이어 켜기</button>
-        <button id="fetchTrafficDataBtn" class="btn">현재 화면 영역 정보 조회</button>
-    </div>
-
-    <div id="map"></div>
-
-    <script>
-        // 1. 기본 지도 생성
-        const map = new ol.Map({
-            target: "map",
-            layers: [
-                new ol.layer.Tile({
-                    source: new ol.source.OSM()
-                })
-            ],
-            view: new ol.View({
-                projection: "EPSG:3857",
-                center: ol.proj.fromLonLat([126.9780, 37.5665]), // 서울 중심 좌표
-                zoom: 12,
-                maxZoom: 18,
-                minZoom: 7
-            })
-        });
-
-        // 2. ITS 교통정보 타일 레이어 (WMTS)
-        const trafficTileLayer = new ol.layer.Tile({
-            source: new ol.source.XYZ({
-                url: "https://its.go.kr:9443/geoserver/gwc/service/wmts/rest/" +
-                     "ntic:N_LEVEL_{z}/" +
-                     "ntic:REALTIME/" +
-                     "EPSG:3857/" +
-                     "EPSG:3857:{z}/{y}/{x}" +
-                     "?format=image/png8"
-            }),
-            visible: false
-        });
-        map.addLayer(trafficTileLayer);
-
-        // 3. 교통정보 타일 켜기/끄기 이벤트
-        const trafficTileBtn = document.getElementById("trafficTileBtn");
-        trafficTileBtn.addEventListener("click", function () {
-            const currentVisible = trafficTileLayer.getVisible();
-            trafficTileLayer.setVisible(!currentVisible);
-            trafficTileBtn.textContent = currentVisible ? "교통정보 레이어 켜기" : "교통정보 레이어 끄기";
-        });
-
-        // 4. 현재 지도의 바운딩 박스를 계산하여 백엔드로 요청
-        const fetchTrafficDataBtn = document.getElementById("fetchTrafficDataBtn");
-        fetchTrafficDataBtn.addEventListener("click", async function () {
-            const extent = map.getView().calculateExtent(map.getSize());
-            const minCoord = ol.proj.toLonLat([extent[0], extent[1]]);
-            const maxCoord = ol.proj.toLonLat([extent[2], extent[3]]);
-
-            const minX = minCoord[0].toFixed(4);
-            const minY = minCoord[1].toFixed(4);
-            const maxX = maxCoord[0].toFixed(4);
-            const maxY = maxCoord[1].toFixed(4);
-
-            alert(`현재 지도 영역의 교통정보를 수집합니다.\n경도: ${minX}~${maxX}\n위도: ${minY}~${maxY}`);
-
-            try {
-                const response = await fetch(`/traffic?min_x=${minX}&max_x=${maxX}&min_y=${minY}&max_y=${maxY}`);
-                if (!response.ok) throw new Error("데이터 조회 실패");
-
-                const result = await response.json();
-                const itemCount = result?.body?.items?.length || 0;
-                alert(`조회 완료! 수집된 구간 수: ${itemCount}건`);
-            } catch (err) {
-                alert("교통정보 조회 중 오류가 발생했습니다.");
-                console.error(err);
+    // 키가 없는 환경에서는 지도 SDK URL을 만들지 않습니다.
+    async function initializeKakaoMap() {
+        try {
+            const response = await fetch("/api/map/sdk-config", { cache: "no-store" });
+            if (!response.ok) throw new Error("카카오맵 설정 API에 연결할 수 없습니다.");
+            const config = await response.json();
+            if (config.provider !== "kakao" || typeof config.javascript_key !== "string" ||
+                !config.javascript_key.trim()) {
+                throw new Error("카카오맵 JavaScript 키가 설정되지 않았습니다.");
             }
-        });
-
-        // 5. 동네 이름으로 검색하여 지도 조회
-        const searchMapBtn = document.getElementById("searchMapBtn");
-        searchMapBtn.addEventListener("click", async function () {
-            const location = document.getElementById("mapSearchInput").value;
-            if (!location) {
-                alert("동네 이름을 입력해주세요.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`/traffic/search?location=${encodeURIComponent(location)}`);
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || "검색 실패");
+            const script = document.createElement("script");
+            script.src = "https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=" +
+                encodeURIComponent(config.javascript_key);
+            script.onload = function () {
+                if (!window.kakao || !kakao.maps) {
+                    showMapError("카카오맵 SDK를 사용할 수 없습니다. 키·도메인·사용 설정을 확인하세요.");
+                    return;
                 }
+                kakao.maps.load(function () {
+                    try {
+                        kakaoMap = new kakao.maps.Map(document.getElementById("map"), {
+                            center: new kakao.maps.LatLng(37.5665, 126.9780),
+                            level: 8
+                        });
+                        kakaoMap.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+                        mapReady = true;
+                        mapStatus.textContent = "카카오맵 지도 표시 중 · 한국어 지명과 도로명";
+                        recovery.hidden = true;
+                    } catch (error) {
+                        showMapError("카카오맵을 초기화하지 못했습니다. 기존 지도를 사용해 주세요.");
+                    }
+                });
+            };
+            script.onerror = function () {
+                showMapError("카카오맵 SDK 로딩 실패: 네트워크·SDK 도메인·쿼터를 확인해 주세요.");
+            };
+            document.head.appendChild(script);
+        } catch (error) {
+            showMapError("카카오맵 연결 오류: " + error.message);
+        }
+    }
 
-                const result = await response.json();
-                const itemCount = result?.body?.items?.length || 0;
-                alert(`'${location}' 주변 교통정보 조회가 완료되었습니다! (수집 건수: ${itemCount}건)`);
-            } catch (err) {
-                alert("오류: " + err.message);
+    function placeLatLng(place) {
+        const latitude = Number(place.latitude);
+        const longitude = Number(place.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+            latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            throw new Error("지도에 표시할 장소 좌표가 올바르지 않습니다.");
+        }
+        return new kakao.maps.LatLng(latitude, longitude);
+    }
+
+    function clearDisplayedRoute() {
+        displayedPolylines.forEach(function (line) { line.setMap(null); });
+        displayedMarkers.forEach(function (marker) { marker.setMap(null); });
+        displayedPolylines = [];
+        displayedMarkers = [];
+    }
+
+    function makeMarker(place, color, bounds) {
+        const position = placeLatLng(place);
+        // 색상과 텍스트가 있는 커스텀 SVG 마커로 출발·도착을 구분합니다.
+        const label = color === "#2563eb" ? "출발" : "도착";
+        const safeColor = color === "#2563eb" ? "#2563eb" : "#111827";
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="52">' +
+            '<circle cx="22" cy="21" r="19" fill="' + safeColor + '" stroke="white" stroke-width="3"/>' +
+            '<text x="22" y="25" text-anchor="middle" font-size="11" font-weight="bold" fill="white">' +
+            label + '</text><path d="M15 38 L22 49 L29 38" fill="' + safeColor + '"/></svg>';
+        const imageUrl = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+        const image = new kakao.maps.MarkerImage(
+            imageUrl, new kakao.maps.Size(44, 52), { offset: new kakao.maps.Point(22, 49) }
+        );
+        const marker = new kakao.maps.Marker({ map: kakaoMap, position: position, image: image });
+        displayedMarkers.push(marker);
+        bounds.extend(position);
+    }
+
+    function drawRoad(road, bounds) {
+        const vertexes = Array.isArray(road.vertexes) ? road.vertexes : [];
+        const path = [];
+        for (let index = 0; index + 1 < vertexes.length; index += 2) {
+            const longitude = Number(vertexes[index]);
+            const latitude = Number(vertexes[index + 1]);
+            if (Number.isFinite(longitude) && Number.isFinite(latitude) &&
+                latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+                const point = new kakao.maps.LatLng(latitude, longitude);
+                path.push(point);
+                bounds.extend(point);
             }
+        }
+        if (path.length < 2) return;
+        const polyline = new kakao.maps.Polyline({
+            map: kakaoMap,
+            path: path,
+            strokeWeight: 5,
+            strokeColor: roadColors[road.traffic_state] || "#64748b",
+            strokeOpacity: 0.9
         });
-    </script>
+        displayedPolylines.push(polyline);
+    }
 
+    function drawCurrentRoute(data) {
+        if (!mapReady) throw new Error("카카오맵 준비가 완료되지 않았습니다. 기존 지도 링크를 이용할 수 있습니다.");
+        if (!Array.isArray(data.roads) || !data.origin || !data.destination) {
+            throw new Error("경로 데이터가 올바르지 않습니다.");
+        }
+        // 먼저 새 결과를 검증한 뒤 기존 오버레이를 제거해 화면 누적을 방지합니다.
+        clearDisplayedRoute();
+        const bounds = new kakao.maps.LatLngBounds();
+        data.roads.forEach(function (road) { drawRoad(road, bounds); });
+        makeMarker(data.origin, "#2563eb", bounds);
+        makeMarker(data.destination, "#111827", bounds);
+        kakaoMap.setBounds(bounds);
+    }
+
+    initializeKakaoMap();
+
+    // F23: 뉴스 기사에서 넘어온 저장 경로를 현재 지도 조회와 구분해 표시합니다.
+    async function loadSavedArticleRouteFromUrl() {
+        const query = new URLSearchParams(window.location.search);
+        const articleIdText = query.get("article_id");
+        const routeIndexText = query.get("route_index");
+
+        // 직접 지도에 들어온 경우에는 기존 지도를 그대로 사용합니다.
+        if (articleIdText === null && routeIndexText === null) return;
+
+        const status = document.getElementById("mapArticleStatus");
+        const panel = document.getElementById("savedArticlePanel");
+        status.hidden = false;
+        panel.hidden = true;
+
+        if (!articleIdText || !routeIndexText ||
+            !/^[1-9][0-9]*$/.test(articleIdText) ||
+            !/^(0|[1-9][0-9]*)$/.test(routeIndexText) ||
+            !Number.isSafeInteger(Number(articleIdText)) ||
+            !Number.isSafeInteger(Number(routeIndexText))) {
+            status.textContent = "기사 주소의 ID 또는 경로 번호가 올바르지 않습니다. 아래에서 직접 경로를 검색할 수 있습니다.";
+            return;
+        }
+
+        const articleId = Number(articleIdText);
+        const routeIndex = Number(routeIndexText);
+        status.textContent = "기사에 저장된 경로 정보를 불러오는 중입니다.";
+
+        try {
+            const response = await fetch("/api/news/history/" + encodeURIComponent(String(articleId)));
+            const article = await response.json();
+            if (!response.ok) {
+                throw new Error(response.status === 404
+                    ? "해당 기사를 찾을 수 없습니다."
+                    : "기사 정보를 불러오지 못했습니다.");
+            }
+            if (!Array.isArray(article.routes) || routeIndex >= article.routes.length) {
+                throw new Error("기사에 해당 번호의 경로가 없습니다.");
+            }
+
+            const selectedRoute = article.routes[routeIndex];
+            if (typeof selectedRoute.start !== "string" ||
+                typeof selectedRoute.end !== "string" ||
+                selectedRoute.start.trim().length < 2 ||
+                selectedRoute.end.trim().length < 2 ||
+                selectedRoute.start.length > 100 ||
+                selectedRoute.end.length > 100) {
+                throw new Error("기사에 저장된 출발지 또는 목적지가 올바르지 않습니다.");
+            }
+
+            const retrievedAt = new Date(article.retrieved_at);
+            const retrievedText = Number.isNaN(retrievedAt.getTime())
+                ? "정보 없음"
+                : retrievedAt.toLocaleString("ko-KR", {timeZone: "Asia/Seoul"}) + " (KST)";
+            const distanceText = Number.isFinite(selectedRoute.distance_m) && selectedRoute.distance_m > 0
+                ? (selectedRoute.distance_m / 1000).toFixed(1) + "km" : "정보 없음";
+            const durationText = Number.isFinite(selectedRoute.duration_seconds) && selectedRoute.duration_seconds >= 0
+                ? (selectedRoute.duration_seconds / 60).toFixed(1) + "분" : "정보 없음";
+            const ratioText = Number.isFinite(selectedRoute.congestion_ratio)
+                ? selectedRoute.congestion_ratio.toFixed(1) + "%" : "정보 없음";
+
+            document.getElementById("savedArticleTitle").textContent = "기사 #" + articleId + "의 저장된 경로";
+            document.getElementById("savedArticleTime").textContent = "기사 교통정보 조회 완료: " + retrievedText;
+            document.getElementById("savedArticleRoute").textContent =
+                selectedRoute.start + " → " + selectedRoute.end;
+            document.getElementById("savedArticleMetrics").textContent =
+                "저장 거리 " + distanceText + " · 예상 소요시간 " + durationText +
+                " · 정체·지체 거리 비율 " + ratioText;
+            document.getElementById("origin").value = selectedRoute.start;
+            document.getElementById("destination").value = selectedRoute.end;
+            document.getElementById("mapRouteSubmit").textContent = "현재 경로 새로 조회";
+            document.getElementById("backToSavedArticle").href = "/news";
+            document.getElementById("result").textContent =
+                "과거 저장 경로를 확인했습니다. 현재 경로를 보려면 조회 버튼을 누르세요.";
+            panel.hidden = false;
+            status.hidden = true;
+            // 사용자가 버튼을 누르기 전에는 /api/route를 호출하지 않습니다.
+        } catch (error) {
+            status.textContent = "기사 연결 안내: " + error.message +
+                " 아래에서 직접 경로를 검색할 수 있습니다.";
+        }
+    }
+
+    loadSavedArticleRouteFromUrl();
+
+    document.getElementById("mapRouteForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const result = document.getElementById("result");
+        if (!mapReady) {
+            result.textContent = "지도 준비 중이거나 연결에 실패했습니다. 아래 기존 지도 링크를 이용하세요.";
+            recovery.hidden = false;
+            return;
+        }
+        const submitButton = document.getElementById("mapRouteSubmit");
+        submitButton.disabled = true;
+        result.textContent = "경로 조회 중...";
+        try {
+            const params = new URLSearchParams({
+                origin: document.getElementById("origin").value.trim(),
+                destination: document.getElementById("destination").value.trim()
+            });
+            const response = await fetch("/api/route?" + params.toString());
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(typeof data.detail === "string" ? data.detail : "조회 실패");
+            }
+            drawCurrentRoute(data);
+            const minutes = data.total_duration_seconds == null
+                ? "정보 없음" : (data.total_duration_seconds / 60).toFixed(1) + "분";
+            result.textContent = data.origin.name + " → " + data.destination.name + " | 예상 " + minutes;
+        } catch (error) {
+            result.textContent = "오류: " + error.message;
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+</script>
 </body>
 </html>

@@ -1,445 +1,391 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITS 실시간 교통정보</title>
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>서울 도로교통 브리핑 | 카카오 경로 조회</title>
     <style>
-        * {
-            box-sizing: border-box;
+        body { margin: 0; font-family: Arial, "Noto Sans KR", sans-serif; background: #f5f7fb; color: #172033; }
+        header { background: #182437; color: white; padding: 28px 22px; }
+        header h1 { margin: 0 0 8px; }
+        header p { margin: 0; color: #cbd5e1; }
+        main { max-width: 980px; margin: 28px auto; padding: 0 18px; }
+        section { background: white; padding: 22px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 3px 14px #1824370d; }
+        form { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+        label { display: block; font-weight: bold; margin-bottom: 7px; }
+        .field { flex: 1; min-width: 190px; }
+        input { box-sizing: border-box; padding: 12px; width: 100%; border: 1px solid #cbd5e1; border-radius: 7px; }
+        button, .link { padding: 12px 18px; border: none; border-radius: 7px; background: #2563eb; color: white; cursor: pointer; text-decoration: none; display: inline-block; }
+        .link { background: #047857; margin-top: 14px; }
+        #message { margin-top: 14px; color: #b42318; }
+        .muted { color: #64748b; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; }
+        .scroll { overflow-x: auto; }
+
+        /* D01-B 홈페이지 전용 레이아웃: 원래 조회/표/브리핑 DOM 보존 */
+        .home-hero { background: #13243b; padding: 44px 24px 46px; }
+        .home-hero-inner { max-width: 1180px; margin: 0 auto; }
+        .home-eyebrow { margin: 0 0 10px; color: #b4d9fb!important; font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+        .home-hero h1 { font-size: clamp(27px, 3vw, 38px); margin-bottom: 12px; letter-spacing: -.04em; }
+        .home-hero p { font-size: 15px; }
+        .home-main { max-width: 1180px; margin: 28px auto 52px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; align-items: stretch; }
+        .home-main > section { min-width: 0; margin: 0; padding: 28px; border: 1px solid #dee6f0; border-radius: 14px; box-shadow: 0 4px 18px #13243b0c; }
+        .home-main > section:first-child, .home-main > section:nth-child(n+4) { grid-column: 1 / -1; }
+        .home-main h2 { margin-top: 0; font-size: 23px; color: #17253a; letter-spacing: -.03em; }
+        .home-main h3 { line-height: 1.5; }
+        .home-main .home-search { border-top: 4px solid #2463eb; }
+        .home-main form { gap: 14px; }
+        .home-main .field { min-width: min(100%, 230px); }
+        .home-main input { min-height: 45px; font: inherit; border-color: #c8d5e5; border-radius: 8px; }
+        .home-main button, .home-main .link { min-height: 45px; box-sizing: border-box; border-radius: 8px; font-weight: 700; }
+        .home-main button { background: #2463eb; }
+        .home-main button:disabled { opacity: .65; cursor: wait; }
+        .home-main .link { background: #087e8b; }
+        .home-main #summary { font-size: 17px; line-height: 1.8; color: #17253a; word-break: keep-all; }
+        .home-main #briefingContent, .home-main #overviewBriefingText { white-space: pre-line; line-height: 1.8; }
+        .home-main table { font-size: 14px; }
+        .home-main th { color: #334155; }
+        .home-main .muted { color: #52647a; line-height: 1.7; }
+        @media (max-width: 850px) {
+            .home-main { grid-template-columns: minmax(0,1fr); gap: 16px; margin-top: 18px; }
+            .home-main > section, .home-main > section:first-child, .home-main > section:nth-child(n+4) { grid-column: 1; }
+            .home-hero { padding: 32px 22px; }
         }
-
-        body {
-            margin: 0;
-            font-family: Arial, "Noto Sans KR", sans-serif;
-            background-color: #f4f6f8;
-            color: #222;
-        }
-
-        header {
-            background-color: #1f2937;
-            color: white;
-            padding: 25px 20px;
-        }
-
-        .header-content {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-content h1 {
-            margin: 0 0 8px;
-            font-size: 28px;
-        }
-
-        .header-content p {
-            margin: 0;
-            color: #d1d5db;
-        }
-
-        .map-link-btn {
-            display: inline-block;
-            background-color: #059669;
-            color: white;
-            padding: 10px 18px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background-color 0.2s ease;
-        }
-
-        .map-link-btn:hover {
-            background-color: #047857;
-        }
-
-        main {
-            max-width: 1100px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .search-box {
-            background-color: white;
-            padding: 24px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            margin-bottom: 24px;
-        }
-
-        .search-box h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        .search-form {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr) auto;
-            gap: 12px;
-            align-items: end;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .input-group label {
-            margin-bottom: 6px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 11px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .search-button {
-            padding: 11px 20px;
-            border: none;
-            border-radius: 6px;
-            background-color: #2563eb;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .search-button:hover {
-            background-color: #1d4ed8;
-        }
-
-        .status-message {
-            display: none;
-            margin-top: 16px;
-            padding: 12px;
-            border-radius: 6px;
-            background-color: #eff6ff;
-            color: #1d4ed8;
-        }
-
-        .error-message {
-            display: none;
-            margin-top: 16px;
-            padding: 12px;
-            border-radius: 6px;
-            background-color: #fef2f2;
-            color: #dc2626;
-        }
-
-        .result-box {
-            background-color: white;
-            padding: 24px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .result-header h2 {
-            margin: 0;
-        }
-
-        .result-count {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .traffic-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .traffic-table th {
-            padding: 14px;
-            background-color: #f3f4f6;
-            border-bottom: 2px solid #d1d5db;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .traffic-table td {
-            padding: 14px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-        }
-
-        .traffic-table tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .traffic-good {
-            color: #16a34a;
-            font-weight: bold;
-        }
-
-        .traffic-normal {
-            color: #d97706;
-            font-weight: bold;
-        }
-
-        .traffic-slow {
-            color: #dc2626;
-            font-weight: bold;
-        }
-
-        .empty-message {
-            padding: 50px 20px;
-            text-align: center;
-            color: #6b7280;
-        }
-
-        @media (max-width: 800px) {
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-
-            .search-form {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .search-form {
-                grid-template-columns: 1fr;
-            }
-
-            .traffic-table {
-                font-size: 12px;
-            }
-
-            .traffic-table th,
-            .traffic-table td {
-                padding: 8px;
-            }
+        @media (max-width: 600px) {
+            .home-main { padding: 0 12px; }
+            .home-main > section { padding: 20px 16px; }
+            .home-main .field, .home-main form button { flex-basis: 100%; width: 100%; }
+            .home-main .link { display: block; text-align: center; }
+            .home-main th, .home-main td { white-space: nowrap; }
         }
     </style>
+    <link rel="stylesheet" href="/static/design-system.css">
+    <link rel="stylesheet" href="/static/navigation.css">
+    <link rel="stylesheet" href="/static/d02-journalism.css">
+    <link rel="stylesheet" href="/static/d03-urban-traffic.css">
+    <link rel="stylesheet" href="/static/favorites.css">
+    <script src="/static/favorites.js" defer></script>
+    <script src="/static/navigation.js" defer></script>
 </head>
-
 <body>
+    <nav id="sharedNavigation" aria-label="주요 메뉴"></nav>
+<header class="home-hero">
+    <div class="home-hero-inner">
+        <p class="home-eyebrow">SEOUL TRAFFIC BRIEFING</p>
+        <h1>교통정보와 뉴스를 함께 읽는<br>서울 도로교통 브리핑</h1>
+        <p class="d02-description">선택한 자동차 경로의 조회 시점 교통정보와 경로별 비교를 확인하세요. 저장된 분석 뉴스는 교통 뉴스 페이지에서 읽을 수 있습니다.</p>
+        <div class="d02-hero-actions"><a href="#routeForm">경로 교통정보 조회</a><a href="/news">저장된 교통 뉴스 읽기</a></div>
+    </div>
+</header>
+<main class="home-main">
+    <section class="home-search">
+        <h2>출발지와 목적지 검색</h2>
+        <form id="routeForm">
+            <div class="field"><label for="origin">출발지</label><input id="origin" value="서울역" required minlength="2"></div>
+            <div class="field"><label for="destination">목적지</label><input id="destination" value="잠실역" required minlength="2"></div>
+            <button id="submitButton" type="submit">경로 조회</button>
+        </form>
+<div id="favoriteRoutes" class="favorite-routes" aria-label="관심 경로 즐겨찾기">
+    <h3>관심 경로</h3>
+    <p class="favorite-note">자주 이용하는 출발지와 목적지를 이 브라우저에만 저장합니다. 다른 컴퓨터와 동기화되지 않습니다.</p>
+    <button type="button" id="saveFavoriteRoute">현재 입력 경로 저장</button>
+    <ul id="favoriteRouteList" class="favorite-list"></ul>
+    <p id="favoriteRouteStatus" class="favorite-status" role="status" aria-live="polite"></p>
+</div>
+        <p id="message" role="status"></p>
+        <a class="link" href="/map">지도에서 경로 보기</a>
+    </section>
+    <section>
+        <h2>경로 요약</h2>
+        <p id="summary" class="muted">조회 버튼을 눌러주세요.</p>
+        <p class="muted">※ 경로의 교통정보이며 서울 전체 교통 현황을 대표하지 않습니다.</p>
+    </section>
+    
+<section>
+    <h2>서울 교통 브리핑</h2>
 
-    <header>
-        <div class="header-content">
-            <div>
-                <h1>🚗 실시간 교통정보</h1>
-                <p>ITS 국가교통정보센터 API를 이용한 교통정보 조회 서비스</p>
-            </div>
-            <a href="/map" class="map-link-btn">🗺️ 실시간 교통 지도 보러가기</a>
-        </div>
-    </header>
+    <h3 id="briefingTitle">
+        경로를 조회하면 브리핑이 표시됩니다.
+    </h3>
 
-    <main>
+    <p id="briefingContent">
+        아직 생성된 교통 브리핑이 없습니다.
+    </p>
 
-        <!-- 1. 동네 이름 검색 영역 -->
-        <section class="search-box">
-            <h2>동네 이름으로 교통정보 조회</h2>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="locationInput" placeholder="예: 인사동, 종로구, 혜화동" style="flex: 1; padding: 11px; border: 1px solid #d1d5db; border-radius: 6px;">
-                <button type="button" class="search-button" onclick="searchTrafficByLocation()">동네 검색</button>
-            </div>
-        </section>
+    <p class="muted">
+        카카오 자동차 경로 정보를 바탕으로 작성된
+        데이터 기반 브리핑입니다.
+    </p>
+</section>
 
-        <!-- 2. 좌표 범위 검색 영역 -->
-        <section class="search-box">
-            <h2>좌표 범위로 조회</h2>
-
-            <div class="search-form">
-                <div class="input-group">
-                    <label for="minX">최소 경도</label>
-                    <input type="number" id="minX" value="126.8" step="0.001">
-                </div>
-
-                <div class="input-group">
-                    <label for="maxX">최대 경도</label>
-                    <input type="number" id="maxX" value="127.0" step="0.001">
-                </div>
-
-                <div class="input-group">
-                    <label for="minY">최소 위도</label>
-                    <input type="number" id="minY" value="37.4" step="0.001">
-                </div>
-
-                <div class="input-group">
-                    <label for="maxY">최대 위도</label>
-                    <input type="number" id="maxY" value="37.6" step="0.001">
-                </div>
-
-                <button type="button" class="search-button" onclick="searchTraffic()">조회</button>
-            </div>
-
-            <div id="statusMessage" class="status-message">
-                교통정보를 조회하고 있습니다...
-            </div>
-
-            <div id="errorMessage" class="error-message"></div>
-        </section>
-
-        <!-- 3. 결과 테이블 영역 -->
-        <section class="result-box">
-            <div class="result-header">
-                <h2>교통정보</h2>
-                <span id="resultCount" class="result-count">조회 결과 없음</span>
-            </div>
-
-            <table class="traffic-table">
-                <thead>
-                    <tr>
-                        <th>도로명</th>
-                        <th>현재 속도</th>
-                        <th>통행시간</th>
-                        <th>교통 상태</th>
-                        <th>업데이트</th>
-                    </tr>
-                </thead>
-                <tbody id="trafficTableBody">
-                    <tr>
-                        <td colspan="5" class="empty-message">
-                            조회 버튼을 눌러 교통정보를 확인하세요.
-                        </td>
-                    </tr>
-                </tbody>
+    <section>
+        <h2>도로 구간별 교통정보</h2>
+        <div class="scroll">
+            <table>
+                <thead><tr><th>도로명</th><th>구간 거리</th><th>통행속도</th><th>교통 상태</th></tr></thead>
+                <tbody id="roadRows"><tr><td colspan="4">조회 결과 없음</td></tr></tbody>
             </table>
-        </section>
+        </div>
+    </section>
+    
+<!-- 서울 주요 경로 종합 교통 브리핑 -->
+<section id="overviewSection">
+    <h2>서울 주요 경로 종합 교통 브리핑</h2>
 
-    </main>
+    <p class="muted">
+        서울 주요 이동 경로 3곳의 교통 상황을 비교합니다.
+    </p>
 
-    <script>
-        const API_URL = "/traffic";
+    <button
+        type="button"
+        id="overviewButton"
+        onclick="loadOverviewBriefing()"
+    >
+        서울 주요 경로 종합 조회
+    </button>
 
-        // 동네 이름 검색 함수
-        async function searchTrafficByLocation() {
-            const location = document.getElementById("locationInput").value;
-            if (!location) {
-                alert("검색할 동네 이름을 입력하세요.");
-                return;
+    <p id="overviewMessage" role="status"></p>
+
+    <h3>경로별 교통 현황</h3>
+
+    <div class="scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>이동 경로</th>
+                    <th>거리</th>
+                    <th>예상 시간</th>
+                    <th>정체·지체 구간</th>
+                    <th>정체·지체 거리 비율</th>
+                </tr>
+            </thead>
+
+            <tbody id="overviewTableBody">
+                <tr>
+                    <td colspan="5">
+                        조회 버튼을 눌러주세요.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>종합 교통 브리핑</h3>
+
+    <p
+        id="overviewBriefingText"
+        style="white-space: pre-line; line-height: 1.8;"
+    >
+        아직 생성된 종합 브리핑이 없습니다.
+    </p>
+
+    <p id="overviewScopeNotice" class="muted"></p>
+</section>
+<section id="helpSection" class="service-help" aria-labelledby="helpTitle">
+    <h2 id="helpTitle">이용 안내·FAQ</h2>
+    <p class="muted">조회되는 수치는 선택한 자동차 경로와 조회 시점을 기준으로 합니다. 서울 전체 교통 현황이나 미래 교통량 예측은 아닙니다.</p>
+    <details><summary>자동차 경로는 어떻게 확인하나요?</summary><p>출발지와 목적지를 입력하고 '경로 조회'를 누르세요. 지도가 필요하면 '지도에서 경로 보기'를 이용하세요.</p></details>
+    <details><summary>관심 경로는 어디에 저장되나요?</summary><p>이 브라우저의 로컬 저장소에 보관됩니다. 다른 기기와 자동으로 동기화되지 않으며, 저장한 경로를 불러와도 자동 조회되지는 않습니다.</p></details>
+    <details><summary>뉴스와 교통정보는 실시간인가요?</summary><p>경로 조회는 버튼을 누른 시점의 응답입니다. 저장된 뉴스에는 작성 당시 조회 시각과 경로 기록이 표시되므로 현재 교통 상황과 다를 수 있습니다.</p></details>
+    <details><summary>교통정보가 표시되지 않으면?</summary><p>잠시 후 수동으로 다시 조회해 주세요. 카카오 API의 이용 제한이나 일시적 연결 오류가 발생할 수 있습니다. 지도는 기존 지도 열기 링크도 제공합니다.</p></details>
+</section>
+<section class="d02-home-news" aria-label="저장된 교통 뉴스 안내"><h2>교통 데이터로 읽는 뉴스</h2><p class="muted">저장된 경로 분석 기사에서 조회 시각과 수치를 확인하고, 해당 경로를 지도에서 다시 조회할 수 있습니다. 과거 기사 수치와 현재 경로 결과는 다를 수 있습니다.</p><a href="/news#historySection">저장된 교통 뉴스 바로가기 →</a></section>
+</main>
+<script>
+    const routeForm = document.getElementById("routeForm");
+    const message = document.getElementById("message");
+    const summary = document.getElementById("summary");
+    const roadRows = document.getElementById("roadRows");
+    const submitButton = document.getElementById("submitButton");
+    const briefingTitle = document.getElementById("briefingTitle");
+    const briefingContent = document.getElementById("briefingContent");
+
+    function displayNumber(value, unit) {
+        return value === null || value === undefined ? "정보 없음" : value + " " + unit;
+    }
+
+    routeForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        message.textContent = "카카오 교통정보를 조회하고 있습니다.";
+        submitButton.disabled = true;
+        try {
+            const origin = document.getElementById("origin").value.trim();
+            const destination = document.getElementById("destination").value.trim();
+            const parameters = new URLSearchParams({ origin: origin, destination: destination });
+            const response = await fetch("/api/route?" + parameters.toString());
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(typeof data.detail === "string" ? data.detail : "경로 조회 실패");
             }
-
-            const statusMessage = document.getElementById("statusMessage");
-            const errorMessage = document.getElementById("errorMessage");
-
-            errorMessage.style.display = "none";
-            statusMessage.style.display = "block";
-
-            try {
-                const requestUrl = `/traffic/search?location=${encodeURIComponent(location)}`;
-                const response = await fetch(requestUrl);
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.detail || "교통정보를 가져오지 못했습니다.");
-                }
-
-                const trafficData = await response.json();
-                displayTrafficData(trafficData);
-
-            } catch (error) {
-                errorMessage.textContent = "오류가 발생했습니다: " + error.message;
-                errorMessage.style.display = "block";
-            } finally {
-                statusMessage.style.display = "none";
-            }
-        }
-
-        // 좌표 범위 검색 함수
-        async function searchTraffic() {
-            const minX = document.getElementById("minX").value;
-            const maxX = document.getElementById("maxX").value;
-            const minY = document.getElementById("minY").value;
-            const maxY = document.getElementById("maxY").value;
-
-            const statusMessage = document.getElementById("statusMessage");
-            const errorMessage = document.getElementById("errorMessage");
-
-            errorMessage.style.display = "none";
-            statusMessage.style.display = "block";
-
-            try {
-                const requestUrl = `${API_URL}?min_x=${minX}&max_x=${maxX}&min_y=${minY}&max_y=${maxY}`;
-                const response = await fetch(requestUrl);
-
-                if (!response.ok) {
-                    throw new Error("교통정보를 가져오지 못했습니다.");
-                }
-
-                const trafficData = await response.json();
-                displayTrafficData(trafficData);
-
-            } catch (error) {
-                errorMessage.textContent = "오류가 발생했습니다: " + error.message;
-                errorMessage.style.display = "block";
-            } finally {
-                statusMessage.style.display = "none";
-            }
-        }
-
-        // 교통 데이터 화면 출력 함수
-        function displayTrafficData(trafficData) {
-            const tableBody = document.getElementById("trafficTableBody");
-            const resultCount = document.getElementById("resultCount");
-
-            if (!trafficData.body || !trafficData.body.items) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="empty-message">조회된 교통정보가 없습니다.</td></tr>`;
-                resultCount.textContent = "조회 결과 없음";
-                return;
-            }
-
-            const trafficItems = trafficData.body.items;
-            const displayItems = trafficItems.slice(0, 50);
-
-            tableBody.innerHTML = "";
-            resultCount.textContent = `전체 ${trafficItems.length}건 중 ${displayItems.length}건 표시`;
-
-            displayItems.forEach(function (trafficItem) {
+            const distance = data.total_distance_m === null ? "정보 없음" : (data.total_distance_m / 1000).toFixed(2) + " km";
+            const duration = data.total_duration_seconds === null ? "정보 없음" : (data.total_duration_seconds / 60).toFixed(1) + " 분";
+            summary.textContent = data.origin.name + " → " + data.destination.name + " | 거리: " + distance + " | 예상 시간: " + duration;
+            roadRows.replaceChildren();
+            data.roads.forEach(function (road) {
                 const row = document.createElement("tr");
-
-                const roadName = trafficItem.roadName || "-";
-                const speed = Number(trafficItem.speed || 0);
-                const travelTime = trafficItem.travelTime || "-";
-                const createdDate = trafficItem.createdDate || "-";
-
-                let trafficStatus = "";
-                let statusClass = "";
-
-                if (speed >= 60) {
-                    trafficStatus = "원활";
-                    statusClass = "traffic-good";
-                } else if (speed >= 30) {
-                    trafficStatus = "서행";
-                    statusClass = "traffic-normal";
-                } else {
-                    trafficStatus = "정체";
-                    statusClass = "traffic-slow";
-                }
-
-                row.innerHTML = `
-                    <td>${roadName}</td>
-                    <td>${speed} km/h</td>
-                    <td>${travelTime}분</td>
-                    <td class="${statusClass}">${trafficStatus}</td>
-                    <td>${createdDate}</td>
-                `;
-
-                tableBody.appendChild(row);
+                const values = [
+                    road.name,
+                    displayNumber(road.distance_m, "m"),
+                    displayNumber(road.traffic_speed_kmh, "km/h"),
+                    road.traffic_status || "정보 없음"
+                ];
+                values.forEach(function (value) {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                roadRows.appendChild(row);
             });
+            if (data.roads.length === 0) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.colSpan = 4;
+                cell.textContent = "세부 구간 정보가 제공되지 않았습니다.";
+                row.appendChild(cell);
+                roadRows.appendChild(row);
+            }
+            
+if (data.briefing) {
+    briefingTitle.textContent = data.briefing.title;
+    briefingContent.textContent = data.briefing.content;
+}
+
+            message.textContent = "";
+        } catch (error) {
+            message.textContent = "오류: " + error.message;
+        } finally {
+            submitButton.disabled = false;
         }
-    </script>
+    });
+    
+async function loadOverviewBriefing() {
 
+    const overviewButton = document.getElementById(
+        "overviewButton"
+    );
+
+    const overviewMessage = document.getElementById(
+        "overviewMessage"
+    );
+
+    const overviewTableBody = document.getElementById(
+        "overviewTableBody"
+    );
+
+    const overviewBriefingText = document.getElementById(
+        "overviewBriefingText"
+    );
+
+    const overviewScopeNotice = document.getElementById(
+        "overviewScopeNotice"
+    );
+
+    // 중복 조회 방지
+    overviewButton.disabled = true;
+    overviewMessage.textContent = "서울 주요 경로를 조회하고 있습니다.";
+
+    try {
+
+        // 1. FastAPI에서 종합 교통정보 가져오기
+        const response = await fetch(
+            "/api/briefing/overview"
+        );
+
+        const overviewData = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                typeof overviewData.detail === "string"
+                    ? overviewData.detail
+                    : "종합 교통정보를 가져오지 못했습니다."
+            );
+        }
+
+        // 2. 기존 표 내용 지우기
+        overviewTableBody.replaceChildren();
+
+        // 3. 경로별 교통정보를 표에 추가
+        overviewData.routes.forEach(function (route) {
+
+            const routeRow = document.createElement("tr");
+
+            const routeName = route.start + " → " + route.end;
+
+            let distanceText = "정보 없음";
+            let durationText = "정보 없음";
+            let congestionRatioText = "정보 없음";
+
+            if (route.distance_m != null) {
+                distanceText = (
+                    route.distance_m / 1000
+                ).toFixed(2) + " km";
+            }
+
+            if (route.duration_seconds != null) {
+                durationText = (
+                    route.duration_seconds / 60
+                ).toFixed(1) + " 분";
+            }
+
+            if (route.distance_m > 0) {
+                const congestionRatio = (
+                    route.congested_distance_m /
+                    route.distance_m
+                ) * 100;
+
+                congestionRatioText =
+                    congestionRatio.toFixed(1) + "%";
+            }
+
+            const cellValues = [
+                routeName,
+                distanceText,
+                durationText,
+                route.congested_count + "개",
+                congestionRatioText
+            ];
+
+            cellValues.forEach(function (value) {
+
+                const tableCell = document.createElement("td");
+
+                tableCell.textContent = value;
+
+                routeRow.appendChild(tableCell);
+
+            });
+
+            overviewTableBody.appendChild(routeRow);
+
+        });
+
+        // 4. 종합 브리핑 문장 표시
+        overviewBriefingText.textContent =
+            overviewData.briefing;
+
+        // 5. 분석 범위 안내
+        overviewScopeNotice.textContent =
+            overviewData.scope_notice || "";
+
+        overviewMessage.textContent =
+            "조회 완료: " +
+            overviewData.analyzed_route_count +
+            "개 경로 분석";
+
+    } catch (error) {
+
+        overviewMessage.textContent =
+            "오류가 발생했습니다: " + error.message;
+
+    } finally {
+
+        overviewButton.disabled = false;
+
+    }
+}
+</script>
+<footer class="d03-photo-credit">상단 교통 사진: <a href="https://commons.wikimedia.org/wiki/File:Gangnam_traffic.jpg" target="_blank" rel="noopener noreferrer">kallerna · Wikimedia Commons</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>, 어두운 오버레이·화면에 맞게 잘라 사용). 장식용 과거 사진이며 실시간 교통 상황이 아닙니다.</footer>
 </body>
-
 </html>
