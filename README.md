@@ -2271,3 +2271,11 @@ git pull origin kakao
 - `traffic-api/tests/test_navigation.py`에 `test_d02_map_news_admin_layout_refinement` 정적 회귀 1개를 추가(커밋 `461e656`). 기존 67개 + 1개로 **68개 자동 테스트 예상**. 새 테스트는 CSS 선택자·HTML 핵심 ID를 검사하며 **Windows에서 아직 재실행되지 않았으므로 68개 합격이라고 표시하지 않음**.
 - **남은 검증:** 사용자 Windows `git pull origin kakao` → `unittest discover` 전체 실행 → Chrome `/map` 지도 타일/길찾기/저장 기사 경로, `/news` 검색·기사 #11·CSV/차트, `/admin` 로그인 전후/초안/저장 버튼·Console/320/390/768px. 실제 저장을 다시 누르지 말고 기존 저장 데이터만 조회. 사용자 스크린샷을 받은 뒤 디자인과 간격·반응형 문제는 필요 시 추가 보완.
 - 앞선 생성 이미지의 '실시간 모든 도로 상황', 속도·기상·사고·AI 편집·교통 예측·다양한 대체 경로 등 미구현 기능은 여전히 구현하지 않음.
+
+### 16.10 D02 Windows 전체 68개 자동 테스트 통과 (2026-10-20)
+
+- 사용자 Windows PowerShell `C:\workspace\traffic_app_domain\traffic-api`의 `.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v` 실제 실행 로그 확인: **`Ran 68 tests in 0.486s`, `OK`**. 총 68개 성공, 실패·오류 0개.
+- 신규 D02 `test_d02_map_news_admin_layout_refinement`과 기존 `test_d02_shared_styles_and_legacy_function_ids`이 모두 `ok`. 지도 JS 닫힘·뉴스 API 필터/CSV·관리자 서명/권한 및 F19-A 캐시 테스트도 `ok`.
+- 예외 처리 테스트의 `RuntimeError: test DB error`, `private DB detail`, `secret DB`, 카카오 API `502` 메시지는 mock 의도된 오류이며 각각 `ok`. `StarletteDeprecationWarning`은 비치명적 경고.
+- **검증 구분:** 이 결과는 사용자 Windows 자동 테스트 합격 기록이며, `/map`, `/news`, `/admin`의 실제 Chrome 레이아웃·지도 타일·저장 기사 조회·관리자 UI를 이번 변경 후 브라우저에서 검사한 것은 아님. 저장 기사 #11/DB/관리자 인증은 미변경.
+- 다음 단계: Chrome `/map` 강력 새로고침 후 지도 및 '경로 표시' 기능·Console 확인, 이어서 `/news` 저장 기사 검색/상세와 `/admin` 로그인 전후를 실제 브라우저에서 순차 확인.
