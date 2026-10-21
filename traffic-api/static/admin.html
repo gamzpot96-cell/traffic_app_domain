@@ -600,6 +600,7 @@
                         throw new Error(data.detail || "기사 생성에 실패했습니다.");
                     }
                     pendingDraftToken = data.draft_token;
+                    console.log("생성된 data.news:", data.news);
                     showDraft(data.news);
                     saveButton.disabled = false;
                     status.textContent = "미리보기 확인 후 저장하세요. 저장 가능 시간: 약 "
