@@ -11,7 +11,6 @@
 | 장소 검색·좌표 정보 | [Kakao Local API](https://developers.kakao.com/docs/latest/ko/local/dev-guide) | 카카오 플랫폼 정책 적용; **수집 좌표의 저장·재배포 조건은 확인 필요** |
 | 웹 지도 | [Kakao Maps JavaScript SDK](https://apis.map.kakao.com/web/guide/) | 카카오 지도 서비스 및 플랫폼 정책 적용; **지도 이미지·타일의 별도 재사용 조건은 확인 필요** |
 | 기본 지도 데이터 | [OpenStreetMap](https://www.openstreetmap.org/copyright) | **ODbL 1.0** — © OpenStreetMap contributors 출처 표시 및 해당 데이터 라이선스 준수 |
-| 선택적 고해상도 지도 타일 | [CARTO Basemaps](https://carto.com/attribution/) | 지도에 **© OpenStreetMap contributors, © CARTO** 표시; CARTO 서비스 이용 조건·사용량 제한 준수 |
 | 상단 교통 사진 `Gangnam traffic.jpg` | [kallerna / Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Gangnam_traffic.jpg) | **CC BY-SA 4.0** — 저작자·라이선스·출처 표시, 수정 시 변경 내용 표시, 수정본 공유 시 동일계열 라이선스 적용 |
 | AI 기사 생성에 사용하는 모델 서비스 | [OpenAI API](https://openai.com/policies/) | OpenAI 서비스 이용 조건 적용; **생성 결과의 공개·재사용에 관한 구체적 적용 조건은 확인 필요** |
 
