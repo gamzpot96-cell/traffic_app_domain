@@ -7,14 +7,14 @@
 | 자료 | 출처 | 이용 조건 |
 |---|---|---|
 | 프로젝트 소스코드 | 이 저장소의 [LICENSE](LICENSE) | **MIT** — 저작권 표시와 라이선스 고지 유지 |
-| 자동차 길찾기·교통 분석 원천 데이터 | [카카오모빌리티 Directions API](https://developers.kakaomobility.com/en/guide/navi-api/start) | 서비스별 API 이용 약관·쿼터 준수; **응답 데이터의 재배포·2차 사용 조건은 확인 필요** |
-| 장소 검색·좌표 정보 | [Kakao Local API](https://developers.kakao.com/docs/latest/ko/local/dev-guide) | 카카오 플랫폼 정책 적용; **수집 좌표의 저장·재배포 조건은 확인 필요** |
-| 웹 지도 | [Kakao Maps JavaScript SDK](https://apis.map.kakao.com/web/guide/) | 카카오 지도 서비스 및 플랫폼 정책 적용; **지도 이미지·타일의 별도 재사용 조건은 확인 필요** |
+| 자동차 길찾기·교통 분석 원천 데이터 | [카카오모빌리티 Directions API](https://developers.kakaomobility.com/en/guide/navi-api/start) · [요금·한도](https://developers.kakaomobility.com/en/price/) | 등록된 앱의 REST API 키로 경로·예상 소요시간 등을 서비스에 활용할 수 있으며 이용량·요금 기준을 준수해야 함. **원본 응답의 독립적인 재판매·일괄 재배포나 외부 AI 전송·뉴스 공개까지 포괄 허가한 것으로 해석하지 않음** |
+| 장소 검색·좌표 정보 | [Kakao Local API](https://developers.kakao.com/docs/ko/local/dev-guide) · [서비스 약관](https://developers.kakao.com/terms/ko/site-terms) | 등록 앱의 REST API 키로 장소명·좌표 등을 조회하는 기능. 서비스 약관과 운영정책 및 쿼터 준수, 무단 수집·제3자 제공·권리 침해 금지. **조회 결과의 무제한 저장·독립 재배포 권한을 부여하는 라이선스가 아님** |
+| 웹 지도 | [Kakao Maps JavaScript SDK](https://apis.map.kakao.com/web/guide/) · [운영정책](https://developers.kakao.com/terms/ko/site-policies) | JavaScript 키 발급과 허용 도메인 등록 후 SDK를 통해 지도 표시. 서비스 약관·운영정책 준수. **지도 타일·이미지의 별도 추출·복제·재배포 허가로 간주하지 않음** |
 | 기본 지도 데이터 | [OpenStreetMap](https://www.openstreetmap.org/copyright) | **ODbL 1.0** — © OpenStreetMap contributors 출처 표시 및 해당 데이터 라이선스 준수 |
 | 상단 교통 사진 `Gangnam traffic.jpg` | [kallerna / Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Gangnam_traffic.jpg) | **CC BY-SA 4.0** — 저작자·라이선스·출처 표시, 수정 시 변경 내용 표시, 수정본 공유 시 동일계열 라이선스 적용 |
-| AI 기사 생성에 사용하는 모델 서비스 | [OpenAI API](https://openai.com/policies/) | OpenAI 서비스 이용 조건 적용; **생성 결과의 공개·재사용에 관한 구체적 적용 조건은 확인 필요** |
+| AI 기사 생성에 사용하는 모델 서비스 | [OpenAI API](https://openai.com/ko-KR/policies/services-agreement/) · [서비스 약관](https://openai.com/ko-KR/policies/service-terms/) | 적용 법률 범위에서 고객은 출력물에 대한 권리를 보유하지만, 입력 자료에 필요한 사용 권한을 확보해야 하고 결과의 적법성·정확성·공개 적절성을 직접 검토해야 함. **제3자 원천 데이터의 이용 허가를 대신하지 않음** |
 
-**유의:** 카카오 API로 조회한 경로별 예상 소요시간은 조회 시점의 API 예상값이며, 서울 전체 교통상황이나 별도의 독립 관측 자료를 뜻하지 않습니다. 외부 자료의 사용 범위와 라이선스는 제공자 정책 변경에 따라 다시 확인해야 합니다.
+**유의:** 카카오 API로 조회한 경로별 예상 소요시간은 조회 시점의 API 예상값이며, 서울 전체 교통상황이나 별도의 독립 관측 자료를 뜻하지 않습니다. **공식 문서에서 확인한 SDK·API의 일반적인 사용 방법은 응답 데이터의 영구 저장·외부 AI 서비스 전송·기사 공개·제3자 재배포에 대한 개별 허가를 의미하지 않습니다.** 이러한 이용의 구체적인 허용 범위는 해당 제공자의 계약·승인 내용에 따라 달라질 수 있으므로, 별도 허가가 필요한 경우 제공자에게 직접 문의해야 합니다. 이 절의 확인 기준: 2026-10-22.
 
 
 
