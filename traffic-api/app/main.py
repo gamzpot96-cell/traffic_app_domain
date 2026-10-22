@@ -23,8 +23,6 @@ from app.traffic_export import get_export_route_options, get_export_rows, get_ro
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from app.its_routes import router as its_router
-
 from app.kakao_api import (
     KakaoApiError,
     find_place,
@@ -62,14 +60,6 @@ app = FastAPI(
 # 공통 메뉴 CSS/JavaScript 등 정적 자산을 로컬에서도 제공합니다.
 # 기존 페이지와 /api 경로는 변경하지 않습니다.
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
-
-
-app.include_router(its_router)
-
-# 기존 ITS 독립 페이지
-@app.get("/its")
-async def its_page():
-    return FileResponse(ROOT / "static" / "its.html")
 
 
 # 메인 페이지

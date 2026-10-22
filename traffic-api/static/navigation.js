@@ -35,12 +35,6 @@
             ]
         },
         {
-            name: "ITS 교통정보",
-            items: [
-                {name: "ITS 교통정보 지도", href: "/its"}
-            ]
-        },
-        {
             name: "관리자·운영",
             items: [
                 {name: "기사 생성·검토·저장", href: "/admin"},
