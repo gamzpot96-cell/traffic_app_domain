@@ -9,7 +9,7 @@ FastAPI 기반의 자동차 경로 조회·교통정보 분석·뉴스 브리핑
 | 자료 | 출처 | 이용 조건 |
 |---|---|---|
 | 프로젝트 소스코드 | 이 저장소의 [LICENSE](LICENSE) | **MIT** — 저작권 표시와 라이선스 고지 유지 |
-| 자동차 길찾기·교통 분석 원천 데이터 | [카카오모빌리티 Directions API](https://developers.kakaomobility.com/en/guide/navi-api/start) · [요금·한도](https://developers.kakaomobility.com/en/price/) | 등록된 앱의 REST API 키로 경로·예상 소요시간 등을 서비스에 활용할 수 있으며 이용량·요금 기준을 준수해야 함. **원본 응답의 독립적인 재판매·일괄 재배포나 외부 AI 전송·뉴스 공개까지 포괄 허가한 것으로 해석하지 않음** |
+| 자동차 길찾기·교통 분석 원천 데이터 | [카카오모빌리티 Directions API](https://developers.kakaomobility.com/guide/navi-api/start) · [요금·한도](https://developers.kakaomobility.com/en/price/) | 등록된 앱의 REST API 키로 경로·예상 소요시간 등을 서비스에 활용할 수 있으며 이용량·요금 기준을 준수해야 함. **원본 응답의 독립적인 재판매·일괄 재배포나 외부 AI 전송·뉴스 공개까지 포괄 허가한 것으로 해석하지 않음** |
 | 장소 검색·좌표 정보 | [Kakao Local API](https://developers.kakao.com/docs/ko/local/dev-guide) · [서비스 약관](https://developers.kakao.com/terms/ko/site-terms) | 등록 앱의 REST API 키로 장소명·좌표 등을 조회하는 기능. 서비스 약관과 운영정책 및 쿼터 준수, 무단 수집·제3자 제공·권리 침해 금지. **조회 결과의 무제한 저장·독립 재배포 권한을 부여하는 라이선스가 아님** |
 | 웹 지도 | [Kakao Maps JavaScript SDK](https://apis.map.kakao.com/web/guide/) · [운영정책](https://developers.kakao.com/terms/ko/site-policies) | JavaScript 키 발급과 허용 도메인 등록 후 SDK를 통해 지도 표시. 서비스 약관·운영정책 준수. **지도 타일·이미지의 별도 추출·복제·재배포 허가로 간주하지 않음** |
 | 기본 지도 데이터 | [OpenStreetMap](https://www.openstreetmap.org/copyright) | **ODbL 1.0** — © OpenStreetMap contributors 출처 표시 및 해당 데이터 라이선스 준수 |
