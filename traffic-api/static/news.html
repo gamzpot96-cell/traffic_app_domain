@@ -511,6 +511,16 @@ body { background: #f3f6fa; color: #17253a; }
                 <button type="button" id="copyNewsLink">기사·뉴스 링크 복사</button>
                 <p id="readingToolsStatus" class="small-note" role="status" aria-live="polite">저장된 기사를 읽거나 현재 뉴스 페이지 주소를 공유할 수 있습니다.</p>
             </div>
+            <section id="articleTransparency" aria-label="기사 투명성 정보" hidden>
+                <h2>기사 투명성 정보</h2>
+                <p id="articleAuthor"></p>
+                <p id="articleCreatedAt"></p>
+                <p id="articleAiDisclosure"></p>
+                <h3>문단별 출처</h3>
+                <div id="articleParagraphSources"></div>
+                <h3>정정 기록</h3>
+                <p id="articleCorrections">없음</p>
+            </section>
             <div id="newsBody" class="article-body"></div>
 
             <p class="notice" id="newsNotice"></p>
@@ -1185,6 +1195,46 @@ document.getElementById("trafficExportForm").addEventListener("submit", async fu
 
 loadTrafficExportRoutes();
 
+// 기사별 실제 DB 메타데이터만 표시합니다. 원문 개별 요청 URL은 DB에 저장되지 않습니다.
+function displayArticleTransparency(article) {
+    const section = document.getElementById("articleTransparency");
+    section.hidden = !article;
+    if (!article) return;
+
+    document.getElementById("articleAuthor").textContent =
+        "작성 주체: 교통정보 뉴스룸 (개별 작성자 기록 없음)";
+    const createdAt = article.created_at ? new Date(article.created_at) : null;
+    const validDate = createdAt && !Number.isNaN(createdAt.getTime());
+    document.getElementById("articleCreatedAt").textContent =
+        "작성일: " + (validDate ? createdAt.toLocaleString("ko-KR", {
+            timeZone: "Asia/Seoul", year: "numeric", month: "2-digit",
+            day: "2-digit", hour: "2-digit", minute: "2-digit",
+            hour12: false
+        }) + " (KST)" : "기록 없음");
+
+    document.getElementById("articleAiDisclosure").textContent =
+        "AI 사용 표시: 현재 관리자 기사 생성 기능은 OpenAI를 사용합니다. " +
+        "이 기사의 개별 AI 사용 여부는 DB에 별도로 기록되지 않았습니다.";
+
+    const sourceBox = document.getElementById("articleParagraphSources");
+    sourceBox.replaceChildren();
+    const paragraphs = String(article.body || "").split(/\n\s*\n/).filter(text => text.trim());
+    paragraphs.forEach(function (_paragraph, index) {
+        const row = document.createElement("p");
+        row.appendChild(document.createTextNode("본문 " + (index + 1) + "문단 참고 API: "));
+        const link = document.createElement("a");
+        link.href = "https://developers.kakaomobility.com/guide/navi-api/start";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "카카오모빌리티 자동차 길찾기 공식 안내";
+        row.appendChild(link);
+        row.appendChild(document.createTextNode(" (개별 API 응답의 영구 링크는 제공되지 않음)"));
+        sourceBox.appendChild(row);
+    });
+    document.getElementById("articleCorrections").textContent =
+        "없음 (기사별 정정 이력 기록 기능은 연결되지 않음)";
+}
+
 // 선택한 과거 뉴스 상세 조회
 async function loadSavedNews(articleId) {
     shareableSavedArticleId = null;
@@ -1195,6 +1245,7 @@ async function loadSavedNews(articleId) {
         "저장된 기사 #" + articleId + "을 불러오는 중입니다.";
     // 새 기사 전환 중 이전 기사의 경로 링크가 남지 않도록 초기화합니다.
     displaySavedArticleRouteLinks(null);
+    displayArticleTransparency(null);
 
     try {
 
@@ -1213,6 +1264,7 @@ async function loadSavedNews(articleId) {
         }
 
         shareableSavedArticleId = article.id;
+        displayArticleTransparency(article);
         // 기존 뉴스 기사 영역에 저장된 기사 표시
         document.getElementById("newsTitle").textContent =
             article.title;
