@@ -46,6 +46,92 @@ FastAPI 기반의 자동차 경로 조회·교통정보 분석·뉴스 브리핑
 
 새 기사는 검토 상태로 저장되며 관리자 발행 절차를 거치기 전에는 공개하지 않습니다. 기존 기사와 DB 데이터는 별도로 삭제하거나 변경하지 않았습니다.
 
+### ERD — Supabase PostgreSQL
+
+아래 ERD는 운영 DB의 `public` 스키마를 **읽기 전용으로 조회하여 실제 테이블·컬럼 및 외래키 관계를 확인한 구조**입니다. 데이터 조회 및 문서 수정만 수행했으며 DB 구조·데이터는 변경하지 않았습니다. 표시한 관계는 DB 외래키 제약조건 기준입니다.
+
+```mermaid
+erDiagram
+    traffic_news_articles ||--o{ traffic_route_snapshots : "article_id"
+    traffic_news_articles ||--o| traffic_article_publication : "article_id"
+    traffic_news_articles ||--o{ traffic_article_publication_events : "article_id"
+    traffic_collection_runs ||--o{ traffic_observations : "run_id"
+    traffic_collection_runs ||--o{ traffic_operational_events : "run_id"
+
+    traffic_news_articles {
+        bigint id PK
+        text title
+        text lead
+        text body
+        text scope_notice
+        int analyzed_route_count
+        timestamptz retrieved_at
+        timestamptz created_at
+        uuid generation_id
+    }
+
+    traffic_route_snapshots {
+        bigint id PK
+        bigint article_id FK
+        text start_place
+        text end_place
+        int distance_m
+        int duration_seconds
+        int congested_distance_m
+        numeric congestion_ratio
+        timestamptz retrieved_at
+    }
+
+    traffic_article_publication {
+        bigint article_id PK,FK
+        text status
+        timestamptz changed_at
+        text changed_by
+    }
+
+    traffic_article_publication_events {
+        bigint id PK
+        bigint article_id FK
+        text old_status
+        text new_status
+        timestamptz changed_at
+        text changed_by
+    }
+
+    traffic_collection_runs {
+        uuid id PK
+        timestamptz scheduled_for
+        timestamptz started_at
+        timestamptz finished_at
+        text outcome
+    }
+
+    traffic_observations {
+        bigint id PK
+        uuid run_id FK
+        text origin
+        text destination
+        int distance_m
+        int duration_seconds
+        numeric congestion_ratio
+        timestamptz retrieved_at
+    }
+
+    traffic_operational_events {
+        bigint id PK
+        uuid run_id FK
+        timestamptz event_time
+        text source
+        text event_type
+        text outcome
+        text safe_error_code
+    }
+```
+
+- **기사·경로:** 기사 한 건에 경로 스냅샷 여러 건이 연결됩니다. 기사 공개 상태는 별도 테이블로, 상태 변경 이력은 이벤트 테이블로 관리합니다.
+- **수집·운영:** 수집 실행 한 건에 경로 관측값 여러 건이 연결되며, 운영 이벤트의 `run_id`는 NULL일 수도 있습니다.
+- **표시 범위:** 핵심 컬럼 위주로 표시했습니다. OpenAI 초안 생성 자체를 별도 DB 테이블로 표현하지 않았으며, 다른 서비스 관리용 스키마는 포함하지 않았습니다.
+
 ## 주요 화면 및 API
 
 | 경로 | 역할 |
