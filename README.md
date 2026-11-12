@@ -39,10 +39,12 @@ FastAPI 기반의 자동차 경로 조회·교통정보 분석·뉴스 브리핑
 | 서버 | Python, FastAPI |
 | 화면 | HTML, CSS, JavaScript |
 | 지도·교통 데이터 | Kakao Maps, Kakao Local, Kakao Mobility Directions |
-| AI 기사 작성 | OpenAI API (서버 측, 관리자 전용) |
+| AI 기사 작성 | OpenAI API (서버 측, 관리자 전용), 기본 모델 `gpt-6-luna` |
 | DB·인증 | Supabase PostgreSQL 및 Supabase Auth |
 | 주요 DB | `traffic_news_articles` (기사), `traffic_route_snapshots` (경로별 수치), `traffic_article_publication` (발행 상태), `traffic_article_publication_events` (상태 변경 이력) |
 | 운영 관련 | 반복 수집·API 현황·오류 기록 관련 테이블 및 관리 기능은 문서와 실제 환경에서 확인 |
+
+AI 기사 생성 모델은 `traffic-api/app/ai_news.py`에서 `OPENAI_MODEL` 환경변수로 지정하며, 미설정 시 `gpt-6-luna`를 사용합니다. Vercel 운영 환경에도 `OPENAI_MODEL=gpt-6-luna`를 설정해야 실제 배포에서 동일 모델을 사용합니다. 모델 호출 성공 여부는 별도 API 실행으로 검증해야 합니다.
 
 새 기사는 검토 상태로 저장되며 관리자 발행 절차를 거치기 전에는 공개하지 않습니다. 기존 기사와 DB 데이터는 별도로 삭제하거나 변경하지 않았습니다.
 
