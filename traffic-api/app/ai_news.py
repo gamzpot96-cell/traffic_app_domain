@@ -46,7 +46,7 @@ async def create_ai_news_briefing(analysis_results):
              "서울 전체 도로 상황을 대표하지 않으며, 정체·지체 거리 비율만으로 "
              "전체 교통 혼잡도를 판단할 수 없습니다.")
     payload = {
-        "model": os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
+        "model": os.getenv("OPENAI_MODEL", "gpt-6-luna"),
         "temperature": 0.2,
         "response_format": {"type": "json_object"},
         "messages": [
@@ -61,6 +61,10 @@ async def create_ai_news_briefing(analysis_results):
                                   + json.dumps(facts, ensure_ascii=False)}
         ],
     }
+    # GPT-6 Luna의 기존 temperature 설정 호환 및 추론 비용 최소화.
+    if payload["model"] == "gpt-6-luna":
+        payload["reasoning_effort"] = "none"
+
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
             response = await client.post(

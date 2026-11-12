@@ -54,7 +54,7 @@ class AiNewsTests(unittest.TestCase):
                 '{"title":"세 경로 교통 분석","lead":"카카오 경로 비교",'
                 '"body":"서울역에서 잠실역까지 예상 소요시간을 비교했습니다."}'}}]
         }
-        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only", "OPENAI_MODEL": "gpt-4.1-mini"}), \
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only", "OPENAI_MODEL": "gpt-6-luna"}), \
              patch("app.ai_news.httpx.AsyncClient") as client_class:
             client_class.return_value.__aenter__.return_value.post = AsyncMock(
                 return_value=mock_response
@@ -66,6 +66,9 @@ class AiNewsTests(unittest.TestCase):
         self.assertIn("3개 자동차 경로", article["scope_notice"])
         self.assertEqual(arguments.args[0], "https://api.openai.com/v1/chat/completions")
         import json
+        self.assertEqual(arguments.kwargs["json"]["model"], "gpt-6-luna")
+        self.assertEqual(arguments.kwargs["json"]["reasoning_effort"], "none")
+        self.assertEqual(arguments.kwargs["json"]["temperature"], 0.2)
         prompt = arguments.kwargs["json"]["messages"][1]["content"]
         self.assertIn('"distance_m": 16000', prompt)
         self.assertIn('"congestion_ratio_percent": 12.5', prompt)
